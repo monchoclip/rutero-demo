@@ -1,0 +1,3281 @@
+<!DOCTYPE html>
+<html lang="es-PA">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>RUTERO · Plataforma comercial de campo — Demo</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   RUTERO · demo comercial — estética agroindustrial
+   papel crema + verde bosque + ámbar cosecha + sellos de caucho
+   ═══════════════════════════════════════════════════════════════ */
+
+:root{
+  --verde-950:#0F241A;
+  --verde-900:#14301F;
+  --verde-800:#1B4028;
+  --verde-700:#1E4A2E;
+  --verde-500:#2E7D4F;
+  --verde-300:#7FB08F;
+  --verde-100:#DCE8DA;
+  --crema:#F1EBDC;
+  --papel:#FBF8EF;
+  --papel-hueso:#F6F1E3;
+  --ambar:#E8A13D;
+  --ambar-osc:#C77F1B;
+  --teja:#C4552D;
+  --teja-osc:#A03F1E;
+  --tinta:#22301F;
+  --tinta-suave:#5C6A54;
+  --linea:#D9D0B8;
+  --azul-frio:#5B8DB8;
+  --wa:#25A05A;
+  --fb:#4A6FB5;
+  --sombra-tarjeta:0 1px 2px rgba(34,48,31,.06),0 6px 18px -6px rgba(34,48,31,.14);
+  --sombra-flotante:0 12px 40px -8px rgba(15,36,26,.35);
+  --f-display:"Avenir Next Condensed","AvenirNextCondensed-Bold","Bahnschrift SemiBold Condensed","Bahnschrift","Arial Narrow",Impact,sans-serif;
+  --f-cuerpo:"Avenir Next","Avenir","Seravek","Segoe UI","Trebuchet MS",sans-serif;
+  --f-mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --radio:14px;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:var(--f-cuerpo);
+  color:var(--tinta);
+  background:var(--crema);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+/* textura de papel: ruido sutil + viñeta */
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+}
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(1100px 500px at 85% -10%, rgba(232,161,61,.12), transparent 60%),
+    radial-gradient(900px 600px at -10% 110%, rgba(46,125,79,.10), transparent 55%);
+}
+#escenario{position:relative;z-index:1}
+
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+button:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--ambar);outline-offset:2px;border-radius:6px}
+.mono{font-family:var(--f-mono);font-size:.86em;letter-spacing:0}
+[hidden]{display:none!important}
+
+/* ─────────────── barra superior ─────────────── */
+.barra-marca{
+  position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;gap:18px;
+  padding:10px 22px;
+  background:var(--verde-900);
+  color:var(--papel);
+  box-shadow:0 2px 14px rgba(15,36,26,.35);
+}
+.barra-marca::after{
+  content:"";position:absolute;left:0;right:0;bottom:-6px;height:6px;
+  background:repeating-linear-gradient(-45deg,var(--ambar) 0 10px,transparent 10px 20px);
+  opacity:.85;
+}
+.marca{display:flex;align-items:center;gap:10px}
+.marca__sello{
+  width:36px;height:36px;display:grid;place-items:center;
+  font-family:var(--f-display);font-size:22px;font-weight:800;
+  color:var(--verde-900);background:var(--ambar);
+  border-radius:8px;transform:rotate(-4deg);
+  box-shadow:inset 0 0 0 2px rgba(20,48,31,.35);
+}
+.marca__texto{
+  display:flex;flex-direction:column;line-height:1;text-align:left;
+  font-family:var(--f-display);font-weight:800;font-size:21px;letter-spacing:.06em;
+}
+.marca__texto small{
+  font-family:var(--f-cuerpo);font-weight:500;font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--verde-300);margin-top:4px;
+}
+.cambio-rol{display:flex;gap:8px;margin-left:auto}
+.cambio-rol__btn{
+  padding:8px 16px;border-radius:999px;font-weight:600;font-size:14px;
+  border:1.5px solid rgba(251,248,239,.25);transition:.18s;
+  display:flex;align-items:center;gap:6px;
+}
+.cambio-rol__btn span{font-weight:400;font-size:12px;color:var(--verde-300)}
+.cambio-rol__btn:hover{border-color:var(--ambar);transform:translateY(-1px)}
+.cambio-rol__btn--activo{background:var(--ambar);border-color:var(--ambar);color:var(--verde-950)}
+.cambio-rol__btn--activo span{color:var(--verde-800)}
+.chip-demo{
+  font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;
+  padding:5px 10px;border:1px dashed rgba(251,248,239,.4);border-radius:6px;color:var(--verde-300);
+}
+
+/* ─────────────── vistas ─────────────── */
+.vista{display:none}
+.vista--activa{display:block;animation:aparecer .45s ease both}
+@keyframes aparecer{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+/* ─────────────── portada ─────────────── */
+.portada{max-width:1060px;margin:0 auto;padding:64px 24px 80px;text-align:center}
+.portada__sello{
+  width:92px;height:92px;margin:0 auto 20px;display:grid;place-items:center;
+  font-family:var(--f-display);font-size:58px;font-weight:800;color:var(--papel);
+  background:var(--verde-800);border-radius:22px;transform:rotate(-5deg);
+  box-shadow:var(--sombra-flotante),inset 0 0 0 3px rgba(232,161,61,.7),inset 0 0 0 7px var(--verde-800),inset 0 0 0 8px rgba(232,161,61,.35);
+  animation:aparecer .5s .05s ease both;
+}
+.portada h1{
+  font-family:var(--f-display);font-size:clamp(52px,9vw,96px);font-weight:800;
+  letter-spacing:.1em;color:var(--verde-900);line-height:.95;
+  animation:aparecer .5s .12s ease both;
+}
+.portada__lema{
+  font-size:clamp(17px,2.6vw,22px);color:var(--tinta-suave);margin-top:12px;
+  animation:aparecer .5s .2s ease both;
+}
+.portada__lema em{color:var(--teja);font-style:italic}
+.portada__roles{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px;
+  margin:48px 0 40px;text-align:left;
+}
+.tarjeta-rol{
+  position:relative;background:var(--papel);border:1.5px solid var(--linea);
+  border-radius:var(--radio);padding:30px 28px 26px;cursor:pointer;
+  box-shadow:var(--sombra-tarjeta);transition:.22s;overflow:hidden;
+  animation:aparecer .55s .3s ease both;
+}
+.tarjeta-rol:nth-child(2){animation-delay:.4s}
+.tarjeta-rol::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:5px;
+  background:repeating-linear-gradient(-45deg,var(--verde-500) 0 12px,var(--verde-100) 12px 24px);
+}
+.tarjeta-rol:nth-child(2)::before{
+  background:repeating-linear-gradient(-45deg,var(--ambar) 0 12px,#F3DDB4 12px 24px);
+}
+.tarjeta-rol:hover,.tarjeta-rol:focus-visible{transform:translateY(-5px) rotate(-.4deg);box-shadow:var(--sombra-flotante);border-color:var(--verde-500)}
+.tarjeta-rol__icono{font-size:34px;display:block;margin-bottom:12px}
+.tarjeta-rol h2{font-family:var(--f-display);font-size:27px;letter-spacing:.04em;text-transform:uppercase;color:var(--verde-900)}
+.tarjeta-rol p{margin:10px 0 18px;color:var(--tinta-suave);line-height:1.55;font-size:15.5px}
+.tarjeta-rol__cta{font-weight:700;color:var(--verde-500);letter-spacing:.02em}
+.tarjeta-rol:nth-child(2) .tarjeta-rol__cta{color:var(--ambar-osc)}
+.portada__puntos{
+  list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:18px;text-align:left;animation:aparecer .55s .5s ease both;
+}
+.portada__puntos li{
+  font-size:14.5px;line-height:1.55;color:var(--tinta-suave);
+  padding:16px 18px;border-left:3px solid var(--ambar);
+  background:linear-gradient(90deg,rgba(232,161,61,.10),transparent 70%);
+  border-radius:0 10px 10px 0;
+}
+.portada__puntos strong{display:block;color:var(--verde-900);font-size:15.5px;margin-bottom:3px}
+
+/* ═══════════════ TELÉFONO ═══════════════ */
+.telefono{display:flex;flex-direction:column;align-items:center;padding:34px 16px 50px}
+.telefono__marco{
+  width:398px;max-width:100%;
+  background:#151D17;border-radius:52px;padding:12px;
+  box-shadow:var(--sombra-flotante),inset 0 0 0 2px #2c3a2f;
+}
+.telefono__pantalla{
+  position:relative;background:var(--papel-hueso);border-radius:42px;overflow:hidden;
+  height:770px;display:flex;flex-direction:column;
+}
+.telefono__pie{margin-top:16px;font-size:13px;color:var(--tinta-suave);text-align:center;max-width:420px}
+
+/* barra de estado */
+.telefono__estado{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 22px 6px;font-family:var(--f-mono);font-size:13px;font-weight:600;
+  color:var(--verde-900);
+}
+.telefono__muesca{width:112px;height:26px;background:#151D17;border-radius:999px;margin-top:-14px}
+.telefono__senal{display:flex;align-items:center;gap:8px}
+.senal{
+  display:flex;align-items:center;gap:5px;padding:3px 8px;border-radius:8px;
+  font-family:var(--f-mono);font-size:11px;font-weight:700;transition:.2s;
+  border:1.5px solid transparent;
+}
+.senal--ok{color:var(--verde-700);background:rgba(46,125,79,.12)}
+.senal--off{color:var(--teja);background:rgba(196,85,45,.14);border-color:rgba(196,85,45,.4)}
+.senal--off .senal__icono{opacity:.25}
+.senal:hover{border-color:currentColor}
+.bateria{width:24px;height:12px;border:1.5px solid var(--verde-900);border-radius:3px;position:relative;display:inline-block}
+.bateria i{position:absolute;inset:2px 30% 2px 2px;background:var(--verde-500);border-radius:1px}
+.bateria::after{content:"";position:absolute;right:-4px;top:3px;width:2px;height:6px;background:var(--verde-900);border-radius:1px}
+
+/* cabecera app */
+.app-movil__cabecera{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 18px 12px;border-bottom:1.5px solid var(--linea);
+  background:linear-gradient(180deg,rgba(46,125,79,.06),transparent);
+}
+.app-movil__saludo{display:flex;align-items:center;gap:10px}
+.app-movil__saludo strong{font-size:15.5px;display:block;line-height:1.1}
+.app-movil__saludo small{color:var(--tinta-suave);font-size:12px}
+.avatar{
+  width:38px;height:38px;border-radius:12px;display:inline-grid;place-items:center;
+  font-family:var(--f-display);font-weight:700;font-size:15px;letter-spacing:.03em;
+  color:var(--papel);background:var(--verde-500);flex:none;
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.22);
+}
+.avatar--me{background:var(--ambar-osc)}
+.avatar--ca{background:var(--azul-frio)}
+.avatar--cliente{background:var(--teja)}
+.chip-sync{
+  display:flex;align-items:center;gap:7px;padding:6px 11px;border-radius:999px;
+  font-size:11.5px;font-weight:700;letter-spacing:.03em;transition:.25s;
+}
+.chip-sync i{width:8px;height:8px;border-radius:50%;flex:none}
+.chip-sync--ok{background:rgba(46,125,79,.13);color:var(--verde-700)}
+.chip-sync--ok i{background:var(--verde-500);box-shadow:0 0 0 3px rgba(46,125,79,.2)}
+.chip-sync--off{background:rgba(196,85,45,.13);color:var(--teja-osc)}
+.chip-sync--off i{background:var(--teja);animation:latido 1.4s infinite}
+.chip-sync--pend{background:rgba(232,161,61,.16);color:var(--ambar-osc)}
+.chip-sync--pend i{background:var(--ambar);animation:latido 1s infinite}
+
+/* cuerpo + pantallas móviles */
+.app-movil__cuerpo{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;scrollbar-width:thin}
+.pantalla-m{display:none;padding:16px 16px 24px}
+.pantalla-m--activa{display:block;animation:aparecer .3s ease both}
+
+/* progreso del día */
+.progreso-dia{margin-bottom:14px}
+.progreso-dia__texto{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px}
+.progreso-dia__texto strong{font-family:var(--f-display);font-size:19px;letter-spacing:.05em;text-transform:uppercase;color:var(--verde-900)}
+.progreso-dia__texto span{font-size:12.5px;color:var(--tinta-suave);font-weight:600}
+.progreso-dia__barra{height:10px;background:var(--verde-100);border-radius:999px;overflow:hidden}
+.progreso-dia__barra i{
+  display:block;height:100%;width:var(--p,0%);border-radius:999px;transition:width .8s cubic-bezier(.2,.8,.2,1);
+  background:repeating-linear-gradient(-55deg,var(--verde-500) 0 8px,#3B9160 8px 16px);
+}
+
+/* lista de visitas */
+.lista-visitas{list-style:none;display:flex;flex-direction:column;gap:9px}
+.visita{
+  display:flex;align-items:center;gap:12px;padding:13px 14px;
+  background:var(--papel);border:1.5px solid var(--linea);border-radius:12px;
+  box-shadow:var(--sombra-tarjeta);position:relative;
+}
+.visita__hora{font-family:var(--f-mono);font-weight:700;font-size:13px;color:var(--verde-700);flex:none;width:44px}
+.visita__info{flex:1;min-width:0}
+.visita__info strong{display:block;font-size:14px;line-height:1.25}
+.visita__info small{color:var(--tinta-suave);font-size:12px}
+.visita--hecha{opacity:.78}
+.visita--hecha .visita__info strong{text-decoration:line-through;text-decoration-color:rgba(46,125,79,.5);text-decoration-thickness:1.5px}
+.visita--siguiente{border-color:var(--ambar);cursor:pointer;background:linear-gradient(120deg,var(--papel) 60%,rgba(232,161,61,.14));}
+.visita--siguiente:hover{transform:translateY(-2px);box-shadow:var(--sombra-flotante)}
+.visita--siguiente::before{
+  content:"";position:absolute;left:-1.5px;top:12px;bottom:12px;width:4px;border-radius:4px;background:var(--ambar);
+}
+.visita__cta{font-family:var(--f-display);font-size:13px;letter-spacing:.08em;color:var(--ambar-osc);font-weight:700;flex:none}
+.visita__pend{font-size:11px;color:var(--tinta-suave);border:1px dashed var(--linea);padding:3px 8px;border-radius:999px;flex:none}
+.nota-offline{
+  margin-top:16px;font-size:12.5px;line-height:1.5;color:var(--tinta-suave);
+  background:rgba(232,161,61,.12);border:1px dashed rgba(199,127,27,.45);
+  padding:11px 13px;border-radius:10px;
+}
+
+/* sello de caucho */
+.sello{
+  font-family:var(--f-display);font-weight:800;letter-spacing:.1em;color:var(--verde-500);
+  border:2.5px solid currentColor;border-radius:7px;padding:3px 8px;
+  transform:rotate(-6deg);display:inline-flex;flex-direction:column;align-items:center;line-height:1.05;
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='r'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.28' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.4 -0.18'/%3E%3C/filter%3E%3Crect width='120' height='120' fill='black' filter='url(%23r)'/%3E%3C/svg%3E");
+  mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='r'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.28' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.4 -0.18'/%3E%3C/filter%3E%3Crect width='120' height='120' fill='black' filter='url(%23r)'/%3E%3C/svg%3E");
+}
+.sello--mini{font-size:10.5px;flex:none;padding:2px 6px}
+.sello--grande{font-size:24px;padding:8px 18px;margin:0 auto 16px;transform:rotate(-5deg) scale(1);animation:estampar .45s cubic-bezier(.2,2.4,.4,1) both}
+.sello--grande small{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.22em;font-weight:600;margin-top:2px}
+@keyframes estampar{from{transform:rotate(-5deg) scale(2.1);opacity:0}60%{opacity:1}to{transform:rotate(-5deg) scale(1);opacity:1}}
+
+/* ficha de cliente */
+.volver{font-weight:700;color:var(--verde-700);font-size:13.5px;margin-bottom:10px;padding:4px 2px}
+.ficha__cabecera{display:flex;gap:11px;align-items:center;margin-bottom:14px}
+.ficha__cabecera h3{font-family:var(--f-display);font-size:20px;letter-spacing:.03em;line-height:1.05;color:var(--verde-900)}
+.ficha__cabecera small{color:var(--tinta-suave);font-size:12px}
+.ficha__stats{
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;
+}
+.ficha__stats div{
+  background:var(--papel);border:1.5px solid var(--linea);border-radius:10px;
+  padding:9px 6px;text-align:center;
+}
+.ficha__stats strong{display:block;font-family:var(--f-display);font-size:16.5px;color:var(--verde-700);letter-spacing:.02em}
+.ficha__stats span{font-size:10px;color:var(--tinta-suave);text-transform:uppercase;letter-spacing:.05em}
+.ficha__datos{display:flex;flex-direction:column;gap:7px;margin-bottom:14px}
+.ficha__datos div{display:flex;gap:8px;font-size:13px;line-height:1.4}
+.ficha__datos dt{flex:none;width:96px;color:var(--tinta-suave);font-weight:600}
+.ficha__datos dd{flex:1}
+.ficha__historial{background:var(--papel);border:1.5px solid var(--linea);border-radius:12px;padding:13px 14px;margin-bottom:16px}
+.ficha__historial h4{font-size:13px;margin-bottom:9px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;color:var(--verde-900)}
+.ficha__historial ul{list-style:none;display:flex;flex-direction:column;gap:8px}
+.ficha__historial li{font-size:12.5px;line-height:1.45;padding-left:10px;border-left:2.5px solid var(--verde-100)}
+.ficha__historial small{display:block;font-family:var(--f-mono);font-size:10.5px;color:var(--tinta-suave)}
+.ficha__acciones{display:flex;gap:8px;margin-top:10px}
+.ficha__acciones .boton-fantasma{flex:1;text-align:center;padding:9px 4px;font-size:13px}
+
+.chip{
+  display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;
+  padding:3px 8px;border-radius:999px;letter-spacing:.03em;white-space:nowrap;
+  background:var(--verde-100);color:var(--verde-700);
+}
+.chip--verde{background:rgba(46,125,79,.13);color:var(--verde-700)}
+.chip--gps{background:rgba(46,125,79,.13);color:var(--verde-700);font-family:var(--f-mono);font-size:11px;font-weight:600}
+.chip--ia{background:rgba(91,141,184,.16);color:#38618C}
+.chip--asesor{background:rgba(232,161,61,.18);color:var(--ambar-osc)}
+
+/* botones */
+.boton-primario{
+  display:block;width:100%;padding:14px 18px;border-radius:12px;
+  font-family:var(--f-display);font-size:16.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--papel);background:var(--verde-500);
+  box-shadow:0 4px 0 var(--verde-800),var(--sombra-tarjeta);
+  transition:.15s;text-align:center;
+}
+.boton-primario:hover{filter:brightness(1.06)}
+.boton-primario:active{transform:translateY(3px);box-shadow:0 1px 0 var(--verde-800)}
+.boton-primario--rojo{background:var(--teja);box-shadow:0 4px 0 var(--teja-osc),var(--sombra-tarjeta)}
+.boton-primario--rojo:active{box-shadow:0 1px 0 var(--teja-osc)}
+.boton-primario--ambar{background:var(--ambar);color:var(--verde-950);box-shadow:0 4px 0 var(--ambar-osc),var(--sombra-tarjeta)}
+.boton-primario--ambar:active{box-shadow:0 1px 0 var(--ambar-osc)}
+.boton-fantasma{
+  padding:9px 14px;border-radius:10px;border:1.5px solid var(--linea);
+  font-weight:600;font-size:13.5px;background:var(--papel);transition:.15s;
+}
+.boton-fantasma:hover{border-color:var(--verde-500);color:var(--verde-700)}
+.enlace{color:var(--verde-700);font-weight:700;text-decoration:underline;text-underline-offset:3px;font-size:13px}
+.enlace--centrado{display:block;margin:14px auto 0;text-align:center}
+
+/* visita activa */
+.visita-activa{text-align:center;padding-top:8px}
+.grabando{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--f-display);font-size:15px;letter-spacing:.16em;color:var(--teja);
+  margin-bottom:6px;
+}
+.grabando i{width:11px;height:11px;border-radius:50%;background:var(--teja);animation:latido 1.1s infinite}
+@keyframes latido{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.8)}}
+.cronometro{
+  font-family:var(--f-mono);font-size:64px;font-weight:700;letter-spacing:.02em;
+  color:var(--verde-900);line-height:1;margin:6px 0 12px;font-variant-numeric:tabular-nums;
+}
+.nota-acelerada{font-family:var(--f-mono);font-size:10px;color:var(--tinta-suave);margin:-8px 0 10px;letter-spacing:.04em}
+.datos-gps{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.datos-gps .chip{font-size:11px}
+.campo{display:block;text-align:left;margin-bottom:14px}
+.campo span{display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--tinta-suave);margin-bottom:6px}
+.campo textarea{
+  width:100%;border:1.5px solid var(--linea);border-radius:11px;padding:11px 12px;
+  font:inherit;font-size:13.5px;line-height:1.5;background:var(--papel);color:var(--tinta);resize:vertical;
+}
+.campo textarea:focus{outline:2.5px solid var(--verde-500);outline-offset:-1px}
+.campo-etiqueta{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--tinta-suave);margin:2px 0 8px;text-align:left}
+.opciones-resultado{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
+.opcion{
+  padding:10px 8px;border-radius:10px;border:1.5px solid var(--linea);
+  font-size:12.5px;font-weight:600;background:var(--papel);transition:.15s;
+}
+.opcion--activa{border-color:var(--verde-500);background:rgba(46,125,79,.1);color:var(--verde-700);box-shadow:inset 0 0 0 1px var(--verde-500)}
+
+/* cámara */
+.camara{
+  position:absolute;inset:0;z-index:20;background:#0c120e;
+  display:flex;flex-direction:column;animation:aparecer .25s ease both;
+}
+.camara__visor{position:relative;flex:1;overflow:hidden;display:flex}
+.camara__visor svg{width:100%;height:100%;object-fit:cover}
+.camara__brackets i{position:absolute;width:34px;height:34px;border:3px solid rgba(251,248,239,.85)}
+.camara__brackets i:nth-child(1){top:16px;left:16px;border-right:0;border-bottom:0;border-radius:6px 0 0 0}
+.camara__brackets i:nth-child(2){top:16px;right:16px;border-left:0;border-bottom:0;border-radius:0 6px 0 0}
+.camara__brackets i:nth-child(3){bottom:16px;left:16px;border-right:0;border-top:0;border-radius:0 0 0 6px}
+.camara__brackets i:nth-child(4){bottom:16px;right:16px;border-left:0;border-top:0;border-radius:0 0 6px 0}
+.camara__gps{
+  position:absolute;left:50%;bottom:14px;transform:translateX(-50%);
+  background:rgba(12,18,14,.78);color:#EDE8D8;font-size:11px;padding:6px 12px;border-radius:999px;
+  white-space:nowrap;backdrop-filter:blur(3px);
+}
+.camara__flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+.camara__flash--activo{animation:flashazo .5s ease-out both}
+@keyframes flashazo{0%{opacity:0}12%{opacity:1}100%{opacity:0}}
+.camara__pie{padding:16px 20px 26px;text-align:center;color:#B9C4B4}
+.camara__pie p{font-size:12.5px;margin-bottom:14px}
+.camara__pie strong{color:#F1EBDC}
+.obturador{
+  width:70px;height:70px;border-radius:50%;margin:0 auto;display:grid;place-items:center;
+  border:4px solid #F1EBDC;transition:.12s;
+}
+.obturador i{width:52px;height:52px;border-radius:50%;background:#F1EBDC;display:block;transition:.12s}
+.obturador:active i{transform:scale(.82);background:var(--ambar)}
+
+/* resumen / evidencia */
+.resumen-visita{text-align:center}
+.evidencia{
+  position:relative;border-radius:14px;overflow:hidden;margin-bottom:14px;
+  border:3px solid var(--papel);box-shadow:var(--sombra-tarjeta);
+  transform:rotate(1.2deg);background:#dcd6c4;min-height:60px;
+}
+.evidencia svg{display:block;width:100%;height:clamp(180px,44vw,300px)}
+.evidencia figcaption{
+  position:absolute;left:0;right:0;bottom:0;padding:7px 12px;
+  background:linear-gradient(transparent,rgba(15,36,26,.82));
+  color:#EDE8D8;font-family:var(--f-mono);font-size:10.5px;text-align:left;
+}
+.resumen-datos{
+  display:grid;grid-template-columns:1fr 1fr;gap:9px;text-align:left;margin-bottom:12px;
+}
+.resumen-datos div{background:var(--papel);border:1.5px solid var(--linea);border-radius:10px;padding:9px 11px}
+.resumen-datos dt{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--tinta-suave);font-weight:700;margin-bottom:3px}
+.resumen-datos dd{font-size:12.5px;font-weight:600}
+.resumen-nota{
+  font-size:12.5px;line-height:1.5;color:var(--tinta-suave);font-style:italic;
+  border-left:3px solid var(--ambar);padding:6px 12px;text-align:left;margin-bottom:16px;
+  background:rgba(232,161,61,.08);border-radius:0 8px 8px 0;
+}
+.aviso-offline{
+  margin-top:12px;padding:12px 14px;border-radius:11px;font-size:12.5px;line-height:1.55;text-align:left;
+  background:rgba(196,85,45,.1);border:1.5px dashed rgba(196,85,45,.5);color:var(--teja-osc);
+}
+.aviso-offline .enlace{color:var(--teja-osc);display:inline;padding:0}
+
+/* chat */
+.chat{display:flex;flex-direction:column;height:calc(100% - 4px);min-height:520px}
+.chat__cabecera{display:flex;gap:10px;align-items:center;padding-bottom:11px;border-bottom:1.5px solid var(--linea)}
+.chat__cabecera strong{font-size:14.5px;display:block}
+.chat__cabecera small{font-size:11px;color:var(--tinta-suave)}
+.chat__hilo{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:9px;padding:14px 2px}
+.burbuja{
+  max-width:84%;padding:9px 12px;border-radius:14px;font-size:13px;line-height:1.45;
+  position:relative;box-shadow:var(--sombra-tarjeta);animation:aparecer .3s ease both;
+}
+.burbuja--cliente{align-self:flex-start;background:var(--papel);border:1px solid var(--linea);border-bottom-left-radius:4px}
+.burbuja--yo{align-self:flex-end;background:#DDEEDD;border:1px solid #C4DEC6;border-bottom-right-radius:4px}
+.burbuja--ia{
+  align-self:flex-end;background:#E4EBF4;border:1px solid #C9D7E8;border-bottom-right-radius:4px;
+}
+.burbuja--ia::before{
+  content:"🤖 IA · respuesta automática";display:block;font-size:9.5px;font-weight:700;
+  letter-spacing:.06em;color:#38618C;margin-bottom:4px;text-transform:uppercase;
+}
+.burbuja__hora{display:block;font-family:var(--f-mono);font-size:9.5px;color:var(--tinta-suave);margin-top:4px;text-align:right}
+.escribiendo{align-self:flex-end;display:flex;gap:4px;padding:10px 14px;background:#E4EBF4;border-radius:14px;border-bottom-right-radius:4px}
+.escribiendo i{width:7px;height:7px;border-radius:50%;background:#38618C;animation:latido 1s infinite}
+.escribiendo i:nth-child(2){animation-delay:.18s}
+.escribiendo i:nth-child(3){animation-delay:.36s}
+.chat__entrada{display:flex;gap:8px;padding-top:10px;border-top:1.5px solid var(--linea)}
+.chat__entrada input{
+  flex:1;border:1.5px solid var(--linea);border-radius:999px;padding:10px 16px;
+  font:inherit;font-size:13.5px;background:var(--papel);color:var(--tinta);
+}
+.chat__entrada input:focus{outline:2.5px solid var(--verde-500);outline-offset:-1px}
+.chat__entrada button{
+  width:42px;height:42px;border-radius:50%;background:var(--verde-500);color:var(--papel);
+  font-size:17px;flex:none;box-shadow:0 3px 0 var(--verde-800);
+}
+.chat__entrada button:active{transform:translateY(2px);box-shadow:none}
+.canal{
+  display:inline-grid;place-items:center;font-size:9.5px;font-weight:800;letter-spacing:.04em;
+  padding:2.5px 6px;border-radius:6px;color:#fff;
+}
+.canal--wa{background:var(--wa)}
+.canal--fb{background:var(--fb)}
+
+/* pestañas inferiores */
+.app-movil__tabs{
+  display:flex;border-top:1.5px solid var(--linea);background:var(--papel);
+  padding:7px 6px calc(10px + env(safe-area-inset-bottom));
+}
+.tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
+  font-size:17px;padding:5px 0;border-radius:10px;color:var(--tinta-suave);transition:.15s;
+}
+.tab span{font-size:10px;font-weight:700;letter-spacing:.04em}
+.tab--activa{color:var(--verde-700);background:rgba(46,125,79,.1)}
+.tab:disabled{opacity:.35;cursor:default}
+
+/* ═══════════════ ESCRITORIO DEL COORDINADOR ═══════════════ */
+.escritorio{
+  display:grid;grid-template-columns:228px 1fr;gap:0;
+  max-width:1400px;margin:26px auto 46px;padding:0 22px;
+  min-height:calc(100vh - 170px);
+}
+.lateral{
+  background:var(--verde-900);border-radius:var(--radio) 0 0 var(--radio);
+  padding:22px 14px;display:flex;flex-direction:column;gap:10px;color:var(--papel);
+}
+.lateral__nav{display:flex;flex-direction:column;gap:4px}
+.lateral__btn{
+  display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:10px;
+  font-weight:600;font-size:14px;color:#C8D6C3;transition:.15s;position:relative;text-align:left;
+}
+.lateral__btn:hover{background:rgba(251,248,239,.08);color:var(--papel)}
+.lateral__btn--activo{background:var(--ambar);color:var(--verde-950);font-weight:700}
+.lateral__badge{
+  margin-left:auto;background:var(--teja);color:#fff;font-size:10.5px;font-weight:800;
+  min-width:19px;height:19px;border-radius:999px;display:grid;place-items:center;padding:0 5px;
+}
+.lateral__btn--activo .lateral__badge{background:var(--teja)}
+.lateral__resguardo{
+  margin-top:auto;border:1.5px dashed rgba(232,161,61,.55);border-radius:12px;
+  padding:13px;text-align:center;background:rgba(232,161,61,.08);
+}
+.lateral__resguardo strong{font-family:var(--f-display);font-size:22px;letter-spacing:.04em;display:block;color:var(--ambar)}
+.lateral__resguardo span{font-size:11px;color:#C8D6C3;line-height:1.4;display:block;margin-top:3px}
+
+.panel-zona{
+  background:var(--papel);border:1.5px solid var(--linea);border-left:0;
+  border-radius:0 var(--radio) var(--radio) 0;padding:26px 30px;overflow:hidden;
+}
+.panel{display:none}
+.panel--activo{display:block;animation:aparecer .35s ease both}
+.panel__titulo{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin-bottom:20px;flex-wrap:wrap}
+.panel__titulo h2{
+  font-family:var(--f-display);font-size:30px;letter-spacing:.05em;text-transform:uppercase;color:var(--verde-900);
+}
+.panel__titulo small{
+  display:block;font-family:var(--f-cuerpo);font-size:13px;letter-spacing:0;
+  text-transform:none;color:var(--tinta-suave);font-weight:500;margin-top:2px;
+}
+.panel__titulo .mono{color:var(--tinta-suave);font-size:13px}
+
+/* kpis */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:20px}
+.kpi{
+  background:var(--papel-hueso);border:1.5px solid var(--linea);border-radius:12px;padding:16px 17px;
+  animation:aparecer .4s ease both;
+}
+.kpi:nth-child(2){animation-delay:.06s}.kpi:nth-child(3){animation-delay:.12s}.kpi:nth-child(4){animation-delay:.18s}
+.kpi strong{font-family:var(--f-display);font-size:37px;line-height:1;color:var(--verde-900);letter-spacing:.01em}
+.kpi strong em{font-style:normal;font-size:19px;color:var(--tinta-suave)}
+.kpi span{display:block;font-size:12.5px;color:var(--tinta-suave);margin:5px 0 7px;line-height:1.3}
+.kpi small{font-size:11.5px;font-weight:700}
+.kpi__ok{color:var(--verde-500)}
+.kpi__neutro{color:var(--tinta-suave);font-weight:500}
+
+.fila-doble{display:grid;grid-template-columns:1.4fr 1fr;gap:14px}
+.tarjeta-panel{background:var(--papel-hueso);border:1.5px solid var(--linea);border-radius:12px;padding:17px 19px}
+.tarjeta-panel h3{font-size:14.5px;margin-bottom:12px;color:var(--verde-900)}
+.tarjeta-panel--resguardo{
+  background:linear-gradient(150deg,var(--verde-900),var(--verde-700));color:#E4EBDF;border-color:var(--verde-800);
+}
+.tarjeta-panel--resguardo h3{color:var(--papel)}
+.tarjeta-panel--resguardo p{font-size:13px;line-height:1.55;margin-bottom:10px}
+.tarjeta-panel--resguardo .boton-fantasma{background:transparent;color:var(--ambar);border-color:rgba(232,161,61,.5)}
+.tarjeta-panel--resguardo .boton-fantasma:hover{border-color:var(--ambar)}
+.resguardo-cifra strong{font-family:var(--f-display);font-size:24px;color:var(--ambar);letter-spacing:.03em}
+.actividad{list-style:none;display:flex;flex-direction:column;gap:10px}
+.actividad li{
+  font-size:13px;line-height:1.45;padding:9px 12px;border-radius:9px;background:var(--papel);
+  border:1px solid var(--linea);display:flex;gap:10px;align-items:baseline;animation:aparecer .4s ease both;
+}
+.actividad li .mono{color:var(--verde-500);font-weight:700;flex:none;font-size:11.5px}
+.actividad li.nuevo{border-color:var(--ambar);background:rgba(232,161,61,.09)}
+
+/* bandeja */
+.bandeja{display:grid;grid-template-columns:250px 1fr 235px;gap:0;border:1.5px solid var(--linea);border-radius:12px;overflow:hidden;min-height:540px;background:var(--papel-hueso)}
+.bandeja__lista{list-style:none;border-right:1.5px solid var(--linea);overflow-y:auto;background:var(--papel)}
+.convo{display:flex;gap:9px;align-items:center;padding:12px 12px;border-bottom:1px solid var(--linea);cursor:pointer;transition:.12s}
+.convo:hover{background:var(--papel-hueso)}
+.convo--activa{background:rgba(46,125,79,.09);box-shadow:inset 3px 0 0 var(--verde-500)}
+.convo__info{flex:1;min-width:0}
+.convo__info strong{display:block;font-size:13px;line-height:1.2}
+.convo__info small{display:block;font-size:11px;color:var(--tinta-suave);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.convo__meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none}
+.convo__hora{font-family:var(--f-mono);font-size:10px;color:var(--tinta-suave);font-weight:400}
+.bandeja__hilo{display:flex;flex-direction:column;background:var(--papel-hueso)}
+.hilo__cabecera{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 16px;border-bottom:1.5px solid var(--linea);background:var(--papel)}
+.hilo__cabecera strong{font-size:14.5px}
+.hilo__mensajes{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:16px}
+.hilo__acciones{padding:12px 16px;border-top:1.5px solid var(--linea);background:var(--papel)}
+.hilo__acciones .boton-primario{font-size:14px;padding:11px 14px}
+.chat__entrada--web{padding-top:0;border-top:0}
+.bandeja__ficha{border-left:1.5px solid var(--linea);padding:16px 15px;background:var(--papel);overflow-y:auto}
+.bandeja__ficha h3{font-family:var(--f-display);font-size:15px;letter-spacing:.09em;text-transform:uppercase;color:var(--tinta-suave);margin-bottom:12px}
+.prospecto{display:flex;gap:10px;align-items:center;margin-bottom:13px}
+.prospecto strong{font-size:14px;display:block;line-height:1.15}
+.prospecto small{font-size:11.5px;color:var(--tinta-suave)}
+.ficha__datos--web div{flex-direction:column;gap:1px}
+.ficha__datos--web dt{width:auto;font-size:10px;text-transform:uppercase;letter-spacing:.07em}
+.ficha__datos--web dd{font-size:12.5px}
+.termometro{display:flex;gap:5px;margin-bottom:14px}
+.temp{flex:1;text-align:center;font-size:11px;font-weight:700;padding:6px 4px;border-radius:8px;border:1.5px solid var(--linea);color:var(--tinta-suave);opacity:.6}
+.temp--activa{opacity:1}
+.temp--frio.temp--activa{background:rgba(91,141,184,.15);border-color:var(--azul-frio);color:#38618C}
+.temp--templado.temp--activa{background:rgba(232,161,61,.16);border-color:var(--ambar);color:var(--ambar-osc)}
+.temp--caliente.temp--activa{background:rgba(196,85,45,.13);border-color:var(--teja);color:var(--teja-osc)}
+.asignacion{margin-bottom:14px}
+.ficha__pie{font-size:11.5px;line-height:1.5;color:var(--tinta-suave);border-top:1.5px dashed var(--linea);padding-top:10px}
+.ficha__pie strong{color:var(--verde-700)}
+
+/* kanban */
+.kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:start}
+.columna{background:var(--papel-hueso);border:1.5px solid var(--linea);border-radius:12px;overflow:hidden;transition:.15s}
+.columna header{
+  display:flex;align-items:center;gap:7px;padding:11px 13px;
+  font-family:var(--f-display);font-size:15px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
+  border-bottom:1.5px solid var(--linea);
+}
+.columna header i{font-style:normal}
+.columna__monto{margin-left:auto;font-family:var(--f-mono);font-size:11px;font-weight:600;color:var(--tinta-suave);letter-spacing:0}
+.columna[data-temp="frio"] header{color:#38618C;background:rgba(91,141,184,.1)}
+.columna[data-temp="templado"] header{color:var(--ambar-osc);background:rgba(232,161,61,.12)}
+.columna[data-temp="caliente"] header{color:var(--teja-osc);background:rgba(196,85,45,.1)}
+.columna[data-temp="cierre"] header{color:var(--verde-700);background:rgba(46,125,79,.12)}
+.columna__cuerpo{padding:10px;display:flex;flex-direction:column;gap:9px;min-height:120px}
+.columna--sobre{border-color:var(--verde-500);box-shadow:0 0 0 3px rgba(46,125,79,.18)}
+.tarjeta-lead{
+  background:var(--papel);border:1.5px solid var(--linea);border-radius:10px;padding:11px 12px;
+  cursor:grab;box-shadow:var(--sombra-tarjeta);transition:.15s;
+}
+.tarjeta-lead:hover{transform:translateY(-2px);border-color:var(--verde-300)}
+.tarjeta-lead:active{cursor:grabbing}
+.tarjeta-lead--arrastrando{opacity:.4;transform:rotate(2deg)}
+.tarjeta-lead strong{display:block;font-size:13px;line-height:1.2}
+.tarjeta-lead small{display:block;font-size:11.5px;color:var(--tinta-suave);margin:3px 0 7px}
+.tarjeta-lead__pie{display:flex;align-items:center;gap:6px;font-family:var(--f-mono);font-size:10.5px;color:var(--tinta-suave)}
+
+/* mapa */
+.mapa-zona{display:grid;grid-template-columns:1.55fr 1fr;gap:14px;align-items:start}
+.mapa-marco{border:1.5px solid var(--linea);border-radius:12px;overflow:hidden;background:#EAE4D0;position:relative}
+#mapa{display:block;width:100%;height:auto}
+.mapa__zona{font-size:12px;fill:#A79B72;letter-spacing:.18em;font-weight:600}
+.punto-ruta text{fill:#fff;font-size:10px;font-weight:800;text-anchor:middle;font-family:var(--f-mono)}
+.punto-ruta--pend circle{fill:var(--papel);stroke:var(--verde-500);stroke-width:2}
+.punto-ruta--pend text{fill:var(--verde-700)}
+.punto-ruta--activo circle{filter:drop-shadow(0 0 6px rgba(232,161,61,.8))}
+.pin{cursor:pointer}
+.pin__fondo{fill:var(--verde-900);stroke:var(--papel);stroke-width:2.5}
+.pin[data-asesor="maria"] .pin__fondo{fill:var(--ambar-osc)}
+.pin[data-asesor="carlos"] .pin__fondo{fill:var(--azul-frio)}
+.pin__texto{fill:#fff;font-family:var(--f-display);font-weight:700;font-size:13px;text-anchor:middle;letter-spacing:.05em}
+.pin__onda{fill:none;stroke:var(--verde-500);stroke-width:2;opacity:0;animation:onda 2.2s infinite}
+.pin__onda--ruta{stroke:var(--azul-frio);animation-duration:3s}
+@keyframes onda{0%{transform:scale(.55);opacity:.9}100%{transform:scale(1.5);opacity:0}}
+.pin__estado{stroke:var(--papel);stroke-width:2}
+.pin__estado--visita{fill:var(--teja);animation:latido 1.2s infinite}
+.pin__estado--ruta{fill:var(--ambar)}
+.pin--activo .pin__fondo{stroke:var(--ambar);stroke-width:3.5}
+.mapa__leyenda{
+  position:absolute;left:10px;bottom:10px;display:flex;flex-direction:column;gap:4px;
+  background:rgba(251,248,239,.92);border:1px solid var(--linea);border-radius:9px;padding:8px 11px;
+  font-size:10.5px;color:var(--tinta-suave);backdrop-filter:blur(2px);
+}
+.mapa__leyenda span{display:flex;align-items:center;gap:6px}
+.mapa__leyenda i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.leyenda--visita{background:var(--teja)}
+.leyenda--ruta{background:var(--ambar)}
+.leyenda--punto{background:var(--verde-500)}
+.mapa__detalle{min-height:300px}
+.mapa__vacio{
+  font-size:13.5px;color:var(--tinta-suave);line-height:1.6;padding:20px;
+  border:1.5px dashed var(--linea);border-radius:12px;text-align:center;
+}
+.tarjeta-asesor{
+  background:var(--papel-hueso);border:1.5px solid var(--linea);border-radius:12px;padding:16px;
+  animation:aparecer .3s ease both;
+}
+.tarjeta-asesor__cabecera{display:flex;gap:10px;align-items:center;margin-bottom:12px}
+.tarjeta-asesor__cabecera strong{display:block;font-size:15px}
+.tarjeta-asesor__cabecera small{font-size:12px;color:var(--tinta-suave)}
+.tarjeta-asesor .evidencia{transform:none;margin:10px 0}
+.tarjeta-asesor dl{display:flex;flex-direction:column;gap:6px;font-size:12.5px}
+.tarjeta-asesor dt{font-weight:700;color:var(--tinta-suave);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em}
+.tarjeta-asesor dd{margin-bottom:4px}
+.tarjeta-asesor .chip{margin-top:2px}
+
+/* equipo */
+.equipo{display:flex;flex-direction:column;gap:10px;margin-bottom:22px}
+.asesor-fila{
+  display:grid;grid-template-columns:46px 1.5fr repeat(4,1fr);gap:12px;align-items:center;
+  background:var(--papel-hueso);border:1.5px solid var(--linea);border-radius:12px;padding:13px 16px;
+  transition:.4s;
+}
+.asesor-fila__nombre strong{display:block;font-size:14.5px}
+.asesor-fila__nombre small{font-size:12px;color:var(--tinta-suave)}
+.asesor-fila__dato{text-align:center}
+.asesor-fila__dato strong{font-family:var(--f-display);font-size:19px;color:var(--verde-800);display:block;transition:.3s}
+.asesor-fila__dato span{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--tinta-suave)}
+.asesor-fila--saliente{opacity:.45;filter:grayscale(.9);border-style:dashed}
+.asesor-fila--saliente .asesor-fila__nombre strong{text-decoration:line-through}
+.asesor-fila--receptor{border-color:var(--verde-500);box-shadow:0 0 0 3px rgba(46,125,79,.15)}
+.asesor-fila--receptor .asesor-fila__dato strong{color:var(--verde-500)}
+.zona-simulacro{
+  display:flex;gap:20px;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  border:2px dashed rgba(199,127,27,.55);border-radius:12px;padding:18px 20px;
+  background:rgba(232,161,61,.07);
+}
+.zona-simulacro h3{font-size:15.5px;color:var(--verde-900);margin-bottom:5px}
+.zona-simulacro p{font-size:13px;color:var(--tinta-suave);line-height:1.5;max-width:560px}
+.zona-simulacro .boton-primario{width:auto;flex:none}
+
+/* modal */
+.modal{position:fixed;inset:0;z-index:90;display:grid;place-items:center;padding:20px}
+.modal__fondo{position:absolute;inset:0;background:rgba(15,36,26,.55);backdrop-filter:blur(2px)}
+.modal__caja{
+  position:relative;background:var(--papel);border-radius:16px;padding:26px 26px 20px;
+  max-width:430px;width:100%;box-shadow:var(--sombra-flotante);text-align:center;
+  animation:aparecer .3s cubic-bezier(.2,1.4,.4,1) both;
+  border-top:6px solid var(--ambar);
+}
+.modal__caja h3{font-family:var(--f-display);font-size:21px;letter-spacing:.04em;color:var(--verde-900);margin-bottom:8px;text-transform:uppercase}
+.modal__caja>p{font-size:13.5px;color:var(--tinta-suave);line-height:1.55;margin-bottom:16px}
+.modal__opciones{display:flex;flex-direction:column;gap:9px;margin-bottom:14px}
+.opcion-destino{
+  display:flex;align-items:center;gap:11px;padding:11px 14px;border:1.5px solid var(--linea);
+  border-radius:11px;font-weight:700;font-size:14.5px;background:var(--papel-hueso);transition:.15s;text-align:left;
+}
+.opcion-destino small{margin-left:auto;font-weight:500;font-size:12px;color:var(--tinta-suave)}
+.opcion-destino:hover{border-color:var(--verde-500);transform:translateY(-1px);box-shadow:var(--sombra-tarjeta)}
+
+/* avisos flotantes */
+#avisos{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:99;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:min(94vw,560px)}
+.aviso{
+  background:var(--verde-900);color:var(--papel);padding:12px 18px;border-radius:12px;
+  font-size:13.5px;font-weight:600;box-shadow:var(--sombra-flotante);
+  display:flex;gap:9px;align-items:center;animation:avisoEntra .35s cubic-bezier(.2,1.3,.4,1) both;
+  border-left:4px solid var(--verde-500);text-align:left;line-height:1.4;
+}
+.aviso--ambar{border-left-color:var(--ambar)}
+.aviso--teja{border-left-color:var(--teja)}
+.aviso--saliendo{animation:avisoSale .3s ease both}
+@keyframes avisoEntra{from{opacity:0;transform:translateY(16px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes avisoSale{to{opacity:0;transform:translateY(10px)}}
+
+/* ─────────────── responsive ─────────────── */
+@media (max-width:1080px){
+  .fila-doble{grid-template-columns:1fr}
+  .bandeja{grid-template-columns:220px 1fr}
+  .bandeja__ficha{display:none}
+  .kanban{grid-template-columns:repeat(2,1fr)}
+  .mapa-zona{grid-template-columns:1fr}
+}
+@media (max-width:760px){
+  .barra-marca{padding:8px 12px;gap:10px}
+  .marca__texto{display:none}
+  .chip-demo{display:none}
+  .cambio-rol__btn{padding:7px 11px;font-size:12.5px}
+  .cambio-rol__btn span{display:none}
+  .portada{padding:40px 18px 60px}
+  /* teléfono a pantalla completa */
+  .telefono{padding:0}
+  .telefono__marco{width:100%;border-radius:0;padding:0;box-shadow:none;background:transparent}
+  .telefono__pantalla{border-radius:0;height:calc(100dvh - 58px)}
+  .telefono__muesca{display:none}
+  .telefono__pie{display:none}
+  /* escritorio apilado */
+  .escritorio{grid-template-columns:1fr;margin:12px auto 30px;padding:0 10px;min-height:0}
+  .lateral{flex-direction:row;align-items:center;border-radius:12px 12px 0 0;padding:10px;overflow-x:auto}
+  .lateral__nav{flex-direction:row;gap:4px}
+  .lateral__btn{padding:9px 11px;font-size:12.5px;white-space:nowrap}
+  .lateral__btn span{display:none}
+  .lateral__resguardo{display:none}
+  .panel-zona{border-radius:0 0 12px 12px;border-left:1.5px solid var(--linea);padding:18px 14px}
+  .panel__titulo h2{font-size:24px}
+  .bandeja{grid-template-columns:1fr;min-height:0}
+  .bandeja__lista{max-height:220px;border-right:0;border-bottom:1.5px solid var(--linea)}
+  .kanban{grid-template-columns:1fr 1fr;gap:8px}
+  .asesor-fila{grid-template-columns:40px 1fr 1fr 1fr;gap:8px}
+  .asesor-fila__dato:nth-of-type(4),.asesor-fila__dato:nth-of-type(5){display:none}
+}
+
+/* ═══════════════ MEJORAS v2 ═══════════════ */
+
+/* login corporativo */
+.login{
+  position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;justify-content:center;
+  padding:34px 30px;text-align:center;color:var(--papel);
+  background:linear-gradient(168deg,var(--verde-900) 20%,var(--verde-700));
+  transition:opacity .45s ease,visibility .45s;
+}
+.login--fuera{opacity:0;visibility:hidden}
+.login__sello{
+  width:74px;height:74px;margin:0 auto 14px;display:grid;place-items:center;
+  font-family:var(--f-display);font-size:44px;font-weight:800;color:var(--papel);
+  background:var(--verde-800);border-radius:18px;transform:rotate(-5deg);
+  box-shadow:inset 0 0 0 3px rgba(232,161,61,.7),inset 0 0 0 7px var(--verde-800),inset 0 0 0 8px rgba(232,161,61,.35);
+}
+.login__marca{font-family:var(--f-display);font-size:34px;letter-spacing:.12em;margin-bottom:2px}
+.login__sub{font-size:12px;color:var(--verde-300);margin-bottom:24px}
+.login__campo{display:block;text-align:left;margin-bottom:11px}
+.login__campo span{display:block;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--verde-300);font-weight:700;margin-bottom:5px}
+.login__campo input{
+  width:100%;padding:11px 13px;border-radius:10px;font:inherit;font-size:14px;
+  border:1.5px solid rgba(251,248,239,.25);background:rgba(15,36,26,.45);color:var(--papel);
+}
+.login__recordar{display:flex;gap:8px;align-items:center;font-size:12.5px;color:#C8D6C3;margin:2px 0 16px}
+.login__recordar input{accent-color:var(--ambar)}
+.login .boton-primario{background:var(--ambar);color:var(--verde-950);box-shadow:0 4px 0 var(--ambar-osc)}
+.login .boton-primario:active{box-shadow:0 1px 0 var(--ambar-osc)}
+.login__pie{margin-top:20px;font-size:11px;color:var(--verde-300);line-height:1.55}
+
+/* buscador y lista de clientes */
+.buscador{
+  display:flex;align-items:center;gap:8px;background:var(--papel);
+  border:1.5px solid var(--linea);border-radius:999px;padding:9px 15px;margin-bottom:12px;
+}
+.buscador:focus-within{border-color:var(--verde-500);box-shadow:0 0 0 2.5px rgba(46,125,79,.15)}
+.buscador input{border:0;outline:0;flex:1;font:inherit;font-size:13.5px;background:transparent;color:var(--tinta)}
+.lista-clientes{list-style:none;display:flex;flex-direction:column;gap:8px}
+.cliente-item{
+  display:flex;gap:11px;align-items:center;background:var(--papel);
+  border:1.5px solid var(--linea);border-radius:12px;padding:11px 12px;cursor:pointer;transition:.15s;
+}
+.cliente-item:hover{border-color:var(--verde-300);transform:translateY(-1px);box-shadow:var(--sombra-tarjeta)}
+.cliente-item__info{flex:1;min-width:0}
+.cliente-item__info strong{display:block;font-size:13.5px;line-height:1.2}
+.cliente-item__info small{display:block;font-size:11.5px;color:var(--tinta-suave);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.cliente-item__chips{display:flex;flex-direction:column;gap:4px;align-items:flex-end;flex:none}
+.lista-clientes__pie{font-size:11.5px;color:var(--tinta-suave);text-align:center;margin-top:14px}
+
+/* toma de pedido */
+.pedido__titulo{font-family:var(--f-display);font-size:21px;letter-spacing:.03em;color:var(--verde-900);text-transform:uppercase}
+.pedido__sub{font-size:12px;color:var(--tinta-suave);margin:3px 0 13px}
+.catalogo{list-style:none;display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.prod{
+  display:flex;align-items:center;gap:10px;background:var(--papel);
+  border:1.5px solid var(--linea);border-radius:11px;padding:10px 12px;transition:.15s;
+}
+.prod--con{border-color:var(--verde-500);background:rgba(46,125,79,.07)}
+.prod__info{flex:1;min-width:0}
+.prod__info strong{display:block;font-size:13.5px;line-height:1.2}
+.prod__info small{font-family:var(--f-mono);font-size:11px;color:var(--tinta-suave)}
+.prod__paso{display:flex;align-items:center;border:1.5px solid var(--linea);border-radius:999px;overflow:hidden;background:var(--papel-hueso);flex:none}
+.prod__paso button{width:34px;height:34px;font-size:18px;font-weight:700;color:var(--verde-700);display:grid;place-items:center}
+.prod__paso button:active{background:var(--verde-100)}
+.prod__paso b{min-width:28px;text-align:center;font-family:var(--f-mono);font-size:13.5px;font-variant-numeric:tabular-nums}
+.pedido__total{
+  display:flex;justify-content:space-between;align-items:center;padding:12px 15px;margin-bottom:12px;
+  border:2px dashed var(--ambar);border-radius:11px;background:rgba(232,161,61,.1);
+}
+.pedido__total span{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--tinta-suave)}
+.pedido__total strong{font-family:var(--f-display);font-size:23px;color:var(--verde-900);font-variant-numeric:tabular-nums}
+.boton-pedido{width:100%;margin-bottom:12px}
+.chip-pedido{margin:-4px 0 12px;padding:9px 13px;border-radius:10px;background:rgba(46,125,79,.12);color:var(--verde-700);font-size:12.5px;font-weight:700;text-align:left}
+
+/* perfil / mi día */
+.perfil__cabecera{display:flex;gap:12px;align-items:center;margin-bottom:14px}
+.perfil__cabecera h3{font-family:var(--f-display);font-size:21px;letter-spacing:.03em;color:var(--verde-900);line-height:1.05}
+.perfil__cabecera small{color:var(--tinta-suave);font-size:12px}
+.avatar--grande{width:54px;height:54px;font-size:20px;border-radius:16px}
+.racha{margin:2px 0 14px;padding:11px 13px;border-radius:11px;background:rgba(232,161,61,.12);border:1px dashed rgba(199,127,27,.5);font-size:13px}
+.ranking{background:var(--papel);border:1.5px solid var(--linea);border-radius:12px;padding:14px;margin-bottom:14px}
+.ranking h4{font-size:13px;margin-bottom:11px;color:var(--verde-900)}
+.ranking__fila{display:grid;grid-template-columns:118px 1fr 30px;gap:9px;align-items:center;margin-bottom:8px;font-size:12.5px}
+.ranking__fila:last-child{margin-bottom:0}
+.ranking__nombre em{font-style:normal;color:var(--ambar-osc);font-size:10.5px;font-weight:700}
+.ranking__barra{height:10px;border-radius:999px;background:var(--verde-100);position:relative;overflow:hidden;display:block}
+.ranking__barra::after{content:"";position:absolute;inset:0;width:var(--p,0%);background:var(--verde-500);border-radius:999px}
+.ranking__fila--yo .ranking__barra::after{background:var(--ambar)}
+.ranking__fila b{font-family:var(--f-mono);font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+.perfil__pie{
+  font-size:12.5px;color:var(--tinta-suave);line-height:1.55;border-left:3px solid var(--verde-500);
+  padding:7px 12px;background:rgba(46,125,79,.07);border-radius:0 8px 8px 0;
+}
+
+/* agenda: cobro pendiente + nombre del cliente en visita */
+.visita__info .visita__extra{color:var(--teja-osc);font-weight:700}
+.visita__estado{flex:none;display:flex;align-items:center}
+.visita-activa__cliente{font-size:13px;font-weight:700;color:var(--verde-900);margin-top:2px}
+
+/* gráfica de ventas de la semana */
+.col-apilada{display:flex;flex-direction:column;gap:14px;min-width:0}
+.grafica__unidad{font-weight:500;font-size:11px;color:var(--tinta-suave);margin-left:6px}
+.grafica{padding-bottom:22px}
+.grafica__barras{display:flex;align-items:flex-end;gap:14px;height:118px;padding:8px 4px 0;border-bottom:1.5px solid var(--linea)}
+.gbar{flex:1;position:relative;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;cursor:default}
+.gbar i{width:100%;max-width:44px;height:calc(var(--v)/4.6*82px);background:var(--verde-500);border-radius:4px 4px 0 0;transition:filter .15s}
+.gbar--hoy i{background:var(--ambar)}
+.gbar b{font-family:var(--f-mono);font-size:11px;color:var(--tinta);margin-bottom:4px;font-variant-numeric:tabular-nums}
+.gbar span{position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);font-size:10.5px;color:var(--tinta-suave);white-space:nowrap;letter-spacing:.03em}
+.gbar:hover i{filter:brightness(1.12)}
+.gbar:hover::after{
+  content:attr(data-tip);position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);
+  background:var(--verde-900);color:var(--papel);font-family:var(--f-mono);font-size:10.5px;
+  padding:4px 9px;border-radius:6px;white-space:nowrap;z-index:5;
+}
+
+/* guión flotante para quien presenta */
+.guia-boton{
+  position:fixed;right:18px;bottom:18px;z-index:80;width:46px;height:46px;border-radius:50%;
+  background:var(--verde-900);color:var(--papel);font-size:19px;display:grid;place-items:center;
+  box-shadow:var(--sombra-flotante);border:2px solid rgba(232,161,61,.65);transition:.15s;
+}
+.guia-boton:hover{transform:translateY(-2px)}
+.guia{
+  position:fixed;right:18px;bottom:76px;z-index:80;width:330px;max-width:calc(100vw - 36px);
+  background:var(--papel);border:1.5px solid var(--linea);border-top:5px solid var(--ambar);
+  border-radius:14px;padding:16px 16px 13px;box-shadow:var(--sombra-flotante);animation:aparecer .25s ease both;
+}
+.guia h4{
+  font-family:var(--f-display);font-size:16px;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--verde-900);display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;
+}
+.guia__cerrar{font-size:19px;color:var(--tinta-suave);padding:0 4px;line-height:1}
+.guia ol{list-style:none;display:flex;flex-direction:column;gap:7px}
+.guia li{font-size:12px;line-height:1.45;color:var(--tinta-suave)}
+.guia label{display:flex;gap:8px;align-items:flex-start;cursor:pointer}
+.guia input{accent-color:var(--verde-500);margin-top:2px;flex:none}
+.guia b{color:var(--tinta)}
+.guia input:checked ~ b{color:var(--tinta-suave)}
+@media (max-width:760px){.guia-boton,.guia{display:none}}
+
+/* Carlos patrullando el Corredor Sur */
+.pin[data-asesor="carlos"]{animation:patrulla 46s ease-in-out infinite}
+@keyframes patrulla{
+  0%,100%{transform:translate(410px,420px)}
+  50%{transform:translate(575px,432px)}
+}
+
+/* simulacro: botones apilados */
+.zona-simulacro__botones{display:flex;flex-direction:column;gap:9px;align-items:center;flex:none}
+
+/* ═══════════════ MEJORAS v3: analíticas, programación, llamadas, vista web ═══════════════ */
+
+/* conmutador campo/oficina del asesor */
+.conmutador{display:flex;justify-content:center;padding:20px 16px 0}
+.conmutador__btn{
+  padding:9px 18px;border:1.5px solid var(--linea);background:var(--papel);
+  font-weight:700;font-size:13.5px;color:var(--tinta-suave);transition:.15s;
+}
+.conmutador__btn:first-child{border-radius:999px 0 0 999px}
+.conmutador__btn:last-child{border-radius:0 999px 999px 0;border-left:0}
+.conmutador__btn--activo{background:var(--verde-900);color:var(--papel);border-color:var(--verde-900)}
+@media (max-width:760px){.conmutador{display:none}}
+
+/* vista web (oficina) del asesor: la misma app, en el navegador */
+body.asesor-web .telefono{padding-top:16px}
+body.asesor-web .telefono__marco{width:min(900px,96vw);background:transparent;box-shadow:none;padding:0;border-radius:16px}
+body.asesor-web .telefono__pantalla{
+  height:auto;min-height:660px;border-radius:16px;
+  border:1.5px solid var(--linea);box-shadow:var(--sombra-tarjeta);
+}
+body.asesor-web .telefono__estado,
+body.asesor-web .telefono__pie{display:none}
+body.asesor-web .app-movil__cabecera{order:-2}
+body.asesor-web .app-movil__tabs{
+  order:-1;border-top:0;border-bottom:1.5px solid var(--linea);
+  padding:8px 12px;background:var(--papel-hueso);
+}
+body.asesor-web .tab{flex-direction:row;gap:8px;font-size:15px;padding:9px 0;border-radius:8px}
+body.asesor-web .tab span{font-size:12.5px}
+body.asesor-web .pantalla-m{padding:22px 26px 30px}
+body.asesor-web .chat{min-height:420px}
+
+/* tarea de llamada en la agenda */
+.visita--llamada{border-color:rgba(91,141,184,.55);background:linear-gradient(120deg,var(--papel) 65%,rgba(91,141,184,.12))}
+.visita--llamada::before{
+  content:"";position:absolute;left:-1.5px;top:12px;bottom:12px;width:4px;border-radius:4px;background:var(--azul-frio);
+}
+.visita--llamada .visita__pend{border-color:rgba(91,141,184,.5);color:#38618C}
+.visita--llamada{cursor:pointer}
+.visita--llamada:hover{transform:translateY(-2px);box-shadow:var(--sombra-flotante)}
+
+/* pantalla de llamada */
+.llamada{display:flex;flex-direction:column;align-items:center;gap:9px;text-align:center;padding:24px 0 8px}
+.llamada__estado{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--f-display);font-size:13px;letter-spacing:.14em;color:var(--verde-500);
+}
+.llamada__estado i{width:10px;height:10px;border-radius:50%;background:var(--verde-500);animation:latido 1.1s infinite;flex:none}
+.llamada--colgada .llamada__estado{color:var(--teja)}
+.llamada--colgada .llamada__estado i{background:var(--teja);animation:none}
+.llamada h3{font-family:var(--f-display);font-size:24px;letter-spacing:.03em;color:var(--verde-900);line-height:1.05}
+.llamada__sub{font-size:13px;color:var(--tinta-suave)}
+.cronometro--llamada{font-size:46px;margin:0}
+.boton-colgar{
+  width:64px;height:64px;border-radius:50%;background:var(--teja);color:#fff;
+  font-size:24px;display:grid;place-items:center;box-shadow:0 4px 0 var(--teja-osc),var(--sombra-tarjeta);
+  margin-top:8px;transition:.12s;
+}
+.boton-colgar span{display:inline-block;transform:rotate(135deg)}
+.boton-colgar:active{transform:translateY(3px);box-shadow:0 1px 0 var(--teja-osc)}
+.llamada--colgada .boton-colgar{display:none}
+.registro-llamada{
+  margin-top:12px;text-align:left;background:var(--papel);
+  border:1.5px solid var(--linea);border-radius:12px;padding:15px 15px 13px;
+  animation:aparecer .3s ease both;
+}
+.registro-llamada h4{font-size:13.5px;color:var(--verde-900);margin-bottom:11px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+/* analíticas */
+.fila-graficas{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-bottom:14px}
+.barras-h{display:flex;flex-direction:column;gap:11px;padding:6px 0 2px}
+.bh{display:grid;grid-template-columns:88px 1fr 44px;gap:10px;align-items:center;font-size:12.5px}
+.bh i{height:12px;border-radius:999px;background:var(--verde-100);position:relative;overflow:hidden;display:block}
+.bh i::after{content:"";position:absolute;inset:0;width:var(--p,0%);background:var(--verde-500);border-radius:999px}
+.bh b{font-family:var(--f-mono);font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+.grafica-nota{font-size:11.5px;color:var(--tinta-suave);margin-top:10px;line-height:1.5;border-top:1.5px dashed var(--linea);padding-top:9px}
+.radar{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.radar-lista{list-style:none;display:flex;flex-direction:column;gap:9px}
+.radar-lista li{
+  display:flex;align-items:center;gap:10px;background:var(--papel);
+  border:1px solid var(--linea);border-radius:10px;padding:10px 12px;font-size:13px;flex-wrap:wrap;
+}
+.radar__pos{font-family:var(--f-display);font-size:17px;font-weight:800;color:var(--tinta-suave);width:20px;text-align:center;flex:none}
+.tarjeta-panel--alerta .radar__pos{color:var(--teja)}
+.radar__info{flex:1;min-width:150px}
+.radar__info strong{display:block;font-size:13px;line-height:1.2}
+.radar__info small{display:block;font-size:11.5px;color:var(--tinta-suave);margin-top:2px}
+.radar__monto{font-family:var(--f-mono);font-size:12.5px;font-weight:700;color:var(--verde-700);white-space:nowrap}
+.tendencia{font-size:11px;font-weight:800;padding:3px 8px;border-radius:999px;white-space:nowrap}
+.tendencia--sube{background:rgba(46,125,79,.13);color:var(--verde-700)}
+.tendencia--baja{background:rgba(196,85,45,.13);color:var(--teja-osc)}
+.tarjeta-panel--alerta{border-style:dashed;border-color:rgba(196,85,45,.5)}
+.boton-radar{padding:7px 11px;font-size:12px;white-space:nowrap}
+
+/* programación */
+.programar{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;align-items:end;
+  background:var(--papel-hueso);border:1.5px solid var(--linea);border-radius:12px;padding:17px;
+}
+.programar label{
+  display:flex;flex-direction:column;gap:6px;
+  font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--tinta-suave);
+}
+.programar select,.programar input{
+  font:inherit;font-size:13.5px;padding:10px 11px;border:1.5px solid var(--linea);
+  border-radius:9px;background:var(--papel);color:var(--tinta);width:100%;
+}
+.programar select:focus,.programar input:focus{outline:2.5px solid var(--verde-500);outline-offset:-1px}
+.programar__nota{grid-column:1/-1}
+.programar .boton-primario{grid-column:1/-1;width:auto;justify-self:start;padding:12px 24px;font-size:14.5px}
+.crono-titulo{font-size:14.5px;color:var(--verde-900);margin:20px 0 10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.crono{list-style:none;display:flex;flex-direction:column;gap:9px}
+.crono li{
+  display:flex;gap:11px;align-items:center;flex-wrap:wrap;
+  background:var(--papel-hueso);border:1.5px solid var(--linea);border-radius:11px;padding:11px 14px;font-size:13px;
+}
+.crono li.nuevo{border-color:var(--ambar);background:rgba(232,161,61,.09)}
+.crono__icono{font-size:16px;flex:none}
+.crono__hora{font-family:var(--f-mono);font-size:11.5px;color:var(--tinta-suave);white-space:nowrap;flex:none}
+.crono__info{flex:1;min-width:200px}
+.crono__info strong{display:block;font-size:13px;line-height:1.25}
+.crono__info small{display:block;font-size:11.5px;color:var(--tinta-suave);margin-top:2px;line-height:1.45}
+.crono__resumen{font-style:italic}
+
+@media (max-width:1080px){.radar{grid-template-columns:1fr}}
+
+/* ═══════════════ MEJORAS v4: portada pro con proceso animado ═══════════════ */
+
+.portada__sub{
+  max-width:640px;margin:16px auto 0;font-size:15px;line-height:1.6;color:var(--tinta-suave);
+  animation:aparecer .5s .26s ease both;
+}
+.portada__sub strong{color:var(--verde-900)}
+.portada__cta{
+  display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:22px;
+  animation:aparecer .5s .34s ease both;
+}
+.portada__cta .boton-primario{display:inline-block;width:auto;padding:13px 26px;font-size:15px}
+.portada__cta .boton-fantasma{padding:13px 22px;font-size:14.5px;font-weight:700}
+
+.seccion-titulo{
+  font-family:var(--f-display);font-size:clamp(24px,4vw,32px);letter-spacing:.05em;text-transform:uppercase;
+  color:var(--verde-900);text-align:center;text-wrap:balance;
+}
+.seccion-titulo::after{
+  content:"";display:block;width:74px;height:5px;margin:10px auto 0;border-radius:3px;
+  background:repeating-linear-gradient(-45deg,var(--ambar) 0 8px,transparent 8px 16px);
+}
+.seccion-sub{text-align:center;font-size:14px;color:var(--tinta-suave);margin:12px 0 26px;line-height:1.55}
+.proceso__vivo{
+  display:inline-flex;align-items:center;gap:6px;margin-left:8px;
+  font-family:var(--f-mono);font-size:11px;color:var(--teja);white-space:nowrap;
+}
+.proceso__vivo i{width:8px;height:8px;border-radius:50%;background:var(--teja);animation:latido 1.2s infinite}
+
+/* etapas del proceso */
+.proceso{margin:64px 0 12px}
+.proceso__etapas{
+  list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;
+  counter-reset:etapa;text-align:left;
+}
+.etapa{
+  background:var(--papel);border:1.5px solid var(--linea);border-radius:14px;padding:14px 15px 16px;
+  opacity:.62;transition:.4s;position:relative;
+}
+.etapa--activa{
+  opacity:1;border-color:var(--ambar);transform:translateY(-4px);
+  box-shadow:var(--sombra-flotante);
+}
+.etapa h3{
+  display:flex;align-items:center;gap:8px;font-size:14.5px;color:var(--verde-900);margin:12px 0 6px;
+}
+.etapa h3 span{
+  width:24px;height:24px;flex:none;display:grid;place-items:center;border-radius:50%;
+  font-family:var(--f-display);font-size:13px;color:var(--papel);background:var(--verde-500);
+  transform:rotate(-6deg);transition:.3s;
+}
+.etapa--activa h3 span{background:var(--ambar);color:var(--verde-950);transform:rotate(0) scale(1.12)}
+.etapa p{font-size:12.5px;line-height:1.5;color:var(--tinta-suave)}
+.etapa__escena{
+  min-height:96px;background:var(--papel-hueso);border:1px dashed var(--linea);border-radius:10px;
+  padding:10px 11px;display:flex;flex-direction:column;gap:7px;justify-content:center;position:relative;overflow:hidden;
+}
+.etapa__escena>*{opacity:.45;transition:opacity .35s}
+.etapa--activa .etapa__escena>*{opacity:1}
+
+@keyframes brotar{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes desvanecer{to{opacity:0;visibility:hidden}}
+@keyframes calentar{
+  0%{background:var(--papel);color:var(--tinta-suave)}
+  60%{transform:scale(1.16)}
+  100%{background:rgba(196,85,45,.16);color:var(--teja-osc);transform:scale(1)}
+}
+
+/* escenas en miniatura */
+.mini-burbuja{
+  font-size:11.5px;line-height:1.45;padding:7px 10px;border-radius:11px;max-width:96%;
+  box-shadow:var(--sombra-tarjeta);
+}
+.mini-burbuja--cliente{align-self:flex-start;background:var(--papel);border:1px solid var(--linea);border-bottom-left-radius:3px}
+.mini-burbuja--ia{align-self:flex-end;background:#E4EBF4;border:1px solid #C9D7E8;border-bottom-right-radius:3px}
+.etapa--activa .mini-burbuja--cliente{animation:brotar .35s .15s both}
+.mini-canal{font-size:10.5px;color:var(--tinta-suave);display:flex;gap:6px;align-items:center}
+.etapa--activa .mini-canal{animation:brotar .3s .85s both}
+.mini-escribiendo{align-self:flex-end;display:flex;gap:4px;padding:8px 11px;background:#E4EBF4;border-radius:11px;border-bottom-right-radius:3px}
+.mini-escribiendo i{width:6px;height:6px;border-radius:50%;background:#38618C;animation:latido 1s infinite}
+.mini-escribiendo i:nth-child(2){animation-delay:.15s}
+.mini-escribiendo i:nth-child(3){animation-delay:.3s}
+.etapa--activa .mini-escribiendo{animation:brotar .25s .15s both,desvanecer .25s 1.05s forwards}
+.etapa--activa .mini-burbuja--ia{animation:brotar .35s 1.15s both}
+.etapa__badge{
+  position:absolute;top:7px;right:8px;font-family:var(--f-mono);font-size:9.5px;font-weight:700;
+  background:rgba(232,161,61,.2);color:var(--ambar-osc);padding:3px 7px;border-radius:999px;
+}
+.etapa--activa .etapa__badge{animation:brotar .3s 1.75s both}
+.mini-termo{display:flex;gap:5px}
+.mini-termo b{
+  flex:1;text-align:center;font-size:10.5px;font-weight:700;padding:6px 4px;border-radius:8px;
+  border:1.5px solid var(--linea);color:var(--tinta-suave);background:var(--papel);
+}
+.etapa--activa .mini-termo{animation:brotar .3s .15s both}
+.etapa--activa .mini-termo__cal{animation:calentar .55s 1s both}
+.mini-asignacion{display:flex;gap:8px;align-items:center;font-size:11.5px;font-weight:600}
+.mini-asignacion .avatar{width:26px;height:26px;font-size:11px;border-radius:8px}
+.etapa--activa .mini-asignacion{animation:brotar .35s 1.35s both}
+.mini-agenda{display:flex;flex-direction:column;gap:6px}
+.mini-agenda__fila{
+  font-size:11.5px;font-weight:600;background:var(--papel);border:1px solid var(--linea);
+  border-radius:8px;padding:7px 10px;
+}
+.mini-agenda__fila--rec{border-color:rgba(199,127,27,.5);background:rgba(232,161,61,.1);color:var(--ambar-osc)}
+.etapa--activa .mini-agenda__fila:first-child{animation:brotar .3s .2s both}
+.etapa--activa .mini-agenda__fila--rec{animation:brotar .3s .95s both}
+.mini-visita{font-family:var(--f-mono);font-size:11px;color:var(--verde-700);font-weight:600}
+.etapa--activa .mini-visita{animation:brotar .3s .15s both}
+.sello--proceso{align-self:center;font-size:13px}
+.etapa--activa .sello--proceso{animation:estampar .4s .95s both}
+.mini-kpi small{display:block;font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--tinta-suave);font-weight:700}
+.mini-kpi strong{font-family:var(--f-display);font-size:24px;color:var(--verde-700);font-variant-numeric:tabular-nums}
+.etapa--activa .mini-kpi{animation:brotar .3s .15s both}
+.mini-aviso{
+  font-size:11px;font-weight:700;background:rgba(46,125,79,.1);border:1px solid rgba(46,125,79,.3);
+  color:var(--verde-700);border-radius:8px;padding:7px 10px;
+}
+.etapa--activa .mini-aviso{animation:brotar .35s 1.35s both}
+
+/* capacidades */
+.capacidades{margin:64px 0 8px}
+.capacidades__grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;text-align:left}
+.capacidad{
+  background:var(--papel);border:1.5px solid var(--linea);border-radius:13px;padding:18px 18px 16px;
+  position:relative;overflow:hidden;transition:.2s;
+}
+.capacidad::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:4px;opacity:0;transition:.2s;
+  background:repeating-linear-gradient(-45deg,var(--verde-500) 0 10px,var(--verde-100) 10px 20px);
+}
+.capacidad:hover{transform:translateY(-4px);box-shadow:var(--sombra-flotante);border-color:var(--verde-300)}
+.capacidad:hover::before{opacity:1}
+.capacidad span{font-size:26px;display:block;margin-bottom:9px}
+.capacidad strong{display:block;font-size:15px;color:var(--verde-900);margin-bottom:6px}
+.capacidad p{font-size:12.5px;line-height:1.55;color:var(--tinta-suave)}
+
+/* revelado al hacer scroll */
+.revelar{opacity:0;transform:translateY(26px);transition:opacity .6s ease,transform .6s ease}
+.revelar--visible{opacity:1;transform:none}
+
+.portada .portada__roles{margin:30px 0 10px}
+
+/* accesibilidad: respetar reducción de movimiento */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  .revelar{opacity:1;transform:none}
+  .etapa__escena>*{opacity:1}
+}
+
+</style>
+</head>
+<body>
+
+<!-- ============ BARRA SUPERIOR / CAMBIO DE ROL ============ -->
+<header class="barra-marca" id="barra-marca">
+  <button class="marca" data-ir="inicio" title="Volver a la portada">
+    <span class="marca__sello">R</span>
+    <span class="marca__texto">RUTERO<small>plataforma comercial de campo</small></span>
+  </button>
+  <nav class="cambio-rol" aria-label="Cambiar de rol">
+    <button class="cambio-rol__btn" data-rol="asesor">📱 Asesor <span>en campo</span></button>
+    <button class="cambio-rol__btn" data-rol="coordinador">🗂️ Coordinador <span>en oficina</span></button>
+  </nav>
+  <span class="chip-demo">DEMO · marca blanca</span>
+</header>
+
+<main id="escenario">
+
+<!-- ════════════════════════ PORTADA ════════════════════════ -->
+<section class="vista vista--activa" id="vista-inicio">
+  <div class="portada">
+    <div class="portada__cabecera">
+      <div class="portada__sello" aria-hidden="true">R</div>
+      <h1>RUTERO</h1>
+      <p class="portada__lema">La ruta comercial de su empresa, <em>bajo control y a prueba de rotación.</em></p>
+      <p class="portada__sub">Chats con IA, agenda de campo, cronogramas, llamadas registradas y analíticas —
+      <strong>un solo sistema que atiende al cliente, gestiona al equipo y le avisa los resultados.</strong></p>
+      <div class="portada__cta">
+        <button class="boton-primario boton-primario--ambar" data-rol="asesor">▶ Ver la app del asesor</button>
+        <button class="boton-fantasma" data-rol="coordinador">Abrir la consola central →</button>
+      </div>
+    </div>
+
+    <!-- ── el sistema trabajando: secuencia animada ── -->
+    <section class="proceso revelar" aria-label="Así trabaja el sistema, paso a paso">
+      <h2 class="seccion-titulo">Así trabaja — solo, las 24 horas</h2>
+      <p class="seccion-sub">Del primer mensaje del cliente al resultado en su panel, sin que nadie persiga a nadie. <span class="proceso__vivo"><i></i> secuencia en vivo</span></p>
+      <ol class="proceso__etapas" id="proceso-etapas">
+        <li class="etapa">
+          <div class="etapa__escena">
+            <div class="mini-burbuja mini-burbuja--cliente">¿Tienen alimento para cerdo de engorde? 🐷</div>
+            <div class="mini-canal"><span class="canal canal--wa">WA</span> entra a la plataforma, no a un celular personal</div>
+          </div>
+          <h3><span>1</span> El cliente escribe</h3>
+          <p>WhatsApp o Messenger, a cualquier hora — también los que llaman quedan registrados.</p>
+        </li>
+        <li class="etapa">
+          <div class="etapa__escena">
+            <div class="mini-escribiendo"><i></i><i></i><i></i></div>
+            <div class="mini-burbuja mini-burbuja--ia">Cerdo Engorde 40 kg — <strong>B/. 20.80</strong> · entrega gratis desde 30 sacos 🚚</div>
+            <span class="etapa__badge">respondió en 9 s</span>
+          </div>
+          <h3><span>2</span> La IA atiende</h3>
+          <p>Entrenada con su catálogo: precios, presentaciones, disponibilidad y tono de su empresa.</p>
+        </li>
+        <li class="etapa">
+          <div class="etapa__escena">
+            <div class="mini-termo"><b>Frío</b><b>Templado</b><b class="mini-termo__cal">🔥 Caliente</b></div>
+            <div class="mini-asignacion"><span class="avatar avatar--ca">CA</span> asignado a Carlos Á. · zona Oeste</div>
+          </div>
+          <h3><span>3</span> Califica y asigna</h3>
+          <p>Mide el interés y el volumen, y enruta la conversación al asesor dueño de la zona.</p>
+        </li>
+        <li class="etapa">
+          <div class="etapa__escena">
+            <div class="mini-agenda">
+              <span class="mini-agenda__fila">🗓 Visita programada · lunes 9:00 a.m.</span>
+              <span class="mini-agenda__fila mini-agenda__fila--rec">⏰ Recordatorio al asesor · 8:00 a.m.</span>
+            </div>
+          </div>
+          <h3><span>4</span> Programa y recuerda</h3>
+          <p>Cronogramas de visitas, llamadas y seguimientos: la IA propone, el administrador aprueba.</p>
+        </li>
+        <li class="etapa">
+          <div class="etapa__escena">
+            <div class="mini-visita">📍 GPS ✓ &nbsp; 📷 foto ✓ &nbsp; ⏱ 38 min</div>
+            <div class="sello sello--mini sello--proceso">VERIFICADA</div>
+          </div>
+          <h3><span>5</span> Visita con evidencia</h3>
+          <p>Check-in por GPS, foto del sitio, bitácora y pedido — funciona hasta sin señal.</p>
+        </li>
+        <li class="etapa">
+          <div class="etapa__escena">
+            <div class="mini-kpi"><small>venta cerrada</small><strong id="contador-proceso">B/. 0</strong></div>
+            <div class="mini-aviso">🔔 Aviso al administrador: pedido nuevo registrado ✓</div>
+          </div>
+          <h3><span>6</span> Gestiona y avisa</h3>
+          <p>Resultados al panel al instante: ventas, visitas, top de clientes y bajones detectados solos.</p>
+        </li>
+      </ol>
+    </section>
+
+    <!-- ── capacidades del sistema ── -->
+    <section class="capacidades revelar">
+      <h2 class="seccion-titulo">Todo el ciclo comercial, en una sola plataforma</h2>
+      <div class="capacidades__grid">
+        <article class="capacidad"><span>💬</span><strong>Chat corporativo con clientes</strong><p>WhatsApp y Messenger de toda la fuerza de ventas en una consola. El historial es de la empresa, de por vida.</p></article>
+        <article class="capacidad"><span>🤖</span><strong>IA de atención al cliente</strong><p>Responde 24/7 con su catálogo, califica prospectos, agenda visitas y transfiere al asesor con el resumen listo.</p></article>
+        <article class="capacidad"><span>🗓</span><strong>Cronogramas y recordatorios</strong><p>Visitas, llamadas y seguimientos programados por el administrador (o propuestos por la IA), con avisos a cada asesor.</p></article>
+        <article class="capacidad"><span>📇</span><strong>Contactos y cartera protegidos</strong><p>Clientes, direcciones, bitácoras y negociaciones a prueba de rotación: si alguien se va, se reasigna en un clic.</p></article>
+        <article class="capacidad"><span>📞</span><strong>Llamadas con registro</strong><p>Desde el número corporativo, con cronómetro, resumen y clasificación que quedan en el historial del cliente.</p></article>
+        <article class="capacidad"><span>📊</span><strong>Resultados y alertas solas</strong><p>Ventas, visitas verificadas, cliente que más compra y el que dejó de comprar — el sistema avisa antes de que duela.</p></article>
+      </div>
+    </section>
+
+    <!-- ── entrar a la demo ── -->
+    <section class="revelar">
+      <h2 class="seccion-titulo">Pruébelo ahora — dos vistas, una plataforma</h2>
+      <div class="portada__roles">
+        <article class="tarjeta-rol" data-rol="asesor" tabindex="0">
+          <span class="tarjeta-rol__icono">📱</span>
+          <h2>Asesor comercial</h2>
+          <p>La app que lo acompaña en la ruta (y en la oficina, versión web): agenda, check-in con GPS y foto, pedidos, llamadas y chat — <strong>aun sin señal</strong>.</p>
+          <span class="tarjeta-rol__cta">Entrar como Luis Herrera →</span>
+        </article>
+        <article class="tarjeta-rol" data-rol="coordinador" tabindex="0">
+          <span class="tarjeta-rol__icono">🗂️</span>
+          <h2>Administrador comercial</h2>
+          <p>Todo el negocio en una consola: chats con IA, embudo, mapa en vivo, analíticas de ventas y programación del equipo.</p>
+          <span class="tarjeta-rol__cta">Abrir la consola central →</span>
+        </article>
+      </div>
+    </section>
+  </div>
+</section>
+
+<!-- ════════════════════════ APP MÓVIL — ASESOR ════════════════════════ -->
+<section class="vista" id="vista-asesor">
+<div class="conmutador" role="group" aria-label="Modo de la app del asesor">
+  <button class="conmutador__btn conmutador__btn--activo" data-modo="campo">📱 En campo (móvil)</button>
+  <button class="conmutador__btn" data-modo="oficina">🖥️ En oficina (web)</button>
+</div>
+<div class="telefono">
+  <div class="telefono__marco">
+    <div class="telefono__pantalla">
+
+      <!-- pantalla de acceso corporativo -->
+      <div class="login" id="pantalla-login">
+        <div class="login__sello" aria-hidden="true">R</div>
+        <h2 class="login__marca">RUTERO</h2>
+        <p class="login__sub">Acceso corporativo · fuerza de ventas</p>
+        <label class="login__campo"><span>Usuario</span>
+          <input type="text" value="luis.herrera@laempresa.com.pa" readonly>
+        </label>
+        <label class="login__campo"><span>Contraseña</span>
+          <input type="password" value="12345678" readonly>
+        </label>
+        <label class="login__recordar"><input type="checkbox" checked> Recordar en este equipo</label>
+        <button class="boton-primario" id="btn-login">Ingresar</button>
+        <p class="login__pie">🔒 Los chats, clientes y bitácoras pertenecen a la empresa.<br>Cuenta personal ≠ cuenta corporativa.</p>
+      </div>
+
+      <!-- barra de estado del teléfono -->
+      <div class="telefono__estado">
+        <span id="hora-telefono">11:38</span>
+        <span class="telefono__muesca" aria-hidden="true"></span>
+        <span class="telefono__senal">
+          <button id="interruptor-senal" class="senal senal--ok" title="Simular pérdida de señal (modo offline)">
+            <span class="senal__icono">▂▄▆█</span><span class="senal__texto">4G</span>
+          </button>
+          <span class="bateria" aria-hidden="true"><i></i></span>
+        </span>
+      </div>
+
+      <!-- cabecera de la app -->
+      <div class="app-movil__cabecera">
+        <div class="app-movil__saludo">
+          <span class="avatar avatar--lh">LH</span>
+          <div>
+            <strong>Luis Herrera</strong>
+            <small>Zona Panamá Este · <span id="fecha-hoy">sáb 26 jul</span></small>
+          </div>
+        </div>
+        <button class="chip-sync chip-sync--ok" id="chip-sync" title="Estado de sincronización">
+          <i></i><span id="chip-sync-texto">Sincronizado</span>
+        </button>
+      </div>
+
+      <div class="app-movil__cuerpo" id="cuerpo-movil">
+
+        <!-- ── pantalla: AGENDA ── -->
+        <div class="pantalla-m pantalla-m--activa" id="pm-agenda">
+          <div class="progreso-dia">
+            <div class="progreso-dia__texto"><strong>Ruta de hoy</strong><span id="progreso-texto">2 de 5 visitas</span></div>
+            <div class="progreso-dia__barra"><i id="progreso-barra" style="--p:40%"></i></div>
+          </div>
+
+          <ul class="lista-visitas">
+            <li class="visita visita--hecha" id="v-progreso" data-cliente="progreso" role="button" tabindex="0">
+              <span class="visita__hora">8:30</span>
+              <div class="visita__info">
+                <strong>Distribuidora Avícola El Progreso</strong>
+                <small>Juan Díaz · pedido 80 sacos ponedora</small>
+              </div>
+              <span class="visita__estado"><span class="sello sello--mini">VERIFICADA</span></span>
+            </li>
+            <li class="visita visita--hecha" id="v-chen" data-cliente="chen" role="button" tabindex="0">
+              <span class="visita__hora">10:00</span>
+              <div class="visita__info">
+                <strong>Comercial Chen N.º 2</strong>
+                <small>Río Abajo · cobro + reposición</small>
+              </div>
+              <span class="visita__estado"><span class="sello sello--mini">VERIFICADA</span></span>
+            </li>
+            <li class="visita visita--siguiente" id="v-robles" data-cliente="robles" role="button" tabindex="0">
+              <span class="visita__hora">11:30</span>
+              <div class="visita__info">
+                <strong>Granja Porcina Los Robles</strong>
+                <small>Pacora · negociar fórmula premium</small>
+              </div>
+              <span class="visita__estado"><span class="visita__cta">SIGUIENTE →</span></span>
+            </li>
+            <li class="visita visita--llamada" id="t-llamada-nube" role="button" tabindex="0">
+              <span class="visita__hora">12:30</span>
+              <div class="visita__info">
+                <strong>📞 Llamar a Avícola La Nube</strong>
+                <small>asignada por Coordinación · “Bajón de pedidos: preguntar si hubo problema con la última entrega.”</small>
+              </div>
+              <span class="visita__estado"><span class="visita__pend">llamada</span></span>
+            </li>
+            <li class="visita" id="v-sanisidro" data-cliente="sanisidro" role="button" tabindex="0">
+              <span class="visita__hora">14:00</span>
+              <div class="visita__info">
+                <strong>Agropecuaria San Isidro</strong>
+                <small>Tocumen · entrega de muestras</small>
+                <small class="visita__extra">💵 cobro pendiente B/. 890</small>
+              </div>
+              <span class="visita__estado"><span class="visita__pend">programada</span></span>
+            </li>
+            <li class="visita" id="v-fortuna" data-cliente="fortuna" role="button" tabindex="0">
+              <span class="visita__hora">16:00</span>
+              <div class="visita__info">
+                <strong>Minisúper La Fortuna</strong>
+                <small>24 de Diciembre · apertura de cliente</small>
+              </div>
+              <span class="visita__estado"><span class="visita__pend">programada</span></span>
+            </li>
+          </ul>
+
+          <p class="nota-offline">💡 Toca la señal <strong>4G</strong> arriba para simular que el asesor se queda sin cobertura: la app sigue funcionando y sincroniza al volver la señal.</p>
+        </div>
+
+        <!-- ── pantalla: FICHA DE CLIENTE ── -->
+        <div class="pantalla-m" id="pm-cliente">
+          <button class="volver" data-volver="agenda">← Agenda</button>
+          <div class="ficha">
+            <div class="ficha__cabecera">
+              <span class="avatar avatar--cliente" id="ficha-avatar">GR</span>
+              <div>
+                <h3 id="ficha-nombre">Granja Porcina Los Robles</h3>
+                <small id="ficha-sub">Cliente desde 2022 · Pacora, Panamá Este</small>
+              </div>
+            </div>
+            <div class="ficha__stats">
+              <div><strong id="ficha-promedio">B/. 2,840</strong><span>compra promedio</span></div>
+              <div><strong id="ficha-frecuencia">15 días</strong><span>frecuencia</span></div>
+              <div><strong id="ficha-credito">B/. 4,500</strong><span>crédito disponible</span></div>
+            </div>
+            <dl class="ficha__datos">
+              <div><dt>Contacto</dt><dd id="ficha-contacto">Sra. Vielka Robles · +507 6612-4408</dd></div>
+              <div><dt>Dirección</dt><dd id="ficha-direccion">Vía Pacora, km 4.5, entrada El Corotú</dd></div>
+              <div><dt>Última compra</dt><dd id="ficha-ultima">12 jul · 60 × Cerdo Engorde 40 kg</dd></div>
+            </dl>
+            <div class="ficha__historial">
+              <h4>Bitácora del equipo <span class="chip chip--verde">se conserva aunque cambie el asesor</span></h4>
+              <ul id="ficha-historial">
+                <li><small>12 jul · Luis H.</small> Interesada en fórmula premium; pidió comparativo de conversión alimenticia.</li>
+                <li><small>27 jun · Luis H.</small> Reclamo por saco roto resuelto con nota de crédito.</li>
+                <li><small>13 jun · <em>Carlos A. (asesor anterior)</em></small> Cliente valora entrega antes de las 9 a.m.</li>
+              </ul>
+            </div>
+            <button class="boton-primario" id="btn-iniciar-visita">▶ Iniciar visita</button>
+            <div class="ficha__acciones">
+              <button class="boton-fantasma" data-abrir="chat">💬 Chat</button>
+              <button class="boton-fantasma">📞 Llamar</button>
+              <button class="boton-fantasma" id="btn-pedido-ficha">🧾 Pedido</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── pantalla: VISITA EN CURSO ── -->
+        <div class="pantalla-m" id="pm-visita">
+          <div class="visita-activa">
+            <div class="grabando"><i></i> VISITA EN CURSO</div>
+            <p class="visita-activa__cliente" id="visita-cliente">Granja Porcina Los Robles · Pacora</p>
+            <div class="cronometro" id="cronometro">00:00</div>
+            <p class="nota-acelerada">⏩ tiempo acelerado ×20 para la demostración</p>
+            <div class="datos-gps">
+              <span class="chip chip--gps" id="gps-inicio">📍 9.07812° N, 79.28914° O</span>
+              <span class="chip" id="hora-inicio">Inicio 11:41 a.m.</span>
+            </div>
+            <label class="campo">
+              <span>Bitácora de la visita</span>
+              <textarea id="bitacora" rows="5" placeholder="¿Qué se habló? ¿Qué quedó pendiente?">Doña Vielka acepta probar la fórmula premium: 20 sacos de prueba con entrega el martes. Pide mantener precio del engorde regular hasta agosto.</textarea>
+            </label>
+            <div class="campo-etiqueta">Resultado de la gestión</div>
+            <div class="opciones-resultado" id="opciones-resultado">
+              <button class="opcion" data-res="pedido">🧾 Pedido tomado</button>
+              <button class="opcion opcion--activa" data-res="negociacion">🤝 En negociación</button>
+              <button class="opcion" data-res="cobro">💵 Cobro</button>
+              <button class="opcion" data-res="sinpedido">📋 Sin pedido</button>
+            </div>
+            <button class="boton-fantasma boton-pedido" id="btn-tomar-pedido">🧾 Tomar pedido con el catálogo</button>
+            <div class="chip-pedido" id="chip-pedido" hidden></div>
+            <button class="boton-primario boton-primario--rojo" id="btn-finalizar">⏹ Finalizar visita (exige foto)</button>
+          </div>
+        </div>
+
+        <!-- ── pantalla: RESUMEN / EVIDENCIA ── -->
+        <div class="pantalla-m" id="pm-resumen">
+          <div class="resumen-visita">
+            <div class="sello sello--grande" id="sello-verificada">VISITA VERIFICADA<small>GPS + FOTO + HORA</small></div>
+            <figure class="evidencia" id="evidencia-foto">
+              <!-- la foto capturada se inserta aquí -->
+            </figure>
+            <dl class="resumen-datos">
+              <div><dt>Duración</dt><dd id="res-duracion">—</dd></div>
+              <div><dt>Coordenada inicio</dt><dd class="mono" id="res-gps-ini">9.07812° N, 79.28914° O</dd></div>
+              <div><dt>Coordenada cierre</dt><dd class="mono" id="res-gps-fin">9.07809° N, 79.28921° O</dd></div>
+              <div><dt>Resultado</dt><dd id="res-resultado">🤝 En negociación</dd></div>
+              <div id="res-pedido-wrap" hidden><dt>Pedido tomado</dt><dd id="res-pedido">—</dd></div>
+            </dl>
+            <p class="resumen-nota" id="res-nota"></p>
+            <button class="boton-primario" id="btn-sincronizar">☁ Sincronizar con la central</button>
+            <div class="aviso-offline" id="aviso-offline" hidden>
+              <strong>Sin señal:</strong> la visita quedó guardada en el teléfono.
+              Se enviará sola al recuperar cobertura. <button class="enlace" id="btn-recuperar-senal">Simular que vuelve la señal →</button>
+            </div>
+            <button class="enlace enlace--centrado" data-volver="agenda" id="volver-agenda-oculto" hidden>Volver a la agenda</button>
+          </div>
+        </div>
+
+        <!-- ── pantalla: CHAT DEL ASESOR ── -->
+        <div class="pantalla-m" id="pm-chat">
+          <button class="volver" data-volver="agenda">← Agenda</button>
+          <div class="chat">
+            <div class="chat__cabecera">
+              <span class="avatar avatar--cliente">GR</span>
+              <div><strong>Granja Los Robles</strong><small><span class="canal canal--wa">WhatsApp</span> corporativo · nada queda en el celular personal</small></div>
+            </div>
+            <div class="chat__hilo" id="hilo-movil">
+              <div class="burbuja burbuja--cliente">Luis, ¿me confirma si la entrega del martes puede ser antes de las 9?<span class="burbuja__hora">11:02</span></div>
+              <div class="burbuja burbuja--ia">Buen día, Sra. Vielka 🌱 Soy el asistente de RUTERO. Luis está en visita; ya registré su solicitud de entrega <strong>antes de las 9 a.m.</strong> y se la confirmo en cuanto se desocupe.<span class="burbuja__hora">11:02 · IA</span></div>
+              <div class="burbuja burbuja--yo">Confirmado doña Vielka: camión llega 8:15 a.m. con los 20 sacos de prueba premium. 🚚<span class="burbuja__hora">11:36 ✓✓</span></div>
+            </div>
+            <form class="chat__entrada" id="form-chat-movil">
+              <input type="text" placeholder="Escriba un mensaje…" autocomplete="off">
+              <button type="submit" aria-label="Enviar">➤</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- ── pantalla: LISTA DE CLIENTES ── -->
+        <div class="pantalla-m" id="pm-clientes">
+          <label class="buscador">
+            <span aria-hidden="true">🔎</span>
+            <input type="search" id="busca-cliente" placeholder="Buscar cliente, zona o contacto…" autocomplete="off">
+          </label>
+          <ul class="lista-clientes" id="lista-clientes"></ul>
+          <p class="lista-clientes__pie">412 clientes de la empresa · la cartera completa vive en la central</p>
+        </div>
+
+        <!-- ── pantalla: TOMA DE PEDIDO ── -->
+        <div class="pantalla-m" id="pm-pedido">
+          <button class="volver" id="volver-pedido">← Volver</button>
+          <h3 class="pedido__titulo">Pedido · <span id="pedido-cliente">—</span></h3>
+          <p class="pedido__sub">Catálogo con precios vigentes — sin llamar a la oficina a preguntar.</p>
+          <ul class="catalogo" id="catalogo"></ul>
+          <div class="pedido__total"><span>Total del pedido</span><strong id="pedido-total">B/. 0.00</strong></div>
+          <button class="boton-primario" id="btn-guardar-pedido">💾 Guardar pedido</button>
+        </div>
+
+        <!-- ── pantalla: PERFIL / MI DÍA ── -->
+        <div class="pantalla-m" id="pm-perfil">
+          <div class="perfil__cabecera">
+            <span class="avatar avatar--lh avatar--grande">LH</span>
+            <div>
+              <h3>Luis Herrera</h3>
+              <small>Asesor comercial · Zona Panamá Este</small>
+            </div>
+          </div>
+          <div class="ficha__stats perfil__stats">
+            <div><strong id="perfil-visitas">3/5</strong><span>visitas hoy</span></div>
+            <div><strong id="perfil-pedidos">B/. 1,580</strong><span>vendido hoy</span></div>
+            <div><strong>4 h 32 m</strong><span>en ruta</span></div>
+          </div>
+          <div class="racha">🏅 <strong>18 días seguidos</strong> con el 100 % de visitas verificadas</div>
+          <div class="ranking">
+            <h4>Ranking semanal del equipo</h4>
+            <div class="ranking__fila"><span class="ranking__nombre">María E.</span><i class="ranking__barra" style="--p:96%"></i><b>96</b></div>
+            <div class="ranking__fila ranking__fila--yo"><span class="ranking__nombre">Luis H. <em>(usted)</em></span><i class="ranking__barra" style="--p:91%"></i><b>91</b></div>
+            <div class="ranking__fila"><span class="ranking__nombre">Carlos Á.</span><i class="ranking__barra" style="--p:84%"></i><b>84</b></div>
+          </div>
+          <p class="perfil__pie">Su gestión queda registrada con GPS, foto y hora: las comisiones se calculan solas, sin discusiones a fin de mes.</p>
+        </div>
+
+        <!-- ── pantalla: LLAMADA DESDE LA APP ── -->
+        <div class="pantalla-m" id="pm-llamada">
+          <div class="llamada" id="caja-llamada">
+            <div class="llamada__estado" id="llamada-estado"><i></i> <span>EN LLAMADA · NÚMERO CORPORATIVO</span></div>
+            <span class="avatar avatar--cliente avatar--grande" id="llamada-avatar">AN</span>
+            <h3 id="llamada-nombre">Avícola La Nube</h3>
+            <p class="llamada__sub" id="llamada-sub">Sr. Ovidio Sánchez · +507 6900-3417</p>
+            <div class="cronometro cronometro--llamada" id="crono-llamada">00:00</div>
+            <p class="nota-acelerada">⏩ tiempo acelerado ×8 para la demostración</p>
+            <button class="boton-colgar" id="btn-colgar" aria-label="Colgar llamada"><span>📞</span></button>
+          </div>
+          <div class="registro-llamada" id="registro-llamada" hidden>
+            <h4>Registro de la llamada <span class="chip chip--verde">queda en el cronograma</span></h4>
+            <label class="campo"><span>Resumen</span>
+              <textarea id="resumen-llamada" rows="3" placeholder="¿Qué se habló? ¿Qué se acordó?"></textarea>
+            </label>
+            <div class="campo-etiqueta">Clasificación</div>
+            <div class="opciones-resultado" id="clasificacion-llamada">
+              <button type="button" class="opcion opcion--activa" data-cl="interesado">🔥 Interesado</button>
+              <button type="button" class="opcion" data-cl="pedido">🧾 Dejó pedido</button>
+              <button type="button" class="opcion" data-cl="sininteres">😐 Sin interés</button>
+              <button type="button" class="opcion" data-cl="nocontesto">☎️ No contestó</button>
+            </div>
+            <button class="boton-primario" id="btn-guardar-llamada">💾 Guardar en el cronograma</button>
+          </div>
+        </div>
+
+      </div><!-- /cuerpo -->
+
+      <!-- pestañas inferiores -->
+      <nav class="app-movil__tabs">
+        <button class="tab tab--activa" data-tab="agenda">🗓<span>Agenda</span></button>
+        <button class="tab" data-tab="clientes">👥<span>Clientes</span></button>
+        <button class="tab" data-tab="chat">💬<span>Chat</span></button>
+        <button class="tab" data-tab="perfil">👤<span>Perfil</span></button>
+      </nav>
+
+      <!-- modal cámara -->
+      <div class="camara" id="modal-camara" hidden>
+        <div class="camara__visor">
+          <svg viewBox="0 0 400 300" id="foto-svg" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Fachada de la granja">
+            <defs>
+              <linearGradient id="cielo" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#aecbd6"/><stop offset="1" stop-color="#e8e3cf"/>
+              </linearGradient>
+            </defs>
+            <rect width="400" height="300" fill="url(#cielo)"/>
+            <ellipse cx="330" cy="52" rx="34" ry="12" fill="#f6f3e8" opacity=".8"/>
+            <ellipse cx="90" cy="38" rx="44" ry="13" fill="#f6f3e8" opacity=".7"/>
+            <rect y="218" width="400" height="82" fill="#8a9a6d"/>
+            <rect y="218" width="400" height="10" fill="#75855c"/>
+            <!-- galera -->
+            <polygon points="52,128 200,86 348,128 348,138 52,138" fill="#b8503a"/>
+            <polygon points="60,138 340,138 340,224 60,224" fill="#ddd6c2"/>
+            <line x1="96" y1="138" x2="96" y2="224" stroke="#c4bca6" stroke-width="3"/>
+            <line x1="304" y1="138" x2="304" y2="224" stroke="#c4bca6" stroke-width="3"/>
+            <rect x="168" y="158" width="64" height="66" fill="#5d5646"/>
+            <rect x="172" y="162" width="56" height="58" fill="#3f3a2e"/>
+            <!-- letrero -->
+            <rect x="118" y="98" width="164" height="26" rx="4" fill="#f4efe4" stroke="#b8503a" stroke-width="2"/>
+            <text id="letrero-foto" x="200" y="116" text-anchor="middle" font-size="13" font-family="Arial Narrow, sans-serif" font-weight="bold" fill="#7a4030">GRANJA LOS ROBLES</text>
+            <!-- sacos apilados -->
+            <g fill="#d9c48f" stroke="#b3a069" stroke-width="1.5">
+              <rect x="252" y="196" width="34" height="28" rx="6"/>
+              <rect x="288" y="196" width="34" height="28" rx="6"/>
+              <rect x="270" y="170" width="34" height="28" rx="6"/>
+            </g>
+            <g font-size="8" font-family="Arial Narrow, sans-serif" fill="#7a6a3a" text-anchor="middle">
+              <text x="269" y="213">40kg</text><text x="305" y="213">40kg</text><text x="287" y="187">40kg</text>
+            </g>
+            <!-- cerdito -->
+            <g>
+              <ellipse cx="112" cy="244" rx="22" ry="13" fill="#e8a9a0"/>
+              <circle cx="132" cy="238" r="9" fill="#e8a9a0"/>
+              <circle cx="135" cy="236" r="1.6" fill="#5d3a35"/>
+              <ellipse cx="139" cy="240" rx="3.5" ry="2.6" fill="#d18a80"/>
+              <path d="M104 255 l0 6 M120 255 l0 6" stroke="#d18a80" stroke-width="3"/>
+            </g>
+            <!-- sombra cálida -->
+            <rect width="400" height="300" fill="#e8a13d" opacity="0.08"/>
+          </svg>
+          <div class="camara__brackets" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+          <div class="camara__gps mono">📍 <span id="camara-gps">9.07809° N · 79.28921° O</span> &nbsp;·&nbsp; <span id="camara-hora">11:58 a.m.</span></div>
+          <div class="camara__flash" id="camara-flash"></div>
+        </div>
+        <div class="camara__pie">
+          <p>La app <strong>exige la fotografía del sitio</strong> para poder cerrar la visita.</p>
+          <button class="obturador" id="btn-obturador" aria-label="Tomar foto"><i></i></button>
+        </div>
+      </div>
+
+    </div><!-- /pantalla -->
+  </div><!-- /marco -->
+  <p class="telefono__pie">Funciona como PWA: se instala desde el navegador, sin tiendas de aplicaciones, y opera sin señal.</p>
+</div>
+</section>
+
+<!-- ════════════════════════ CONSOLA WEB — COORDINADOR ════════════════════════ -->
+<section class="vista" id="vista-coordinador">
+<div class="escritorio">
+
+  <aside class="lateral">
+    <nav class="lateral__nav">
+      <button class="lateral__btn lateral__btn--activo" data-panel="tablero">◧ <span>Panel del día</span></button>
+      <button class="lateral__btn" data-panel="bandeja">💬 <span>Bandeja única</span><b class="lateral__badge">3</b></button>
+      <button class="lateral__btn" data-panel="embudo">🌡 <span>Embudo</span></button>
+      <button class="lateral__btn" data-panel="mapa">📍 <span>Mapa en vivo</span></button>
+      <button class="lateral__btn" data-panel="analiticas">📊 <span>Analíticas</span></button>
+      <button class="lateral__btn" data-panel="programar">🗓 <span>Programación</span></button>
+      <button class="lateral__btn" data-panel="equipo">👥 <span>Equipo</span></button>
+    </nav>
+    <div class="lateral__resguardo">
+      <strong>🔒 3,248</strong>
+      <span>chats resguardados por la empresa</span>
+    </div>
+  </aside>
+
+  <section class="panel-zona">
+
+    <!-- ── panel: TABLERO ── -->
+    <div class="panel panel--activo" id="pw-tablero">
+      <header class="panel__titulo"><h2>Panel del día</h2><span class="mono" id="fecha-web">sábado 26 de julio</span></header>
+      <div class="kpis">
+        <div class="kpi"><strong>11<em>/15</em></strong><span>visitas del equipo hoy</span><small class="kpi__ok">▲ 92% de cobertura de ruta</small></div>
+        <div class="kpi"><strong>38<em>min</em></strong><span>duración promedio de visita</span><small class="kpi__ok">▲ 6 min más que en junio</small></div>
+        <div class="kpi"><strong>7</strong><span>prospectos calificados por la IA hoy</span><small class="kpi__ok">3 calientes 🔥</small></div>
+        <div class="kpi"><strong>B/. 18,4<em>mil</em></strong><span>en negociaciones abiertas</span><small class="kpi__neutro">embudo actualizado hace 2 min</small></div>
+      </div>
+      <div class="fila-doble">
+        <div class="col-apilada">
+        <div class="tarjeta-panel">
+          <h3>⚡ Actividad en vivo</h3>
+          <ul class="actividad" id="feed-actividad">
+            <li><span class="mono">11:58</span> <b>Luis H.</b> cerró visita en <b>Granja Los Robles</b> · foto + GPS ✓</li>
+            <li><span class="mono">11:47</span> IA calificó a <b>Granja Bella Vista</b> como 🔥 caliente (pide 120 sacos/mes)</li>
+            <li><span class="mono">11:32</span> <b>María E.</b> inició visita en <b>Súper Xtra Vía España</b></li>
+            <li><span class="mono">11:15</span> IA atendió consulta nocturna de <b>Avícola Doña Nidia</b> (catálogo aves)</li>
+            <li><span class="mono">10:58</span> <b>Carlos A.</b> registró cobro B/. 1,250 en <b>Comercial El Machetazo</b></li>
+          </ul>
+        </div>
+        <div class="tarjeta-panel">
+          <h3>📈 Ventas de la semana <small class="grafica__unidad">miles de B/. · equipo completo</small></h3>
+          <div class="grafica" role="img" aria-label="Ventas por día de la semana en miles de balboas: lunes 2.9, martes 3.4, miércoles 2.1, jueves 3.8, viernes 4.6, sábado 1.9 en curso">
+            <div class="grafica__barras">
+              <div class="gbar" style="--v:2.9" data-tip="lun · B/. 2,900"><i></i><span>lun</span></div>
+              <div class="gbar" style="--v:3.4" data-tip="mar · B/. 3,400"><i></i><span>mar</span></div>
+              <div class="gbar" style="--v:2.1" data-tip="mié · B/. 2,100"><i></i><span>mié</span></div>
+              <div class="gbar" style="--v:3.8" data-tip="jue · B/. 3,800"><i></i><span>jue</span></div>
+              <div class="gbar gbar--max" style="--v:4.6" data-tip="vie · B/. 4,600 · mejor día"><b>4.6</b><i></i><span>vie</span></div>
+              <div class="gbar gbar--hoy" style="--v:1.9" data-tip="sáb · B/. 1,900 · en curso"><b>1.9</b><i></i><span>sáb·hoy</span></div>
+            </div>
+          </div>
+        </div>
+        </div>
+        <div class="tarjeta-panel tarjeta-panel--resguardo">
+          <h3>🔒 Memoria comercial de la empresa</h3>
+          <p class="resguardo-cifra"><strong>3,248</strong> conversaciones · <strong>412</strong> clientes · <strong>1,096</strong> bitácoras</p>
+          <p>Todo vive en la plataforma, no en teléfonos personales. Si un asesor se va, su cartera se reasigna <em>en un clic</em> — pruebe la simulación en la pestaña <b>Equipo</b>.</p>
+          <button class="boton-fantasma" data-panel-ir="equipo">Probar simulación de rotación →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── panel: BANDEJA ÚNICA ── -->
+    <div class="panel" id="pw-bandeja">
+      <header class="panel__titulo"><h2>Bandeja única <small>WhatsApp + Messenger de toda la fuerza de ventas</small></h2></header>
+      <div class="bandeja">
+        <ul class="bandeja__lista">
+          <li class="convo convo--activa" data-convo="bella">
+            <span class="canal canal--wa">WA</span>
+            <div class="convo__info"><strong>Granja Bella Vista</strong><small>IA: “…entrega en La Chorrera sin costo…”</small></div>
+            <div class="convo__meta"><span class="chip chip--ia">IA</span><b class="convo__hora">11:47</b></div>
+          </li>
+          <li class="convo" data-convo="nidia">
+            <span class="canal canal--wa">WA</span>
+            <div class="convo__info"><strong>Avícola Doña Nidia</strong><small>IA: catálogo de ponedoras enviado 🌙 3:12 a.m.</small></div>
+            <div class="convo__meta"><span class="chip chip--ia">IA</span><b class="convo__hora">03:12</b></div>
+          </li>
+          <li class="convo" data-convo="robles">
+            <span class="canal canal--wa">WA</span>
+            <div class="convo__info"><strong>Granja Los Robles</strong><small>Luis: “camión llega 8:15 con los 20 sacos…”</small></div>
+            <div class="convo__meta"><span class="chip chip--asesor">Luis H.</span><b class="convo__hora">11:36</b></div>
+          </li>
+          <li class="convo" data-convo="machetazo">
+            <span class="canal canal--fb">FB</span>
+            <div class="convo__info"><strong>Comercial El Machetazo</strong><small>Carlos: recibo de cobro adjunto ✓</small></div>
+            <div class="convo__meta"><span class="chip chip--asesor">Carlos A.</span><b class="convo__hora">10:58</b></div>
+          </li>
+          <li class="convo" data-convo="xtra">
+            <span class="canal canal--fb">FB</span>
+            <div class="convo__info"><strong>Súper Xtra Vía España</strong><small>María: propuesta de exhibidor enviada</small></div>
+            <div class="convo__meta"><span class="chip chip--asesor">María E.</span><b class="convo__hora">09:40</b></div>
+          </li>
+        </ul>
+
+        <div class="bandeja__hilo">
+          <div class="hilo__cabecera">
+            <div><strong>Granja Bella Vista</strong> <span class="canal canal--wa">WhatsApp</span></div>
+            <span class="chip chip--ia" id="chip-atiende">🤖 atiende la IA</span>
+          </div>
+          <div class="hilo__mensajes" id="hilo-web">
+            <div class="burbuja burbuja--cliente">Buenas, ¿qué precio tiene el alimento para cerdo de engorde? ¿Hacen entrega en La Chorrera?<span class="burbuja__hora">11:44</span></div>
+            <div class="burbuja burbuja--ia">¡Buen día! 🐷 Con gusto:<br>• <strong>Cerdo Engorde 40 kg — B/. 20.80</strong><br>• Cerdo Iniciador 40 kg — B/. 23.50<br>Entrega en <strong>La Chorrera sin costo</strong> desde 30 sacos. ¿Cuántos animales maneja actualmente?<span class="burbuja__hora">11:44 · IA</span></div>
+            <div class="burbuja burbuja--cliente">Unos 250 cerdos. Estaría necesitando como 120 sacos al mes.<span class="burbuja__hora">11:46</span></div>
+            <div class="burbuja burbuja--ia">Excelente volumen 🙌 Para 120 sacos/mes aplica <strong>precio mayorista</strong>. Le agendo una visita del asesor de su zona para llevarle muestras y cotización formal. ¿Le va bien el lunes en la mañana?<span class="burbuja__hora">11:47 · IA</span></div>
+          </div>
+          <div class="hilo__acciones">
+            <button class="boton-primario" id="btn-transferir">⇄ Transferir a Carlos A. (asesor de zona Oeste)</button>
+            <form class="chat__entrada chat__entrada--web" id="form-chat-web" hidden>
+              <input type="text" placeholder="Responder como Carlos A.…" autocomplete="off">
+              <button type="submit" aria-label="Enviar">➤</button>
+            </form>
+          </div>
+        </div>
+
+        <aside class="bandeja__ficha">
+          <h3>Prospecto</h3>
+          <div class="prospecto">
+            <span class="avatar avatar--cliente">BV</span>
+            <div><strong>Granja Bella Vista</strong><small>La Chorrera, Panamá Oeste</small></div>
+          </div>
+          <dl class="ficha__datos ficha__datos--web">
+            <div><dt>Origen</dt><dd>WhatsApp · anuncio de Facebook</dd></div>
+            <div><dt>Interés</dt><dd>Cerdo engorde · ~120 sacos/mes</dd></div>
+            <div><dt>Valor estimado</dt><dd><strong>B/. 2,496 /mes</strong></dd></div>
+            <div><dt>Detectado por</dt><dd>🤖 IA · calificación automática</dd></div>
+          </dl>
+          <div class="campo-etiqueta">Temperatura</div>
+          <div class="termometro">
+            <span class="temp temp--frio">Frío</span>
+            <span class="temp temp--templado">Templado</span>
+            <span class="temp temp--caliente temp--activa">🔥 Caliente</span>
+          </div>
+          <div class="campo-etiqueta">Asesor asignado</div>
+          <div class="asignacion" id="asignacion-prospecto">
+            <span class="chip chip--ia">🤖 IA (sin asignar)</span>
+          </div>
+          <p class="ficha__pie">La IA respondió en <strong>9 segundos</strong>. Promedio del sector sin IA: 4 horas.</p>
+        </aside>
+      </div>
+    </div>
+
+    <!-- ── panel: EMBUDO ── -->
+    <div class="panel" id="pw-embudo">
+      <header class="panel__titulo"><h2>Embudo de ventas <small>arrastre las tarjetas entre columnas</small></h2></header>
+      <div class="kanban" id="kanban">
+        <div class="columna" data-temp="frio">
+          <header><i>❄</i> Frío <b class="columna__monto">B/. 3,120</b></header>
+          <div class="columna__cuerpo">
+            <article class="tarjeta-lead" draggable="true"><strong>Ferretería El Compa</strong><small>consulta general alimentos</small><span class="tarjeta-lead__pie"><span class="canal canal--fb">FB</span> B/. 480 · 🤖 IA</span></article>
+            <article class="tarjeta-lead" draggable="true"><strong>Granja Santa Librada</strong><small>pidió catálogo aves</small><span class="tarjeta-lead__pie"><span class="canal canal--wa">WA</span> B/. 940 · 🤖 IA</span></article>
+            <article class="tarjeta-lead" draggable="true"><strong>Abarrotería Mi Pueblo</strong><small>sin respuesta hace 5 días</small><span class="tarjeta-lead__pie"><span class="canal canal--wa">WA</span> B/. 1,700 · Luis H.</span></article>
+          </div>
+        </div>
+        <div class="columna" data-temp="templado">
+          <header><i>🌤</i> Templado <b class="columna__monto">B/. 5,890</b></header>
+          <div class="columna__cuerpo">
+            <article class="tarjeta-lead" draggable="true"><strong>Avícola Doña Nidia</strong><small>comparando con proveedor actual</small><span class="tarjeta-lead__pie"><span class="canal canal--wa">WA</span> B/. 2,150 · 🤖 IA</span></article>
+            <article class="tarjeta-lead" draggable="true"><strong>Súper Xtra Vía España</strong><small>evalúa exhibidor mascotas</small><span class="tarjeta-lead__pie"><span class="canal canal--fb">FB</span> B/. 3,740 · María E.</span></article>
+          </div>
+        </div>
+        <div class="columna" data-temp="caliente">
+          <header><i>🔥</i> Caliente <b class="columna__monto">B/. 6,570</b></header>
+          <div class="columna__cuerpo">
+            <article class="tarjeta-lead" draggable="true"><strong>Granja Bella Vista</strong><small>120 sacos/mes · visita lunes</small><span class="tarjeta-lead__pie"><span class="canal canal--wa">WA</span> B/. 2,496 · 🤖→Carlos</span></article>
+            <article class="tarjeta-lead" draggable="true"><strong>Granja Los Robles</strong><small>prueba 20 sacos premium ✓</small><span class="tarjeta-lead__pie"><span class="canal canal--wa">WA</span> B/. 2,840 · Luis H.</span></article>
+            <article class="tarjeta-lead" draggable="true"><strong>Rancho Las Garzas</strong><small>espera cotización ganado ceba</small><span class="tarjeta-lead__pie"><span class="canal canal--wa">WA</span> B/. 1,234 · Carlos A.</span></article>
+          </div>
+        </div>
+        <div class="columna columna--cierre" data-temp="cierre">
+          <header><i>🤝</i> Cierre <b class="columna__monto">B/. 2,830</b></header>
+          <div class="columna__cuerpo">
+            <article class="tarjeta-lead" draggable="true"><strong>Distribuidora El Progreso</strong><small>orden 80 sacos ponedora firmada</small><span class="tarjeta-lead__pie"><span class="canal canal--wa">WA</span> B/. 1,580 · Luis H.</span></article>
+            <article class="tarjeta-lead" draggable="true"><strong>Comercial El Machetazo</strong><small>reposición quincenal confirmada</small><span class="tarjeta-lead__pie"><span class="canal canal--fb">FB</span> B/. 1,250 · Carlos A.</span></article>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── panel: MAPA ── -->
+    <div class="panel" id="pw-mapa">
+      <header class="panel__titulo"><h2>Mapa en vivo <small>haga clic sobre un asesor</small></h2></header>
+      <div class="mapa-zona">
+        <div class="mapa-marco">
+          <svg id="mapa" viewBox="0 0 900 520" role="img" aria-label="Mapa de Ciudad de Panamá con asesores en campo">
+            <defs>
+              <radialGradient id="destello" cx="0.5" cy="0.5" r="0.5">
+                <stop offset="0" stop-color="#2E7D4F" stop-opacity="0.35"/><stop offset="1" stop-color="#2E7D4F" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <!-- tierra y mar -->
+            <rect width="900" height="520" fill="#EAE4D0"/>
+            <path d="M0,430 C140,400 260,455 420,438 C580,420 700,470 900,440 L900,520 L0,520 Z" fill="#BFD3D2"/>
+            <path d="M0,430 C140,400 260,455 420,438 C580,420 700,470 900,440" fill="none" stroke="#8FAEAD" stroke-width="3"/>
+            <text x="640" y="498" font-size="15" fill="#6E8F8E" font-style="italic" letter-spacing="3">BAHÍA DE PANAMÁ</text>
+            <!-- vías principales -->
+            <path d="M40,470 C220,420 420,415 640,430 C760,437 830,440 890,450" fill="none" stroke="#D9CFAF" stroke-width="9" stroke-linecap="round"/>
+            <path d="M60,300 C240,290 480,270 860,240" fill="none" stroke="#D9CFAF" stroke-width="8" stroke-linecap="round"/>
+            <path d="M120,80 C300,130 420,240 470,430" fill="none" stroke="#D9CFAF" stroke-width="7" stroke-linecap="round"/>
+            <path d="M330,60 C400,160 560,220 850,205" fill="none" stroke="#E2D9BE" stroke-width="6" stroke-linecap="round"/>
+            <text x="88" y="290" font-size="11" fill="#A79B72" transform="rotate(-2 88 290)">VÍA ESPAÑA</text>
+            <text x="700" y="425" font-size="11" fill="#A79B72" transform="rotate(1 700 425)">CORREDOR SUR</text>
+            <text x="620" y="196" font-size="11" fill="#A79B72" transform="rotate(-3 620 196)">CORREDOR NORTE</text>
+            <!-- zonas -->
+            <text class="mapa__zona" x="150" y="180">SAN MIGUELITO</text>
+            <text class="mapa__zona" x="420" y="120">LAS CUMBRES</text>
+            <text class="mapa__zona" x="640" y="290">TOCUMEN ✈</text>
+            <text class="mapa__zona" x="770" y="150">PACORA</text>
+            <text class="mapa__zona" x="360" y="330">JUAN DÍAZ</text>
+            <text class="mapa__zona" x="140" y="395">CALIDONIA</text>
+            <text class="mapa__zona" x="470" y="405">COSTA DEL ESTE</text>
+            <!-- ruta de Luis (Panamá Este) -->
+            <path id="ruta-luis" d="M370,345 C450,330 560,320 655,300 C720,286 760,220 790,170" fill="none" stroke="#2E7D4F" stroke-width="3" stroke-dasharray="7 7"/>
+            <g class="punto-ruta"><circle cx="370" cy="345" r="9" fill="#2E7D4F"/><text x="370" y="349">1</text></g>
+            <g class="punto-ruta"><circle cx="530" cy="325" r="9" fill="#2E7D4F"/><text x="530" y="329">2</text></g>
+            <g class="punto-ruta punto-ruta--activo"><circle cx="790" cy="170" r="11" fill="#E8A13D"/><text x="790" y="174">3</text></g>
+            <g class="punto-ruta punto-ruta--pend"><circle cx="655" cy="300" r="9"/><text x="655" y="304">4</text></g>
+            <!-- asesores -->
+            <g class="pin" data-asesor="luis" transform="translate(790,170)">
+              <circle class="pin__onda" r="26"/>
+              <circle class="pin__fondo" r="17"/>
+              <text class="pin__texto" y="5">LH</text>
+              <circle class="pin__estado pin__estado--visita" cx="13" cy="-12" r="5"/>
+            </g>
+            <g class="pin" data-asesor="maria" transform="translate(215,275)">
+              <circle class="pin__onda" r="26"/>
+              <circle class="pin__fondo" r="17"/>
+              <text class="pin__texto" y="5">ME</text>
+              <circle class="pin__estado pin__estado--visita" cx="13" cy="-12" r="5"/>
+            </g>
+            <g class="pin" data-asesor="carlos" transform="translate(410,420)">
+              <circle class="pin__onda pin__onda--ruta" r="26"/>
+              <circle class="pin__fondo" r="17"/>
+              <text class="pin__texto" y="5">CA</text>
+              <circle class="pin__estado pin__estado--ruta" cx="13" cy="-12" r="5"/>
+            </g>
+          </svg>
+          <div class="mapa__leyenda">
+            <span><i class="leyenda--visita"></i> en visita (GPS activo)</span>
+            <span><i class="leyenda--ruta"></i> en desplazamiento</span>
+            <span><i class="leyenda--punto"></i> parada de la ruta</span>
+          </div>
+        </div>
+        <aside class="mapa__detalle" id="mapa-detalle">
+          <p class="mapa__vacio">Seleccione un asesor en el mapa para ver su visita en curso, la evidencia fotográfica y su recorrido del día.</p>
+        </aside>
+      </div>
+    </div>
+
+    <!-- ── panel: ANALÍTICAS ── -->
+    <div class="panel" id="pw-analiticas">
+      <header class="panel__titulo"><h2>Analíticas <small>ventas, visitas y contactos — todo lo que el ERP no ve del campo</small></h2></header>
+      <div class="fila-graficas">
+        <div class="tarjeta-panel">
+          <h3>📈 Ventas de la semana <small class="grafica__unidad">miles de B/.</small></h3>
+          <div class="grafica" role="img" aria-label="Ventas por día de la semana en miles de balboas: lunes 2.9, martes 3.4, miércoles 2.1, jueves 3.8, viernes 4.6, sábado 1.9 en curso">
+            <div class="grafica__barras">
+              <div class="gbar" style="--v:2.9" data-tip="lun · B/. 2,900"><i></i><span>lun</span></div>
+              <div class="gbar" style="--v:3.4" data-tip="mar · B/. 3,400"><i></i><span>mar</span></div>
+              <div class="gbar" style="--v:2.1" data-tip="mié · B/. 2,100"><i></i><span>mié</span></div>
+              <div class="gbar" style="--v:3.8" data-tip="jue · B/. 3,800"><i></i><span>jue</span></div>
+              <div class="gbar gbar--max" style="--v:4.6" data-tip="vie · B/. 4,600 · mejor día"><b>4.6</b><i></i><span>vie</span></div>
+              <div class="gbar gbar--hoy" style="--v:1.9" data-tip="sáb · B/. 1,900 · en curso"><b>1.9</b><i></i><span>sáb·hoy</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="tarjeta-panel">
+          <h3>🧭 Visitas verificadas <small class="grafica__unidad">esta semana · por asesor</small></h3>
+          <div class="barras-h">
+            <div class="bh"><span>María E.</span><i style="--p:100%"></i><b>23</b></div>
+            <div class="bh"><span>Luis H.</span><i style="--p:91%"></i><b>21</b></div>
+            <div class="bh"><span>Carlos Á.</span><i style="--p:83%"></i><b>19</b></div>
+          </div>
+          <p class="grafica-nota">Cada barra son visitas con GPS + foto + hora. Nada de “yo sí fui”.</p>
+        </div>
+        <div class="tarjeta-panel">
+          <h3>☎️ Contactos por canal <small class="grafica__unidad">esta semana · equipo</small></h3>
+          <div class="barras-h">
+            <div class="bh"><span>WhatsApp</span><i style="--p:100%"></i><b>148</b></div>
+            <div class="bh"><span>Visitas</span><i style="--p:43%"></i><b>63</b></div>
+            <div class="bh"><span>Llamadas</span><i style="--p:36%"></i><b>54</b></div>
+          </div>
+          <p class="grafica-nota">Las llamadas hechas desde la app quedan en el cronograma con resumen y clasificación.</p>
+        </div>
+      </div>
+      <div class="radar">
+        <div class="tarjeta-panel">
+          <h3>🏆 Clientes con más pedidos <small class="grafica__unidad">últimos 90 días</small></h3>
+          <ul class="radar-lista">
+            <li>
+              <span class="radar__pos">1</span>
+              <div class="radar__info"><strong>Granja Los Robles</strong><small>6 pedidos · cada 15 días · Luis H.</small></div>
+              <span class="radar__monto">B/. 8,520</span>
+              <span class="tendencia tendencia--sube">▲ 12%</span>
+            </li>
+            <li>
+              <span class="radar__pos">2</span>
+              <div class="radar__info"><strong>Distribuidora El Progreso</strong><small>12 pedidos · semanal · Luis H.</small></div>
+              <span class="radar__monto">B/. 6,340</span>
+              <span class="tendencia tendencia--sube">▲ 5%</span>
+            </li>
+            <li>
+              <span class="radar__pos">3</span>
+              <div class="radar__info"><strong>Súper Xtra Vía España</strong><small>5 pedidos · quincenal · María E.</small></div>
+              <span class="radar__monto">B/. 5,610</span>
+              <span class="tendencia tendencia--sube">▲ 9%</span>
+            </li>
+          </ul>
+        </div>
+        <div class="tarjeta-panel tarjeta-panel--alerta">
+          <h3>📉 Bajón de pedidos <small class="grafica__unidad">detectado automáticamente — requieren contacto</small></h3>
+          <ul class="radar-lista">
+            <li>
+              <span class="radar__pos">!</span>
+              <div class="radar__info"><strong>Abarrotería Mi Pueblo</strong><small>sin pedido hace 41 días · antes: mensual</small></div>
+              <span class="tendencia tendencia--baja">▼ 62%</span>
+              <button class="boton-fantasma boton-radar" data-prog-cliente="mipueblo" data-prog-accion="visita" data-prog-nota="Lleva 41 días sin pedir; antes compraba mensual. Rescatar cliente.">🗓 Programar visita</button>
+            </li>
+            <li>
+              <span class="radar__pos">!</span>
+              <div class="radar__info"><strong>Avícola La Nube</strong><small>última compra 15 jul · venía creciendo</small></div>
+              <span class="tendencia tendencia--baja">▼ 35%</span>
+              <button class="boton-fantasma boton-radar" data-prog-cliente="nube" data-prog-accion="llamada" data-prog-nota="Bajón de pedidos: preguntar si hubo problema con la última entrega.">📞 Programar llamada</button>
+            </li>
+          </ul>
+          <p class="grafica-nota">El histórico de pedidos (llamadas, WhatsApp y visitas) alimenta estas alertas: quién compra más, quién dejó de comprar.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── panel: PROGRAMACIÓN ── -->
+    <div class="panel" id="pw-programar">
+      <header class="panel__titulo"><h2>Programación <small>asigne visitas, llamadas o seguimientos — le aparecen al asesor al instante</small></h2></header>
+      <form class="programar" id="form-programar">
+        <label>Cliente
+          <select id="prog-cliente"></select>
+        </label>
+        <label>Asesor
+          <select id="prog-asesor">
+            <option value="luis">Luis H. · Panamá Este</option>
+            <option value="maria">María E. · Centro</option>
+            <option value="carlos">Carlos Á. · Oeste</option>
+          </select>
+        </label>
+        <label>Acción
+          <select id="prog-accion">
+            <option value="visita">🧭 Visita</option>
+            <option value="llamada">📞 Llamada</option>
+            <option value="whatsapp">💬 WhatsApp</option>
+          </select>
+        </label>
+        <label>Cuándo
+          <select id="prog-cuando">
+            <option value="hoy">Hoy</option>
+            <option value="manana">Mañana</option>
+          </select>
+        </label>
+        <label class="programar__nota">Instrucción para el asesor
+          <input id="prog-nota" placeholder="Ej.: preguntar por la última entrega, llevar muestras…" autocomplete="off">
+        </label>
+        <button class="boton-primario" type="submit">Asignar al asesor</button>
+      </form>
+
+      <h3 class="crono-titulo">Cronograma del equipo <span class="chip chip--verde">visitas + llamadas + seguimientos, con evidencia</span></h3>
+      <ul class="crono" id="cronograma">
+        <li>
+          <span class="crono__icono">📞</span>
+          <span class="crono__hora">hoy 10:12</span>
+          <div class="crono__info">
+            <strong>Rancho Las Garzas · Carlos Á.</strong>
+            <small class="crono__resumen">“Confirmó recepción de la cotización de ceba; pide visita el jueves con muestras.” · 🔥 interesado · 4 min</small>
+          </div>
+          <span class="chip chip--verde">completada</span>
+        </li>
+        <li id="crono-nube">
+          <span class="crono__icono">📞</span>
+          <span class="crono__hora">hoy 12:30</span>
+          <div class="crono__info">
+            <strong>Avícola La Nube · Luis H.</strong>
+            <small>“Bajón de pedidos: preguntar si hubo problema con la última entrega.”</small>
+          </div>
+          <span class="chip chip--asesor">pendiente</span>
+        </li>
+        <li>
+          <span class="crono__icono">🧭</span>
+          <span class="crono__hora">mañ. 9:00</span>
+          <div class="crono__info">
+            <strong>Minisúper La Fortuna (cliente nuevo) · Luis H.</strong>
+            <small>Apertura de cliente: llevar catálogo de mascotas y aves.</small>
+          </div>
+          <span class="chip chip--asesor">pendiente</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- ── panel: EQUIPO ── -->
+    <div class="panel" id="pw-equipo">
+      <header class="panel__titulo"><h2>Equipo comercial <small>la cartera es de la empresa, no del teléfono del asesor</small></h2></header>
+      <div class="equipo" id="tabla-equipo">
+        <div class="asesor-fila" data-fila="luis">
+          <span class="avatar avatar--lh">LH</span>
+          <div class="asesor-fila__nombre"><strong>Luis Herrera</strong><small>Zona Panamá Este</small></div>
+          <div class="asesor-fila__dato"><strong id="eq-luis-clientes">143</strong><span>clientes</span></div>
+          <div class="asesor-fila__dato"><strong id="eq-luis-chats">1,286</strong><span>chats</span></div>
+          <div class="asesor-fila__dato"><strong id="eq-luis-negocios">12</strong><span>negociaciones</span></div>
+          <div class="asesor-fila__dato"><strong>4/5</strong><span>visitas hoy</span></div>
+        </div>
+        <div class="asesor-fila" data-fila="maria">
+          <span class="avatar avatar--me">ME</span>
+          <div class="asesor-fila__nombre"><strong>María Espinosa</strong><small>Zona Centro</small></div>
+          <div class="asesor-fila__dato"><strong id="eq-maria-clientes">128</strong><span>clientes</span></div>
+          <div class="asesor-fila__dato"><strong id="eq-maria-chats">1,102</strong><span>chats</span></div>
+          <div class="asesor-fila__dato"><strong id="eq-maria-negocios">9</strong><span>negociaciones</span></div>
+          <div class="asesor-fila__dato"><strong>3/5</strong><span>visitas hoy</span></div>
+        </div>
+        <div class="asesor-fila" data-fila="carlos">
+          <span class="avatar avatar--ca">CA</span>
+          <div class="asesor-fila__nombre"><strong>Carlos Ábrego</strong><small>Zona Oeste</small></div>
+          <div class="asesor-fila__dato"><strong id="eq-carlos-clientes">141</strong><span>clientes</span></div>
+          <div class="asesor-fila__dato"><strong id="eq-carlos-chats">860</strong><span>chats</span></div>
+          <div class="asesor-fila__dato"><strong id="eq-carlos-negocios">8</strong><span>negociaciones</span></div>
+          <div class="asesor-fila__dato"><strong>4/5</strong><span>visitas hoy</span></div>
+        </div>
+      </div>
+
+      <div class="zona-simulacro">
+        <div>
+          <h3>⚠️ Simulacro: ¿y si Luis renuncia mañana?</h3>
+          <p>En el modelo actual (WhatsApp personal + agenda propia) la empresa perdería sus contactos, chats e historial. Con RUTERO, mire lo que pasa:</p>
+        </div>
+        <div class="zona-simulacro__botones">
+          <button class="boton-primario boton-primario--ambar" id="btn-simular-salida">Simular salida de Luis Herrera</button>
+          <button class="enlace" id="btn-restaurar-simulacro" hidden>↺ Restaurar el simulacro</button>
+        </div>
+      </div>
+    </div>
+
+  </section>
+</div>
+</section>
+
+</main>
+
+<!-- modal de reasignación -->
+<div class="modal" id="modal-reasignar" hidden>
+  <div class="modal__fondo" data-cerrar-modal></div>
+  <div class="modal__caja">
+    <h3>Reasignar la cartera de Luis Herrera</h3>
+    <p>Seleccione quién recibe <strong>143 clientes, 1,286 chats y 12 negociaciones</strong>. El historial completo viaja con la cartera.</p>
+    <div class="modal__opciones">
+      <button class="opcion-destino" data-destino="maria"><span class="avatar avatar--me">ME</span> María Espinosa <small>Zona Centro</small></button>
+      <button class="opcion-destino" data-destino="carlos"><span class="avatar avatar--ca">CA</span> Carlos Ábrego <small>Zona Oeste</small></button>
+    </div>
+    <button class="enlace" data-cerrar-modal>Cancelar</button>
+  </div>
+</div>
+
+<!-- guión de demo para quien presenta (solo escritorio) -->
+<button class="guia-boton" id="btn-guia" title="Guión de la demo (para quien presenta)">📋</button>
+<aside class="guia" id="guia-demo" hidden>
+  <h4>Guión de 5 minutos <button class="guia__cerrar" id="cerrar-guia" aria-label="Cerrar">×</button></h4>
+  <ol>
+    <li><label><input type="checkbox"> <b>Portada:</b> dejar correr la secuencia "así trabaja solo" (6 etapas con IA).</label></li>
+    <li><label><input type="checkbox"> <b>Asesor:</b> login corporativo → agenda con visitas selladas.</label></li>
+    <li><label><input type="checkbox"> <b>Ficha:</b> bitácora heredada del asesor anterior.</label></li>
+    <li><label><input type="checkbox"> <b>Visita:</b> iniciar (GPS) → tomar pedido → finalizar (exige foto).</label></li>
+    <li><label><input type="checkbox"> <b>Offline:</b> apagar 4G → sincronizar → vuelve la señal.</label></li>
+    <li><label><input type="checkbox"> <b>Llamada:</b> tarea 📞 asignada → colgar → resumen + clasificación.</label></li>
+    <li><label><input type="checkbox"> <b>Coordinador:</b> la visita y la llamada aparecen en Actividad en vivo.</label></li>
+    <li><label><input type="checkbox"> <b>Bandeja + IA:</b> respuesta en 9 s → transferir a Carlos.</label></li>
+    <li><label><input type="checkbox"> <b>Analíticas:</b> top clientes y bajones → 🗓 programar contacto prellenado.</label></li>
+    <li><label><input type="checkbox"> <b>Cierre:</b> Equipo → simular salida de Luis. <em>"Nada se pierde."</em></label></li>
+  </ol>
+</aside>
+
+<!-- avisos flotantes -->
+<div id="avisos" aria-live="polite"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   RUTERO · demo — toda la lógica de la maqueta interactiva
+   (sin backend: los datos viven en memoria, como corresponde
+   a un prototipo de venta)
+   ═══════════════════════════════════════════════════════════ */
+"use strict";
+
+const $  = (sel, raiz = document) => raiz.querySelector(sel);
+const $$ = (sel, raiz = document) => [...raiz.querySelectorAll(sel)];
+
+/* ───────── datos de la demo ───────── */
+const CLIENTES = {
+  progreso: {
+    nombre: "Distribuidora Avícola El Progreso", ini: "DP", zona: "Juan Díaz",
+    sub: "Cliente desde 2019 · Juan Díaz", promedio: "B/. 1,580", frecuencia: "7 días", credito: "B/. 2,000",
+    contacto: "Sr. Aquilino Pinzón · +507 6803-1122", direccion: "Calle 109 Este, Juan Díaz, frente al parque",
+    ultima: "hoy · 80 × Ponedora Postura 40 kg",
+    gps: "9.03911° N, 79.44873° O", gpsFin: "9.03914° N, 79.44870° O", letrero: "DIST. EL PROGRESO",
+    historial: [["hoy · Luis H.", "Orden de 80 sacos ponedora firmada ✓"], ["19 jul · Luis H.", "Pidió exhibidor para la línea de mascotas."]],
+    nota: "",
+  },
+  chen: {
+    nombre: "Comercial Chen N.º 2", ini: "CC", zona: "Río Abajo",
+    sub: "Cliente desde 2021 · Río Abajo", promedio: "B/. 620", frecuencia: "15 días", credito: "B/. 900",
+    contacto: "Sr. Roberto Chen · +507 6220-4781", direccion: "Vía España, Río Abajo, local 12-B",
+    ultima: "hoy · reposición línea mascotas",
+    gps: "9.01572° N, 79.49911° O", gpsFin: "9.01570° N, 79.49915° O", letrero: "COMERCIAL CHEN",
+    historial: [["hoy · Luis H.", "Cobro quincenal recibido; reposición entregada."], ["12 jul · Luis H.", "Solicita afiche de perro adulto 22.7 kg."]],
+    nota: "",
+  },
+  robles: {
+    nombre: "Granja Porcina Los Robles", ini: "GR", zona: "Pacora",
+    sub: "Cliente desde 2022 · Pacora, Panamá Este", promedio: "B/. 2,840", frecuencia: "15 días", credito: "B/. 4,500",
+    contacto: "Sra. Vielka Robles · +507 6612-4408", direccion: "Vía Pacora, km 4.5, entrada El Corotú",
+    ultima: "12 jul · 60 × Cerdo Engorde 40 kg",
+    gps: "9.07812° N, 79.28914° O", gpsFin: "9.07809° N, 79.28921° O", letrero: "GRANJA LOS ROBLES",
+    historial: [
+      ["12 jul · Luis H.", "Interesada en fórmula premium; pidió comparativo de conversión alimenticia."],
+      ["27 jun · Luis H.", "Reclamo por saco roto resuelto con nota de crédito."],
+      ["13 jun · <em>Carlos A. (asesor anterior)</em>", "Cliente valora entrega antes de las 9 a.m."],
+    ],
+    nota: "Doña Vielka acepta probar la fórmula premium: 20 sacos de prueba con entrega el martes. Pide mantener precio del engorde regular hasta agosto.",
+  },
+  sanisidro: {
+    nombre: "Agropecuaria San Isidro", ini: "AS", zona: "Tocumen",
+    sub: "Cliente desde 2020 · Tocumen", promedio: "B/. 1,120", frecuencia: "30 días", credito: "⚠ cobro pend. B/. 890",
+    contacto: "Ing. Rosa Batista · +507 6771-0934", direccion: "Vía Tocumen, entrada La Doña, galera 3",
+    ultima: "8 jul · 25 × Ganado Lechero 18% 40 kg",
+    gps: "9.06841° N, 79.38102° O", gpsFin: "9.06844° N, 79.38099° O", letrero: "AGROP. SAN ISIDRO",
+    historial: [["8 jul · Luis H.", "Entregadas muestras de lechero 18 %; evalúa cambio."], ["30 jun · Luis H.", "Factura N.º 4471 pendiente de cobro (B/. 890)."]],
+    nota: "",
+  },
+  fortuna: {
+    nombre: "Minisúper La Fortuna", ini: "MF", zona: "24 de Diciembre",
+    sub: "Prospecto · 24 de Diciembre", promedio: "—", frecuencia: "nuevo", credito: "contado",
+    contacto: "Sra. Mixila Ríos · +507 6415-2280", direccion: "Av. Principal 24 de Diciembre, plaza La Fortuna",
+    ultima: "primera visita — apertura de cliente",
+    gps: "9.09102° N, 79.32455° O", gpsFin: "9.09105° N, 79.32450° O", letrero: "MINISÚPER LA FORTUNA",
+    historial: [["22 jul · IA", "Prospecto captado por WhatsApp; pidió lista de mascotas y aves."]],
+    nota: "",
+  },
+  garzas: {
+    nombre: "Rancho Las Garzas", ini: "RG", zona: "Pacora",
+    sub: "Cliente desde 2023 · Pacora", promedio: "B/. 1,234", frecuencia: "30 días", credito: "B/. 1,500",
+    contacto: "Sr. Edilberto Garzón · +507 6118-7745", direccion: "Camino a San Miguel, finca 8, Pacora",
+    ultima: "2 jul · 30 × Ganado Ceba 40 kg",
+    gps: "9.08511° N, 79.27102° O", gpsFin: "9.08514° N, 79.27099° O", letrero: "RANCHO LAS GARZAS",
+    historial: [["hoy · Carlos A.", "Espera cotización de ganado de ceba (embudo: caliente)."]],
+    nota: "",
+  },
+  nube: {
+    nombre: "Avícola La Nube", ini: "AN", zona: "Las Cumbres",
+    sub: "Cliente desde 2024 · Las Cumbres", promedio: "B/. 760", frecuencia: "21 días", credito: "B/. 800",
+    contacto: "Sr. Ovidio Sánchez · +507 6900-3417", direccion: "Vía Transístmica, km 14, Las Cumbres",
+    ultima: "15 jul · 20 × Pollo Engorde Iniciador 40 kg",
+    gps: "9.11702° N, 79.53411° O", gpsFin: "9.11705° N, 79.53408° O", letrero: "AVÍCOLA LA NUBE",
+    historial: [["15 jul · María E.", "Cliente compartido de zona; compra estable."]],
+    nota: "",
+  },
+  mipueblo: {
+    nombre: "Abarrotería Mi Pueblo", ini: "MP", zona: "San Miguelito",
+    sub: "Cliente desde 2021 · San Miguelito", promedio: "B/. 1,700", frecuencia: "mensual", credito: "B/. 1,700",
+    contacto: "Sra. Yaritza Camarena · +507 6350-9812", direccion: "Paraíso, San Miguelito, frente a la parada",
+    ultima: "14 jun · 40 × Perro Adulto 22.7 kg (hace 41 días)",
+    gps: "9.05412° N, 79.47021° O", gpsFin: "9.05409° N, 79.47025° O", letrero: "ABARR. MI PUEBLO",
+    historial: [["21 jul · sistema", "⚠ Alerta automática: 41 días sin pedido (antes compraba mensual)."], ["14 jun · Luis H.", "Pedido regular de mascotas; sin novedades."]],
+    nota: "",
+  },
+};
+const ORDEN_CLIENTES = ["robles", "sanisidro", "fortuna", "progreso", "chen", "garzas", "nube", "mipueblo"];
+
+const CATALOGO = [
+  { n: "Pollo Engorde Iniciador", p: "saco 40 kg", precio: 21.90 },
+  { n: "Ponedora Postura",        p: "saco 40 kg", precio: 19.75 },
+  { n: "Cerdo Iniciador",         p: "saco 40 kg", precio: 23.50 },
+  { n: "Cerdo Engorde",           p: "saco 40 kg", precio: 20.80 },
+  { n: "Ganado Lechero 18 %",     p: "saco 40 kg", precio: 17.90 },
+  { n: "Perro Adulto",            p: "saco 22.7 kg", precio: 28.00 },
+];
+
+const estado = {
+  online: true,
+  sesionIniciada: false,
+  clienteFicha: "robles",     // ficha abierta
+  clienteActivo: null,        // visita en curso
+  visitaIniciada: null,
+  segundosVisita: 0,
+  cronometro: null,
+  visitaCerrada: false,
+  visitaSincronizada: false,
+  pendienteSync: false,
+  origenPedido: "ficha",
+  pedidoCliente: null,
+  cantidades: CATALOGO.map(() => 0),
+  pedidoVisita: null,         // {total, sacos} de la visita en curso
+  ventasExtra: 0,             // B/. vendidos en la sesión de demo
+  simulacroDestino: null,
+};
+
+/* ───────── utilidades ───────── */
+function avisar(html, tipo = "", ms = 4200) {
+  const caja = $("#avisos");
+  const el = document.createElement("div");
+  el.className = "aviso" + (tipo ? " aviso--" + tipo : "");
+  el.innerHTML = html;
+  caja.appendChild(el);
+  setTimeout(() => {
+    el.classList.add("aviso--saliendo");
+    setTimeout(() => el.remove(), 350);
+  }, ms);
+}
+function horaCorta(fecha = new Date()) {
+  let h = fecha.getHours(), m = fecha.getMinutes();
+  const ap = h >= 12 ? "p.m." : "a.m.";
+  h = h % 12 || 12;
+  return `${h}:${String(m).padStart(2, "0")} ${ap}`;
+}
+function horaReloj(fecha = new Date()) {
+  let h = fecha.getHours() % 12 || 12;
+  return `${h}:${String(fecha.getMinutes()).padStart(2, "0")}`;
+}
+const dinero = n => "B/. " + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const normalizar = t => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+/* fechas en español */
+const hoy = new Date();
+const fmtCorto = hoy.toLocaleDateString("es-PA", { weekday: "short", day: "numeric", month: "short" }).replace(/\.,?/g, "");
+$("#fecha-hoy").textContent = fmtCorto;
+$("#fecha-web").textContent = hoy.toLocaleDateString("es-PA", { weekday: "long", day: "numeric", month: "long" });
+
+/* reloj del teléfono */
+setInterval(() => { $("#hora-telefono").textContent = horaReloj(); }, 5000);
+$("#hora-telefono").textContent = horaReloj();
+
+/* ═══════════ acceso corporativo ═══════════ */
+$("#btn-login").addEventListener("click", () => {
+  estado.sesionIniciada = true;
+  $("#pantalla-login").classList.add("login--fuera");
+  avisar("🔐 Sesión corporativa iniciada. Los datos quedan en la cuenta de la empresa, no en el teléfono personal.");
+});
+
+/* ═══════════ cambio de rol / vistas ═══════════ */
+function mostrarVista(nombre) {
+  $$(".vista").forEach(v => v.classList.remove("vista--activa"));
+  $("#vista-" + nombre).classList.add("vista--activa");
+  $$(".cambio-rol__btn").forEach(b =>
+    b.classList.toggle("cambio-rol__btn--activo", b.dataset.rol === nombre));
+  window.scrollTo({ top: 0 });
+}
+$$("[data-rol]").forEach(el => {
+  el.addEventListener("click", () => mostrarVista(el.dataset.rol));
+  el.addEventListener("keydown", e => { if (e.key === "Enter") mostrarVista(el.dataset.rol); });
+});
+$(".marca").addEventListener("click", () => mostrarVista("inicio"));
+
+/* ═══════════ APP MÓVIL: navegación ═══════════ */
+const TAB_DE = { agenda: "agenda", clientes: "clientes", cliente: "clientes", visita: "clientes", resumen: "clientes", pedido: "clientes", chat: "chat", perfil: "perfil" };
+function mostrarPantallaM(nombre) {
+  $$(".pantalla-m").forEach(p => p.classList.remove("pantalla-m--activa"));
+  $("#pm-" + nombre).classList.add("pantalla-m--activa");
+  $$(".app-movil__tabs .tab").forEach(t =>
+    t.classList.toggle("tab--activa", t.dataset.tab === TAB_DE[nombre]));
+  $("#cuerpo-movil").scrollTop = 0;
+}
+$$("[data-abrir]").forEach(el => {
+  el.addEventListener("click", () => mostrarPantallaM(el.dataset.abrir));
+  el.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); mostrarPantallaM(el.dataset.abrir); } });
+});
+$$("[data-volver]").forEach(el => el.addEventListener("click", () => mostrarPantallaM(el.dataset.volver)));
+$$(".app-movil__tabs .tab").forEach(t => {
+  t.addEventListener("click", () => {
+    const destino = t.dataset.tab;
+    if (destino === "clientes" && estado.visitaIniciada && !estado.visitaCerrada) return mostrarPantallaM("visita");
+    mostrarPantallaM(destino);
+  });
+});
+
+/* ───────── ficha de cliente (dinámica) ───────── */
+function abrirFicha(id, mostrar = true) {
+  const c = CLIENTES[id];
+  estado.clienteFicha = id;
+  $("#ficha-avatar").textContent = c.ini;
+  $("#ficha-nombre").textContent = c.nombre;
+  $("#ficha-sub").textContent = c.sub;
+  $("#ficha-promedio").textContent = c.promedio;
+  $("#ficha-frecuencia").textContent = c.frecuencia;
+  $("#ficha-credito").textContent = c.credito;
+  $("#ficha-contacto").textContent = c.contacto;
+  $("#ficha-direccion").textContent = c.direccion;
+  $("#ficha-ultima").textContent = c.ultima;
+  $("#ficha-historial").innerHTML = c.historial
+    .map(([quien, que]) => `<li><small>${quien}</small> ${que}</li>`).join("");
+  if (mostrar) mostrarPantallaM("cliente");
+}
+$$(".visita[data-cliente]").forEach(li => {
+  li.addEventListener("click", () => abrirFicha(li.dataset.cliente));
+  li.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrirFicha(li.dataset.cliente); } });
+});
+
+/* ───────── lista de clientes + buscador ───────── */
+function renderClientes(filtro = "") {
+  const f = normalizar(filtro.trim());
+  const lista = $("#lista-clientes");
+  lista.innerHTML = "";
+  ORDEN_CLIENTES.forEach(id => {
+    const c = CLIENTES[id];
+    if (f && !normalizar(c.nombre + " " + c.zona + " " + c.contacto).includes(f)) return;
+    const li = document.createElement("li");
+    li.className = "cliente-item";
+    li.setAttribute("role", "button");
+    li.tabIndex = 0;
+    const chipExtra = id === "sanisidro"
+      ? '<span class="chip" style="background:rgba(196,85,45,.13);color:var(--teja-osc)">cobro B/. 890</span>'
+      : id === "fortuna"
+        ? '<span class="chip chip--asesor">nuevo</span>'
+        : `<span class="chip chip--verde">${c.promedio}</span>`;
+    li.innerHTML = `
+      <span class="avatar avatar--cliente">${c.ini}</span>
+      <div class="cliente-item__info"><strong>${c.nombre}</strong><small>${c.zona} · últ.: ${c.ultima}</small></div>
+      <div class="cliente-item__chips">${chipExtra}</div>`;
+    const abrir = () => abrirFicha(id);
+    li.addEventListener("click", abrir);
+    li.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrir(); } });
+    lista.appendChild(li);
+  });
+  if (!lista.children.length)
+    lista.innerHTML = '<li class="lista-clientes__pie">Sin resultados en la cartera local. La búsqueda completa corre en la central.</li>';
+}
+$("#busca-cliente").addEventListener("input", e => renderClientes(e.target.value));
+
+/* ───────── señal / modo offline ───────── */
+const btnSenal = $("#interruptor-senal");
+function pintarSync() {
+  const chip = $("#chip-sync"), txt = $("#chip-sync-texto");
+  chip.className = "chip-sync";
+  if (!estado.online && estado.pendienteSync) { chip.classList.add("chip-sync--off"); txt.textContent = "1 visita en el teléfono"; }
+  else if (!estado.online)                    { chip.classList.add("chip-sync--off"); txt.textContent = "Sin señal · modo local"; }
+  else if (estado.pendienteSync)              { chip.classList.add("chip-sync--pend"); txt.textContent = "Sincronizando…"; }
+  else                                        { chip.classList.add("chip-sync--ok"); txt.textContent = "Sincronizado"; }
+}
+function fijarSenal(online, silencioso = false) {
+  estado.online = online;
+  btnSenal.className = "senal " + (online ? "senal--ok" : "senal--off");
+  btnSenal.querySelector(".senal__texto").textContent = online ? "4G" : "×";
+  if (!silencioso) {
+    if (online) avisar("📶 Señal recuperada." + (estado.pendienteSync ? " Sincronizando lo guardado en el teléfono…" : ""));
+    else avisar("📵 <strong>Sin cobertura.</strong> La app sigue funcionando: todo se guarda en el teléfono.", "teja", 5000);
+  }
+  pintarSync();
+  if (online && estado.pendienteSync) setTimeout(sincronizarVisita, 900);
+}
+btnSenal.addEventListener("click", () => fijarSenal(!estado.online));
+
+/* ───────── flujo de visita (genérico para cualquier cliente) ───────── */
+const ACELERACION = 20; // 1 s real = 20 s de visita (rotulado en pantalla)
+
+$("#btn-iniciar-visita").addEventListener("click", () => {
+  const c = CLIENTES[estado.clienteFicha];
+  estado.clienteActivo = estado.clienteFicha;
+  estado.visitaIniciada = new Date();
+  estado.segundosVisita = 0;
+  estado.visitaCerrada = false;
+  estado.visitaSincronizada = false;
+  estado.pedidoVisita = null;
+
+  $("#visita-cliente").textContent = `${c.nombre} · ${c.zona}`;
+  $("#gps-inicio").textContent = "📍 " + c.gps;
+  $("#hora-inicio").textContent = "Inicio " + horaCorta();
+  $("#bitacora").value = c.nota;
+  $("#chip-pedido").hidden = true;
+  $$("#opciones-resultado .opcion").forEach(o =>
+    o.classList.toggle("opcion--activa", o.dataset.res === "negociacion"));
+  $("#cronometro").textContent = "00:00";
+
+  clearInterval(estado.cronometro);
+  estado.cronometro = setInterval(() => {
+    estado.segundosVisita += ACELERACION;
+    const m = Math.floor(estado.segundosVisita / 60), s = estado.segundosVisita % 60;
+    $("#cronometro").textContent = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  }, 1000);
+  mostrarPantallaM("visita");
+  avisar("📍 GPS capturado y visita iniciada. La central ya ve a Luis <em>en visita</em> en el mapa.");
+});
+
+$$("#opciones-resultado .opcion").forEach(op => op.addEventListener("click", () => {
+  $$("#opciones-resultado .opcion").forEach(o => o.classList.remove("opcion--activa"));
+  op.classList.add("opcion--activa");
+}));
+
+/* ───────── toma de pedido ───────── */
+function renderCatalogo() {
+  const ul = $("#catalogo");
+  ul.innerHTML = "";
+  CATALOGO.forEach((prod, i) => {
+    const li = document.createElement("li");
+    li.className = "prod";
+    li.innerHTML = `
+      <div class="prod__info"><strong>${prod.n}</strong><small>${prod.p} · ${dinero(prod.precio)}</small></div>
+      <div class="prod__paso">
+        <button type="button" data-m="-1" aria-label="Quitar uno">−</button>
+        <b>0</b>
+        <button type="button" data-m="1" aria-label="Agregar uno">+</button>
+      </div>`;
+    li.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+      estado.cantidades[i] = Math.max(0, estado.cantidades[i] + Number(b.dataset.m));
+      li.querySelector("b").textContent = estado.cantidades[i];
+      li.classList.toggle("prod--con", estado.cantidades[i] > 0);
+      pintarTotalPedido();
+    }));
+    ul.appendChild(li);
+  });
+}
+function pintarTotalPedido() {
+  const total = CATALOGO.reduce((s, p, i) => s + p.precio * estado.cantidades[i], 0);
+  $("#pedido-total").textContent = dinero(total);
+  return total;
+}
+function abrirPedido(origen) {
+  estado.origenPedido = origen;
+  const id = origen === "visita" ? estado.clienteActivo : estado.clienteFicha;
+  if (estado.pedidoCliente !== id) {
+    estado.pedidoCliente = id;
+    estado.cantidades = CATALOGO.map(() => 0);
+    $$("#catalogo .prod").forEach(p => { p.querySelector("b").textContent = "0"; p.classList.remove("prod--con"); });
+    pintarTotalPedido();
+  }
+  $("#pedido-cliente").textContent = CLIENTES[id].nombre;
+  mostrarPantallaM("pedido");
+}
+$("#btn-tomar-pedido").addEventListener("click", () => abrirPedido("visita"));
+$("#btn-pedido-ficha").addEventListener("click", () => abrirPedido("ficha"));
+$("#volver-pedido").addEventListener("click", () =>
+  mostrarPantallaM(estado.origenPedido === "visita" ? "visita" : "cliente"));
+
+$("#btn-guardar-pedido").addEventListener("click", () => {
+  const total = pintarTotalPedido();
+  const sacos = estado.cantidades.reduce((a, b) => a + b, 0);
+  if (!sacos) return avisar("Agregue al menos un producto al pedido.", "ambar");
+  estado.ventasExtra += total;
+  actualizarPerfil();
+  const enVisita = estado.origenPedido === "visita" && estado.visitaIniciada && !estado.visitaCerrada;
+  if (enVisita) {
+    estado.pedidoVisita = { total, sacos };
+    const chip = $("#chip-pedido");
+    chip.hidden = false;
+    chip.textContent = `🧾 Pedido de la visita: ${sacos} sacos · ${dinero(total)}`;
+    $$("#opciones-resultado .opcion").forEach(o =>
+      o.classList.toggle("opcion--activa", o.dataset.res === "pedido"));
+    mostrarPantallaM("visita");
+    avisar(`🧾 Pedido guardado: <strong>${sacos} sacos · ${dinero(total)}</strong>. Queda amarrado a la visita con GPS y foto.`);
+  } else {
+    mostrarPantallaM("cliente");
+    avisar(`💾 Pedido de <strong>${dinero(total)}</strong> guardado para ${CLIENTES[estado.pedidoCliente].nombre}. La central lo ve al instante.`);
+  }
+});
+
+/* ───────── finalizar → cámara obligatoria ───────── */
+$("#btn-finalizar").addEventListener("click", () => {
+  const c = CLIENTES[estado.clienteActivo || "robles"];
+  const letrero = $("#letrero-foto");
+  letrero.textContent = c.letrero;
+  letrero.setAttribute("font-size", c.letrero.length > 17 ? "10.5" : "13");
+  $("#camara-gps").textContent = c.gpsFin.replace(",", " ·");
+  $("#camara-hora").textContent = horaCorta();
+  $("#modal-camara").hidden = false;
+});
+
+$("#btn-obturador").addEventListener("click", () => {
+  const flash = $("#camara-flash");
+  flash.classList.remove("camara__flash--activo");
+  void flash.offsetWidth;
+  flash.classList.add("camara__flash--activo");
+  setTimeout(() => {
+    $("#modal-camara").hidden = true;
+    cerrarVisita();
+  }, 620);
+});
+
+function cerrarVisita() {
+  clearInterval(estado.cronometro);
+  estado.visitaCerrada = true;
+  const c = CLIENTES[estado.clienteActivo];
+
+  /* evidencia: la "foto" tomada + estampa de datos */
+  const figura = $("#evidencia-foto");
+  const foto = $("#foto-svg").cloneNode(true);
+  foto.removeAttribute("id");
+  figura.innerHTML = "";
+  figura.appendChild(foto);
+  const pie = document.createElement("figcaption");
+  pie.textContent = `📍 ${c.gpsFin} · ${horaCorta()} · ${fmtCorto}`;
+  figura.appendChild(pie);
+
+  /* datos del resumen */
+  const min = Math.max(1, Math.round(estado.segundosVisita / 60));
+  $("#res-duracion").textContent = `${min} min (⏩ demo ×${ACELERACION})`;
+  $("#res-gps-ini").textContent = c.gps;
+  $("#res-gps-fin").textContent = c.gpsFin;
+  $("#res-resultado").textContent = $("#opciones-resultado .opcion--activa").textContent;
+  const wrap = $("#res-pedido-wrap");
+  if (estado.pedidoVisita) {
+    wrap.hidden = false;
+    $("#res-pedido").textContent = `${dinero(estado.pedidoVisita.total)} · ${estado.pedidoVisita.sacos} sacos`;
+  } else wrap.hidden = true;
+  const nota = $("#bitacora").value.trim();
+  $("#res-nota").textContent = nota ? "“" + nota + "”" : "(sin notas de bitácora)";
+
+  const sello = $("#sello-verificada");
+  sello.style.animation = "none"; void sello.offsetWidth; sello.style.animation = "";
+
+  $("#btn-sincronizar").hidden = false;
+  $("#aviso-offline").hidden = true;
+  $("#volver-agenda-oculto").hidden = true;
+  mostrarPantallaM("resumen");
+}
+
+/* ───────── sincronización (el momento offline-first) ───────── */
+$("#btn-sincronizar").addEventListener("click", () => {
+  if (!estado.online) {
+    estado.pendienteSync = true;
+    $("#aviso-offline").hidden = false;
+    $("#btn-sincronizar").hidden = true;
+    pintarSync();
+    avisar("💾 Visita guardada <strong>en el teléfono</strong>. Se enviará sola al volver la señal.", "ambar", 5200);
+    return;
+  }
+  sincronizarVisita();
+});
+$("#btn-recuperar-senal").addEventListener("click", () => fijarSenal(true));
+
+function visitasHechas() { return $$(".lista-visitas .visita[data-cliente].visita--hecha").length; }
+function visitasTotales() { return $$(".lista-visitas .visita[data-cliente]").length; }
+
+function actualizarProgreso() {
+  const n = visitasHechas(), t = visitasTotales();
+  $("#progreso-texto").textContent = n >= t ? `¡Ruta completa! ${n} de ${t}` : `${n} de ${t} visitas`;
+  $("#progreso-barra").style.setProperty("--p", (n / t * 100) + "%");
+  actualizarPerfil();
+}
+function actualizarPerfil() {
+  $("#perfil-visitas").textContent = `${visitasHechas()}/${visitasTotales()}`;
+  $("#perfil-pedidos").textContent = "B/. " + Math.round(1580 + estado.ventasExtra).toLocaleString("en-US");
+}
+function promoverSiguiente() {
+  const prox = $(".lista-visitas .visita[data-cliente]:not(.visita--hecha)");
+  if (!prox || prox.classList.contains("visita--siguiente")) return;
+  prox.classList.add("visita--siguiente");
+  prox.querySelector(".visita__estado").innerHTML = '<span class="visita__cta">SIGUIENTE →</span>';
+}
+
+function sincronizarVisita() {
+  if (estado.visitaSincronizada || !estado.visitaCerrada) return;
+  estado.pendienteSync = true; pintarSync();
+  setTimeout(() => {
+    estado.pendienteSync = false;
+    estado.visitaSincronizada = true;
+    pintarSync();
+
+    const id = estado.clienteActivo;
+    const c = CLIENTES[id];
+    const li = $("#v-" + id);
+    let fueraDeRuta = true;
+    if (li && !li.classList.contains("visita--hecha")) {
+      fueraDeRuta = false;
+      li.classList.remove("visita--siguiente");
+      li.classList.add("visita--hecha");
+      li.querySelector(".visita__estado").innerHTML = '<span class="sello sello--mini">VERIFICADA</span>';
+      promoverSiguiente();
+      actualizarProgreso();
+    } else if (li) fueraDeRuta = false;
+
+    const pedidoTxt = estado.pedidoVisita ? ` · pedido ${dinero(estado.pedidoVisita.total)}` : "";
+    const feed = $("#feed-actividad");
+    const item = document.createElement("li");
+    item.className = "nuevo";
+    item.innerHTML = `<span class="mono">${horaReloj()}</span> <b>Luis H.</b> sincronizó la visita a <b>${c.nombre}</b> · GPS + foto + bitácora ✓${pedidoTxt}${fueraDeRuta ? " · fuera de ruta" : ""}`;
+    feed.prepend(item);
+
+    $("#aviso-offline").hidden = true;
+    $("#btn-sincronizar").hidden = true;
+    $("#volver-agenda-oculto").hidden = false;
+    if (visitasHechas() >= visitasTotales())
+      avisar(`🏁 <strong>Ruta del día completa: ${visitasHechas()} de ${visitasTotales()} visitas verificadas.</strong> Reporte del día listo sin escribir un solo correo.`, "", 6000);
+    else
+      avisar("☁️ <strong>Visita sincronizada con la central.</strong> El coordinador ya la ve en su panel, con foto y GPS.");
+  }, 1400);
+}
+
+/* ───────── chat móvil (Luis ↔ clienta) ───────── */
+const respuestasVielka = [
+  "Perfecto Luis, gracias 🙏",
+  "Listo, quedo pendiente entonces.",
+  "¿Me manda la cotización de una vez por aquí?",
+  "Dale, nos vemos el martes 👍",
+];
+let idxVielka = 0;
+$("#form-chat-movil").addEventListener("submit", e => {
+  e.preventDefault();
+  const input = e.target.querySelector("input");
+  const texto = input.value.trim();
+  if (!texto) return;
+  agregarBurbuja($("#hilo-movil"), "yo", texto);
+  input.value = "";
+  responderConEscritura($("#hilo-movil"), "cliente", respuestasVielka[idxVielka++ % respuestasVielka.length]);
+});
+
+function agregarBurbuja(hilo, tipo, html, horaExtra = "") {
+  const b = document.createElement("div");
+  b.className = "burbuja burbuja--" + tipo;
+  b.innerHTML = html + `<span class="burbuja__hora">${horaReloj()}${horaExtra}</span>`;
+  hilo.appendChild(b);
+  hilo.scrollTop = hilo.scrollHeight;
+  return b;
+}
+function responderConEscritura(hilo, tipo, texto, horaExtra = "") {
+  const puntos = document.createElement("div");
+  puntos.className = "escribiendo";
+  if (tipo === "cliente") puntos.style.alignSelf = "flex-start";
+  puntos.innerHTML = "<i></i><i></i><i></i>";
+  setTimeout(() => { hilo.appendChild(puntos); hilo.scrollTop = hilo.scrollHeight; }, 500);
+  setTimeout(() => { puntos.remove(); agregarBurbuja(hilo, tipo, texto, horaExtra); }, 1700);
+}
+
+/* ═══════════ CONSOLA DEL COORDINADOR ═══════════ */
+function mostrarPanel(nombre) {
+  $$(".panel").forEach(p => p.classList.remove("panel--activo"));
+  $("#pw-" + nombre).classList.add("panel--activo");
+  $$(".lateral__btn").forEach(b =>
+    b.classList.toggle("lateral__btn--activo", b.dataset.panel === nombre));
+}
+$$(".lateral__btn").forEach(b => b.addEventListener("click", () => mostrarPanel(b.dataset.panel)));
+$$("[data-panel-ir]").forEach(b => b.addEventListener("click", () => mostrarPanel(b.dataset.panelIr)));
+
+/* ───────── bandeja única: hilos por conversación ───────── */
+const HILOS = {
+  bella: null,
+  nidia: {
+    nombre: "Avícola Doña Nidia", canal: "wa", atiende: "ia",
+    mensajes: [
+      ["cliente", "Buenas noches, ¿tienen alimento para ponedora? ¿A cómo el saco?", "03:11"],
+      ["ia", "¡Buenas noches! 🐔 Claro que sí:<br>• <strong>Ponedora Postura 40 kg — B/. 19.75</strong><br>• Pollo Engorde Iniciador 40 kg — B/. 21.90<br>¿Para cuántas aves sería? Así le calculo el consumo mensual.", "03:12 · IA"],
+      ["cliente", "Tengo como 400 gallinas. Mañana le pregunto por la entrega, gracias!", "03:15"],
+      ["ia", "Con 400 ponedoras estaría consumiendo ±38 sacos/mes 📊 Le dejo la nota al asesor de su zona para que le escriba en la mañana. ¡Buenas noches!", "03:15 · IA"],
+    ],
+    ficha: { origen: "WhatsApp · consulta nocturna", interes: "Ponedora · ~38 sacos/mes", valor: "B/. 750 /mes", temp: "templado", asesor: "🤖 IA (nota para María E.)" },
+  },
+  robles: {
+    nombre: "Granja Los Robles", canal: "wa", atiende: "asesor", asesorNombre: "Luis H.",
+    mensajes: [
+      ["cliente", "Luis, ¿me confirma si la entrega del martes puede ser antes de las 9?", "11:02"],
+      ["ia", "Buen día, Sra. Vielka 🌱 Luis está en visita; ya registré su solicitud de entrega <strong>antes de las 9 a.m.</strong>", "11:02 · IA"],
+      ["yo", "Confirmado doña Vielka: camión llega 8:15 a.m. con los 20 sacos de prueba premium. 🚚", "11:36"],
+    ],
+    ficha: { origen: "Cliente activo desde 2022", interes: "Prueba fórmula premium cerdos", valor: "B/. 2,840 /mes", temp: "caliente", asesor: "Luis Herrera" },
+  },
+  machetazo: {
+    nombre: "Comercial El Machetazo", canal: "fb", atiende: "asesor", asesorNombre: "Carlos A.",
+    mensajes: [
+      ["cliente", "Carlos, pasaron por el cobro? El administrador no me confirma.", "10:40"],
+      ["yo", "Sí señor, pasé a las 10:45. Le adjunto el recibo firmado ✓ Quedó programada la reposición quincenal.", "10:58"],
+      ["cliente", "Perfecto, gracias por la gestión.", "11:02"],
+    ],
+    ficha: { origen: "Messenger · página corporativa", interes: "Reposición quincenal mascotas", valor: "B/. 1,250 /quincena", temp: "cierre", asesor: "Carlos Ábrego" },
+  },
+  xtra: {
+    nombre: "Súper Xtra Vía España", canal: "fb", atiende: "asesor", asesorNombre: "María E.",
+    mensajes: [
+      ["cliente", "María, ¿nos comparte la propuesta del exhibidor para la sección de mascotas?", "09:12"],
+      ["yo", "¡Claro! Aquí va la propuesta: exhibidor de 1.8 m con 3 presentaciones de alimento premium. Incluye material POP. 📎 propuesta_xtra.pdf", "09:40"],
+    ],
+    ficha: { origen: "Messenger · cadena retail", interes: "Exhibidor categoría mascotas", valor: "B/. 3,740 /mes", temp: "templado", asesor: "María Espinosa" },
+  },
+};
+const FICHA_BELLA = { origen: "WhatsApp · anuncio de Facebook", interes: "Cerdo engorde · ~120 sacos/mes", valor: "B/. 2,496 /mes", temp: "caliente", asesor: "🤖 IA (sin asignar)" };
+
+let convoActiva = "bella";
+let bellaTransferida = false;
+HILOS.bella = { html: $("#hilo-web").innerHTML };
+
+function pintarConvo(clave) {
+  convoActiva = clave;
+  $$(".convo").forEach(c => c.classList.toggle("convo--activa", c.dataset.convo === clave));
+  const hilo = $("#hilo-web");
+  const cab = $(".hilo__cabecera div");
+  const chip = $("#chip-atiende");
+  const btnT = $("#btn-transferir");
+  const formW = $("#form-chat-web");
+
+  if (clave === "bella") {
+    hilo.innerHTML = HILOS.bella.html;
+    cab.innerHTML = '<strong>Granja Bella Vista</strong> <span class="canal canal--wa">WhatsApp</span>';
+    if (bellaTransferida) {
+      chip.textContent = "👤 Carlos A."; chip.className = "chip chip--asesor";
+      btnT.hidden = true; formW.hidden = false;
+    } else {
+      chip.textContent = "🤖 atiende la IA"; chip.className = "chip chip--ia";
+      btnT.hidden = false; formW.hidden = true;
+    }
+    pintarFichaProspecto("Granja Bella Vista", "La Chorrera, Panamá Oeste", "BV", FICHA_BELLA, bellaTransferida ? "Carlos Ábrego" : null);
+    return;
+  }
+
+  const d = HILOS[clave];
+  hilo.innerHTML = "";
+  d.mensajes.forEach(([tipo, texto, hora]) => {
+    const b = document.createElement("div");
+    b.className = "burbuja burbuja--" + tipo;
+    b.innerHTML = texto + `<span class="burbuja__hora">${hora}</span>`;
+    hilo.appendChild(b);
+  });
+  cab.innerHTML = `<strong>${d.nombre}</strong> <span class="canal canal--${d.canal}">${d.canal === "wa" ? "WhatsApp" : "Messenger"}</span>`;
+  if (d.atiende === "ia") { chip.textContent = "🤖 atiende la IA"; chip.className = "chip chip--ia"; }
+  else { chip.textContent = "👤 " + d.asesorNombre; chip.className = "chip chip--asesor"; }
+  btnT.hidden = true; formW.hidden = d.atiende === "ia";
+  const iniciales = d.nombre.split(" ").map(p => p[0]).join("").slice(0, 2).toUpperCase();
+  pintarFichaProspecto(d.nombre, d.ficha.origen.split("·")[1]?.trim() ?? "", iniciales, d.ficha);
+}
+$$(".convo").forEach(c => c.addEventListener("click", () => pintarConvo(c.dataset.convo)));
+
+function pintarFichaProspecto(nombre, sub, iniciales, f, asesorForzado = null) {
+  const caja = $(".bandeja__ficha");
+  caja.querySelector(".prospecto strong").textContent = nombre;
+  caja.querySelector(".prospecto small").textContent = sub || f.origen;
+  caja.querySelector(".prospecto .avatar").textContent = iniciales;
+  const dds = caja.querySelectorAll(".ficha__datos--web dd");
+  dds[0].textContent = f.origen;
+  dds[1].textContent = f.interes;
+  dds[2].innerHTML = `<strong>${f.valor}</strong>`;
+  dds[3].textContent = f.asesor.includes("IA") ? "🤖 IA · calificación automática" : "registro del asesor";
+  caja.querySelectorAll(".temp").forEach(t => t.classList.remove("temp--activa"));
+  const mapa = { frio: ".temp--frio", templado: ".temp--templado", caliente: ".temp--caliente", cierre: ".temp--caliente" };
+  caja.querySelector(mapa[f.temp] || ".temp--frio").classList.add("temp--activa");
+  const asig = $("#asignacion-prospecto");
+  const quien = asesorForzado || f.asesor;
+  asig.innerHTML = quien.includes("IA")
+    ? `<span class="chip chip--ia">${quien}</span>`
+    : `<span class="chip chip--asesor">👤 ${quien}</span>`;
+}
+
+/* transferir la conversación IA → asesor */
+$("#btn-transferir").addEventListener("click", () => {
+  bellaTransferida = true;
+  const hilo = $("#hilo-web");
+  const sist = document.createElement("div");
+  sist.className = "burbuja burbuja--ia";
+  sist.innerHTML = `⇄ <strong>Conversación transferida a Carlos Ábrego</strong> (asesor zona Oeste).<br>Resumen para el asesor: cliente con 250 cerdos · pide ~120 sacos/mes · acepta visita el lunes a.m. · aplica precio mayorista.<span class="burbuja__hora">${horaReloj()} · sistema</span>`;
+  hilo.appendChild(sist);
+  hilo.scrollTop = hilo.scrollHeight;
+  $("#chip-atiende").textContent = "👤 Carlos A.";
+  $("#chip-atiende").className = "chip chip--asesor";
+  $("#btn-transferir").hidden = true;
+  $("#form-chat-web").hidden = false;
+  $("#asignacion-prospecto").innerHTML = '<span class="chip chip--asesor">👤 Carlos Ábrego</span>';
+  HILOS.bella.html = hilo.innerHTML;
+  avisar("⇄ Prospecto asignado a <strong>Carlos Ábrego</strong> con todo el contexto de la IA. Nada que reexplicar.");
+});
+
+/* responder como asesor en la bandeja */
+const respuestasBella = [
+  "Dale, lo espero el lunes entonces. 👍",
+  "¿El precio mayorista me lo respetan todo el año?",
+  "Perfecto, aquí lo espero con las muestras.",
+];
+let idxBella = 0;
+$("#form-chat-web").addEventListener("submit", e => {
+  e.preventDefault();
+  const input = e.target.querySelector("input");
+  const texto = input.value.trim();
+  if (!texto) return;
+  const hilo = $("#hilo-web");
+  agregarBurbuja(hilo, "yo", texto);
+  input.value = "";
+  responderConEscritura(hilo, "cliente", respuestasBella[idxBella++ % respuestasBella.length]);
+  if (convoActiva === "bella") setTimeout(() => { HILOS.bella.html = hilo.innerHTML; }, 2600);
+});
+
+/* ───────── kanban: arrastrar o doble clic ───────── */
+let arrastrada = null;
+$$(".tarjeta-lead").forEach(t => {
+  t.addEventListener("dragstart", () => { arrastrada = t; t.classList.add("tarjeta-lead--arrastrando"); });
+  t.addEventListener("dragend", () => { t.classList.remove("tarjeta-lead--arrastrando"); arrastrada = null; });
+  t.addEventListener("dblclick", () => {
+    const col = t.closest(".columna");
+    const sig = col.nextElementSibling;
+    if (!sig) return avisar("🤝 Ya está en <strong>Cierre</strong>. ¡A facturar!");
+    sig.querySelector(".columna__cuerpo").prepend(t);
+    recalcularKanban();
+    avisar(`Tarjeta movida a <strong>${sig.querySelector("header").textContent.trim().split(" ")[0]}</strong>.`);
+  });
+});
+$$(".columna").forEach(col => {
+  const cuerpo = col.querySelector(".columna__cuerpo");
+  col.addEventListener("dragover", e => { e.preventDefault(); col.classList.add("columna--sobre"); });
+  col.addEventListener("dragleave", () => col.classList.remove("columna--sobre"));
+  col.addEventListener("drop", e => {
+    e.preventDefault();
+    col.classList.remove("columna--sobre");
+    if (arrastrada) { cuerpo.prepend(arrastrada); recalcularKanban(); }
+  });
+});
+function recalcularKanban() {
+  $$(".columna").forEach(col => {
+    let total = 0;
+    col.querySelectorAll(".tarjeta-lead__pie").forEach(p => {
+      const m = p.textContent.match(/B\/\.\s*([\d,]+)/);
+      if (m) total += parseInt(m[1].replace(/,/g, ""), 10);
+    });
+    col.querySelector(".columna__monto").textContent = "B/. " + total.toLocaleString("en-US");
+  });
+}
+
+/* ───────── mapa: detalle por asesor ───────── */
+const DETALLE_MAPA = {
+  luis: {
+    nombre: "Luis Herrera", zona: "Zona Panamá Este", avatar: "avatar--lh", ini: "LH",
+    estado: '<span class="chip" style="background:rgba(196,85,45,.13);color:var(--teja-osc)">● en visita</span>',
+    contenido: `
+      <dl>
+        <dt>Visita en curso</dt><dd><strong>Granja Porcina Los Robles</strong> · Pacora (parada 3 de 5)</dd>
+        <dt>Check-in</dt><dd class="mono">11:41 a.m. · 9.07812° N, 79.28914° O</dd>
+        <dt>Tiempo en sitio</dt><dd id="mapa-timer" class="mono">00:17:23</dd>
+      </dl>
+      <figure class="evidencia" id="evidencia-mapa"></figure>
+      <dl><dt>Última evidencia</dt><dd>Foto de fachada + GPS ✓ <span class="chip chip--verde">VERIFICADA</span></dd></dl>`,
+  },
+  maria: {
+    nombre: "María Espinosa", zona: "Zona Centro", avatar: "avatar--me", ini: "ME",
+    estado: '<span class="chip" style="background:rgba(196,85,45,.13);color:var(--teja-osc)">● en visita</span>',
+    contenido: `
+      <dl>
+        <dt>Visita en curso</dt><dd><strong>Súper Xtra Vía España</strong> (parada 3 de 5)</dd>
+        <dt>Check-in</dt><dd class="mono">11:32 a.m. · 9.00814° N, 79.50293° O</dd>
+        <dt>Gestión</dt><dd>Presentación de exhibidor para categoría mascotas</dd>
+        <dt>Hoy</dt><dd>3 visitas verificadas · 1 pedido tomado (B/. 940)</dd>
+      </dl>`,
+  },
+  carlos: {
+    nombre: "Carlos Ábrego", zona: "Zona Oeste", avatar: "avatar--ca", ini: "CA",
+    estado: '<span class="chip" style="background:rgba(232,161,61,.18);color:var(--ambar-osc)">→ en desplazamiento</span>',
+    contenido: `
+      <dl>
+        <dt>Próxima parada</dt><dd><strong>Rancho Las Garzas</strong> · cita 1:30 p.m. (llega en 24 min)</dd>
+        <dt>Recorrido de hoy</dt><dd>4 visitas verificadas · cobro de B/. 1,250 registrado</dd>
+        <dt>Nuevo asignado</dt><dd>Granja Bella Vista 🔥 (visita el lunes con muestras)</dd>
+      </dl>`,
+  },
+};
+let timerMapa = null;
+$$(".pin").forEach(pin => pin.addEventListener("click", () => {
+  $$(".pin").forEach(p => p.classList.remove("pin--activo"));
+  pin.classList.add("pin--activo");
+  const d = DETALLE_MAPA[pin.dataset.asesor];
+  $("#mapa-detalle").innerHTML = `
+    <div class="tarjeta-asesor">
+      <div class="tarjeta-asesor__cabecera">
+        <span class="avatar ${d.avatar}">${d.ini}</span>
+        <div><strong>${d.nombre}</strong><small>${d.zona}</small></div>
+        <span style="margin-left:auto">${d.estado}</span>
+      </div>
+      ${d.contenido}
+    </div>`;
+  clearInterval(timerMapa);
+  if (pin.dataset.asesor === "luis") {
+    const fig = $("#evidencia-mapa");
+    const foto = $("#foto-svg").cloneNode(true);
+    foto.removeAttribute("id");
+    fig.appendChild(foto);
+    const pie = document.createElement("figcaption");
+    pie.textContent = "📍 9.07809° N, 79.28921° O · 11:58 a.m.";
+    fig.appendChild(pie);
+    let seg = 17 * 60 + 23;
+    timerMapa = setInterval(() => {
+      seg++;
+      const el = $("#mapa-timer");
+      if (!el) return clearInterval(timerMapa);
+      const h = String(Math.floor(seg / 3600)).padStart(2, "0"),
+            m = String(Math.floor((seg % 3600) / 60)).padStart(2, "0"),
+            s = String(seg % 60).padStart(2, "0");
+      el.textContent = `${h}:${m}:${s}`;
+    }, 1000);
+  }
+}));
+
+/* ───────── equipo: simulacro de rotación (repetible) ───────── */
+const modal = $("#modal-reasignar");
+$("#btn-simular-salida").addEventListener("click", () => {
+  if (estado.simulacroDestino) return avisar("Restaure el simulacro (↺) para repetirlo.", "ambar");
+  modal.hidden = false;
+});
+$$("[data-cerrar-modal]").forEach(el => el.addEventListener("click", () => { modal.hidden = true; }));
+
+const CARTERA_LUIS = { clientes: 143, chats: 1286, negocios: 12 };
+const BASE = {
+  maria: { clientes: 128, chats: 1102, negocios: 9 },
+  carlos: { clientes: 141, chats: 860, negocios: 8 },
+};
+
+$$(".opcion-destino").forEach(op => op.addEventListener("click", () => {
+  modal.hidden = true;
+  const destino = op.dataset.destino;
+  estado.simulacroDestino = destino;
+  const nombreDestino = destino === "maria" ? "María Espinosa" : "Carlos Ábrego";
+
+  $('[data-fila="luis"]').classList.add("asesor-fila--saliente");
+  $(`[data-fila="${destino}"]`).classList.add("asesor-fila--receptor");
+
+  animarNumero($("#eq-luis-clientes"), CARTERA_LUIS.clientes, 0);
+  animarNumero($("#eq-luis-chats"), CARTERA_LUIS.chats, 0);
+  animarNumero($("#eq-luis-negocios"), CARTERA_LUIS.negocios, 0);
+  const b = BASE[destino];
+  animarNumero($(`#eq-${destino}-clientes`), b.clientes, b.clientes + CARTERA_LUIS.clientes);
+  animarNumero($(`#eq-${destino}-chats`), b.chats, b.chats + CARTERA_LUIS.chats);
+  animarNumero($(`#eq-${destino}-negocios`), b.negocios, b.negocios + CARTERA_LUIS.negocios);
+
+  const feed = $("#feed-actividad");
+  const item = document.createElement("li");
+  item.className = "nuevo";
+  item.innerHTML = `<span class="mono">${horaReloj()}</span> 🔒 Cartera de <b>Luis H.</b> reasignada a <b>${nombreDestino}</b>: 143 clientes, 1,286 chats y 12 negociaciones. <b>Cero pérdida de información.</b>`;
+  feed.prepend(item);
+
+  $("#btn-restaurar-simulacro").hidden = false;
+  avisar(`🔒 <strong>Cartera transferida a ${nombreDestino} en 4 segundos.</strong> Chats, contactos, direcciones y bitácoras intactos. Con WhatsApp personal, esto se habría perdido.`, "", 7000);
+}));
+
+$("#btn-restaurar-simulacro").addEventListener("click", () => {
+  const destino = estado.simulacroDestino;
+  if (!destino) return;
+  estado.simulacroDestino = null;
+  $('[data-fila="luis"]').classList.remove("asesor-fila--saliente");
+  $(`[data-fila="${destino}"]`).classList.remove("asesor-fila--receptor");
+  const b = BASE[destino];
+  animarNumero($("#eq-luis-clientes"), 0, CARTERA_LUIS.clientes);
+  animarNumero($("#eq-luis-chats"), 0, CARTERA_LUIS.chats);
+  animarNumero($("#eq-luis-negocios"), 0, CARTERA_LUIS.negocios);
+  animarNumero($(`#eq-${destino}-clientes`), b.clientes + CARTERA_LUIS.clientes, b.clientes);
+  animarNumero($(`#eq-${destino}-chats`), b.chats + CARTERA_LUIS.chats, b.chats);
+  animarNumero($(`#eq-${destino}-negocios`), b.negocios + CARTERA_LUIS.negocios, b.negocios);
+  $("#btn-restaurar-simulacro").hidden = true;
+  avisar("↺ Simulacro restaurado. Puede repetirlo las veces que quiera durante la reunión.");
+});
+
+function animarNumero(el, desde, hasta, ms = 1300) {
+  const t0 = performance.now();
+  function paso(t) {
+    const p = Math.min(1, (t - t0) / ms);
+    const suave = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(desde + (hasta - desde) * suave).toLocaleString("en-US");
+    if (p < 1) requestAnimationFrame(paso);
+  }
+  requestAnimationFrame(paso);
+}
+
+/* ───────── guión flotante ───────── */
+$("#btn-guia").addEventListener("click", () => { $("#guia-demo").hidden = !$("#guia-demo").hidden; });
+$("#cerrar-guia").addEventListener("click", () => { $("#guia-demo").hidden = true; });
+
+/* ═══════════ v3: ANALÍTICAS, PROGRAMACIÓN Y LLAMADAS ═══════════ */
+TAB_DE.llamada = "agenda";
+
+const NOMBRE_ASESOR = { luis: "Luis H.", maria: "María E.", carlos: "Carlos Á." };
+const ICONO_ACCION = { visita: "🧭", llamada: "📞", whatsapp: "💬" };
+const ACEL_LLAMADA = 8;
+const llamada = { clienteId: null, li: null, cronoLi: null, timer: null, seg: 0 };
+
+/* ── flujo de llamada desde la app ── */
+function abrirLlamada(clienteId, liTarea, cronoLi) {
+  const c = CLIENTES[clienteId] || { nombre: "Prospecto nuevo", ini: "PN", contacto: "número captado por la central" };
+  Object.assign(llamada, { clienteId, li: liTarea, cronoLi, seg: 0 });
+  $("#llamada-avatar").textContent = c.ini;
+  $("#llamada-nombre").textContent = c.nombre;
+  $("#llamada-sub").textContent = c.contacto;
+  $("#crono-llamada").textContent = "00:00";
+  $("#registro-llamada").hidden = true;
+  $("#resumen-llamada").value = "";
+  $("#caja-llamada").classList.remove("llamada--colgada");
+  $("#llamada-estado span").textContent = "EN LLAMADA · NÚMERO CORPORATIVO";
+  $$("#clasificacion-llamada .opcion").forEach((o, i) => o.classList.toggle("opcion--activa", i === 0));
+  clearInterval(llamada.timer);
+  llamada.timer = setInterval(() => {
+    llamada.seg += ACEL_LLAMADA;
+    const m = Math.floor(llamada.seg / 60), s = llamada.seg % 60;
+    $("#crono-llamada").textContent = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  }, 1000);
+  mostrarPantallaM("llamada");
+  avisar("📞 Llamando desde el número corporativo — el cliente nunca ve el celular personal del asesor.");
+}
+
+$("#btn-colgar").addEventListener("click", () => {
+  clearInterval(llamada.timer);
+  $("#caja-llamada").classList.add("llamada--colgada");
+  const min = Math.max(1, Math.round(llamada.seg / 60));
+  $("#llamada-estado span").textContent = `LLAMADA FINALIZADA · ${min} MIN`;
+  $("#registro-llamada").hidden = false;
+});
+
+$$("#clasificacion-llamada .opcion").forEach(op => op.addEventListener("click", () => {
+  $$("#clasificacion-llamada .opcion").forEach(o => o.classList.remove("opcion--activa"));
+  op.classList.add("opcion--activa");
+}));
+
+$("#btn-guardar-llamada").addEventListener("click", () => {
+  const c = CLIENTES[llamada.clienteId] || { nombre: "Prospecto nuevo" };
+  const min = Math.max(1, Math.round(llamada.seg / 60));
+  const clasif = $("#clasificacion-llamada .opcion--activa").textContent.trim();
+  const resumen = $("#resumen-llamada").value.trim() || "(sin resumen)";
+
+  if (llamada.li) {
+    llamada.li.classList.add("visita--hecha");
+    llamada.li.querySelector(".visita__estado").innerHTML = '<span class="sello sello--mini">REGISTRADA</span>';
+  }
+  if (llamada.cronoLi) {
+    llamada.cronoLi.querySelector(".crono__info").insertAdjacentHTML("beforeend",
+      `<small class="crono__resumen">“${resumen}” · ${clasif} · ${min} min</small>`);
+    const chipEstado = llamada.cronoLi.querySelector(".chip--asesor");
+    if (chipEstado) { chipEstado.className = "chip chip--verde"; chipEstado.textContent = "completada"; }
+  }
+  const feed = $("#feed-actividad");
+  const item = document.createElement("li");
+  item.className = "nuevo";
+  item.innerHTML = `<span class="mono">${horaReloj()}</span> 📞 <b>Luis H.</b> registró llamada a <b>${c.nombre}</b> · ${min} min · ${clasif} · resumen en el cronograma ✓`;
+  feed.prepend(item);
+
+  avisar(`📞 Llamada registrada: <strong>${clasif} · ${min} min</strong>. El coordinador ya ve el resumen en su cronograma.`);
+  mostrarPantallaM("agenda");
+});
+
+/* tarea de llamada sembrada en la agenda */
+const tareaNube = $("#t-llamada-nube");
+const abrirLlamadaNube = () => {
+  if (tareaNube.classList.contains("visita--hecha")) return mostrarPantallaM("llamada");
+  abrirLlamada("nube", tareaNube, $("#crono-nube"));
+};
+tareaNube.addEventListener("click", abrirLlamadaNube);
+tareaNube.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrirLlamadaNube(); } });
+
+/* ── programación: el admin asigna, al asesor le aparece ── */
+function opcionesProgCliente() {
+  $("#prog-cliente").innerHTML =
+    ORDEN_CLIENTES.map(id => `<option value="${id}">${CLIENTES[id].nombre}</option>`).join("") +
+    '<option value="nuevo">➕ Cliente nuevo (prospecto sin ficha)</option>';
+}
+
+function agregarVisitaAgenda(clienteId, nota) {
+  const c = CLIENTES[clienteId];
+  const li = document.createElement("li");
+  li.className = "visita";
+  li.dataset.cliente = clienteId;
+  li.setAttribute("role", "button");
+  li.tabIndex = 0;
+  li.innerHTML = `
+    <span class="visita__hora">17:00</span>
+    <div class="visita__info">
+      <strong>${c.nombre}</strong>
+      <small>${c.zona} · asignada por Coordinación${nota ? " · “" + nota + "”" : ""}</small>
+    </div>
+    <span class="visita__estado"><span class="visita__pend">programada</span></span>`;
+  li.addEventListener("click", () => abrirFicha(clienteId));
+  li.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrirFicha(clienteId); } });
+  $(".lista-visitas").appendChild(li);
+  actualizarProgreso();
+}
+
+function agregarLlamadaAgenda(clienteId, nota, cronoLi) {
+  const nombre = CLIENTES[clienteId]?.nombre || "Prospecto nuevo";
+  const li = document.createElement("li");
+  li.className = "visita visita--llamada";
+  li.setAttribute("role", "button");
+  li.tabIndex = 0;
+  li.innerHTML = `
+    <span class="visita__hora">ahora</span>
+    <div class="visita__info">
+      <strong>📞 Llamar a ${nombre}</strong>
+      <small>asignada por Coordinación${nota ? " · “" + nota + "”" : ""}</small>
+    </div>
+    <span class="visita__estado"><span class="visita__pend">llamada</span></span>`;
+  const abrir = () => abrirLlamada(clienteId === "nuevo" ? null : clienteId, li, cronoLi);
+  li.addEventListener("click", abrir);
+  li.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrir(); } });
+  $(".lista-visitas").appendChild(li);
+}
+
+$("#form-programar").addEventListener("submit", e => {
+  e.preventDefault();
+  const clienteId = $("#prog-cliente").value;
+  const asesor = $("#prog-asesor").value;
+  const accion = $("#prog-accion").value;
+  const cuando = $("#prog-cuando").value;
+  const nota = $("#prog-nota").value.trim();
+  const nombreCliente = clienteId === "nuevo" ? "Cliente nuevo (prospecto)" : CLIENTES[clienteId].nombre;
+
+  const li = document.createElement("li");
+  li.className = "nuevo";
+  li.innerHTML = `
+    <span class="crono__icono">${ICONO_ACCION[accion]}</span>
+    <span class="crono__hora">${cuando === "hoy" ? "hoy" : "mañ."} ${horaReloj()}</span>
+    <div class="crono__info">
+      <strong>${nombreCliente} · ${NOMBRE_ASESOR[asesor]}</strong>
+      ${nota ? `<small>“${nota}”</small>` : ""}
+    </div>
+    <span class="chip chip--asesor">pendiente</span>`;
+  $("#cronograma").prepend(li);
+
+  const feed = $("#feed-actividad");
+  const f = document.createElement("li");
+  f.className = "nuevo";
+  f.innerHTML = `<span class="mono">${horaReloj()}</span> 🗓 Coordinación programó <b>${accion}</b> a <b>${nombreCliente}</b> para <b>${NOMBRE_ASESOR[asesor]}</b>`;
+  feed.prepend(f);
+
+  if (asesor === "luis" && cuando === "hoy") {
+    if (accion === "visita" && clienteId !== "nuevo") agregarVisitaAgenda(clienteId, nota);
+    if (accion === "llamada") agregarLlamadaAgenda(clienteId, nota, li);
+    avisar(`✅ Asignado a <strong>Luis Herrera</strong>: ya le aparece en la agenda del teléfono. Cambie al rol Asesor para verlo.`, "", 5500);
+  } else {
+    avisar(`✅ ${ICONO_ACCION[accion]} ${accion.charAt(0).toUpperCase() + accion.slice(1)} programada para <strong>${NOMBRE_ASESOR[asesor]}</strong> (${cuando === "hoy" ? "hoy" : "mañana"}).`);
+  }
+  $("#prog-nota").value = "";
+});
+
+/* radar → programación prellenada */
+$$(".boton-radar").forEach(b => b.addEventListener("click", () => {
+  mostrarPanel("programar");
+  opcionesProgCliente();
+  $("#prog-cliente").value = b.dataset.progCliente;
+  $("#prog-accion").value = b.dataset.progAccion;
+  $("#prog-nota").value = b.dataset.progNota || "";
+  avisar("🗓 Formulario prellenado desde Analíticas: solo falta elegir asesor y asignar.");
+}));
+
+/* conmutador campo/oficina del asesor */
+$$(".conmutador__btn").forEach(b => b.addEventListener("click", () => {
+  document.body.classList.toggle("asesor-web", b.dataset.modo === "oficina");
+  $$(".conmutador__btn").forEach(x => x.classList.toggle("conmutador__btn--activo", x === b));
+  avisar(b.dataset.modo === "oficina"
+    ? "🖥️ <strong>Vista de oficina:</strong> la misma app del asesor, en el navegador del escritorio — mismos datos, sin instalar nada."
+    : "📱 Vista de campo (móvil).");
+}));
+
+/* ═══════════ v4: portada — secuencia animada del proceso ═══════════ */
+const etapas = $$("#proceso-etapas .etapa");
+let etapaIdx = -1;
+function pasoProceso() {
+  if (document.hidden) return; // en pestaña oculta la secuencia espera
+  etapaIdx = (etapaIdx + 1) % etapas.length;
+  etapas.forEach((e, i) => e.classList.toggle("etapa--activa", i === etapaIdx));
+  const contador = $("#contador-proceso");
+  if (etapaIdx === etapas.length - 1) {
+    contador.textContent = "B/. 0";
+    const t0 = performance.now(), ms = 900, hasta = 2496;
+    requestAnimationFrame(function paso(t) {
+      const p = Math.min(1, (t - t0) / ms);
+      contador.textContent = "B/. " + Math.round(hasta * (1 - Math.pow(1 - p, 3))).toLocaleString("en-US");
+      if (p < 1) requestAnimationFrame(paso);
+    });
+  }
+}
+pasoProceso();
+setInterval(pasoProceso, 2600);
+
+/* revelado de secciones al hacer scroll */
+const observador = new IntersectionObserver(entradas => entradas.forEach(en => {
+  if (en.isIntersecting) { en.target.classList.add("revelar--visible"); observador.unobserve(en.target); }
+}), { threshold: 0.12 });
+$$(".revelar").forEach(el => observador.observe(el));
+/* red de seguridad: nada queda oculto si el observer no dispara */
+setTimeout(() => $$(".revelar").forEach(el => el.classList.add("revelar--visible")), 3000);
+
+/* ───────── estado inicial ───────── */
+renderClientes();
+renderCatalogo();
+abrirFicha("robles", false);
+opcionesProgCliente();
+pintarSync();
+actualizarPerfil();
+
+</script>
+</body>
+</html>
