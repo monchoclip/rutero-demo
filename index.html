@@ -1422,6 +1422,117 @@ body.asesor-web .llamada__pc{
   .leyenda-matriz{gap:10px}
 }
 
+/* ═══════════════ MEJORAS v6: acceso, dispositivos, usuarios, carga y referidos ═══════════════ */
+
+/* pantalla de acceso a la consola */
+.acceso{
+  min-height:calc(100vh - 130px);display:grid;place-items:center;padding:40px 20px;
+}
+.acceso__caja{
+  width:min(420px,100%);background:var(--papel);border:1.5px solid var(--linea);
+  border-top:6px solid var(--ambar);border-radius:16px;padding:32px 30px 26px;
+  box-shadow:var(--sombra-flotante);text-align:center;animation:aparecer .4s ease both;
+}
+.acceso__sello{
+  width:64px;height:64px;margin:0 auto 14px;display:grid;place-items:center;
+  font-family:var(--f-display);font-size:38px;font-weight:800;color:var(--papel);
+  background:var(--verde-800);border-radius:16px;transform:rotate(-5deg);
+  box-shadow:inset 0 0 0 3px rgba(232,161,61,.7),inset 0 0 0 6px var(--verde-800);
+}
+.acceso__caja h2{
+  font-family:var(--f-display);font-size:23px;letter-spacing:.05em;text-transform:uppercase;color:var(--verde-900);
+}
+.acceso__sub{font-size:12.5px;color:var(--tinta-suave);margin:4px 0 20px}
+.acceso__campo{
+  display:block;text-align:left;margin-bottom:13px;
+  font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--tinta-suave);
+}
+.acceso__campo input{
+  width:100%;margin-top:6px;padding:11px 13px;border:1.5px solid var(--linea);border-radius:10px;
+  font:inherit;font-size:14px;background:var(--papel-hueso);color:var(--tinta);
+}
+.acceso__campo input:focus{outline:2.5px solid var(--verde-500);outline-offset:-1px}
+.acceso__error{
+  font-size:12.5px;font-weight:700;color:var(--teja-osc);background:rgba(196,85,45,.1);
+  border-radius:8px;padding:8px 10px;margin-bottom:12px;
+}
+.acceso__pista{font-size:11.5px;color:var(--tinta-suave);margin-top:14px}
+.acceso__pista code{
+  font-family:var(--f-mono);font-size:11px;background:var(--papel-hueso);
+  border:1px solid var(--linea);border-radius:5px;padding:2px 6px;
+}
+.acceso__nota{
+  font-size:11px;line-height:1.55;color:var(--tinta-suave);margin-top:14px;
+  border-top:1.5px dashed var(--linea);padding-top:12px;text-align:left;
+}
+
+/* dispositivos y usuarios */
+.celda-asignado{font-weight:600}
+.estructura{
+  background:var(--papel-hueso);border:1.5px solid var(--linea);border-radius:12px;
+  padding:16px 17px;margin-bottom:14px;
+}
+.estructura h3{font-size:14.5px;color:var(--verde-900);margin-bottom:11px}
+.estructura__ops{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.estructura__ops .opcion{flex:0 1 auto;padding:9px 14px;font-size:12.5px}
+.estructura__nota{font-size:12.5px;line-height:1.55;color:var(--tinta-suave)}
+.credencial-nueva{
+  margin:14px 0;padding:15px 17px;border-radius:12px;
+  background:rgba(46,125,79,.1);border:2px dashed rgba(46,125,79,.5);
+  animation:aparecer .3s ease both;
+}
+.credencial-nueva h4{font-size:14px;color:var(--verde-900);margin-bottom:9px}
+.credencial-nueva dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13px;margin-bottom:9px}
+.credencial-nueva dt{font-weight:700;color:var(--tinta-suave);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.credencial-nueva dd{font-family:var(--f-mono);font-size:13px}
+.credencial-nueva p{font-size:11.5px;color:var(--tinta-suave);line-height:1.5}
+
+/* carga masiva */
+.pasos-carga{list-style:decimal;padding-left:18px;display:flex;flex-direction:column;gap:12px;font-size:13px;line-height:1.5}
+.pasos-carga code{font-family:var(--f-mono);font-size:11.5px;background:var(--papel-hueso);border:1px solid var(--linea);border-radius:5px;padding:1px 5px}
+.pasos-carga .boton-mini{margin-top:7px}
+.zona-archivo{
+  display:block;margin-top:8px;border:2px dashed var(--linea);border-radius:11px;
+  padding:20px 14px;text-align:center;cursor:pointer;transition:.15s;background:var(--papel);
+  font-size:13px;color:var(--tinta-suave);
+}
+.zona-archivo:hover,.zona-archivo--sobre{border-color:var(--verde-500);background:rgba(46,125,79,.07);color:var(--verde-700)}
+.resultado-carga{
+  margin-top:14px;border:1.5px solid var(--linea);border-radius:11px;padding:14px;
+  background:var(--papel);animation:aparecer .3s ease both;
+}
+.resultado-carga h4{font-size:13.5px;color:var(--verde-900);margin-bottom:10px}
+.carga-cifras{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:11px}
+.carga-cifra{
+  flex:1;min-width:88px;background:var(--papel-hueso);border:1px solid var(--linea);
+  border-radius:9px;padding:9px;text-align:center;
+}
+.carga-cifra b{display:block;font-family:var(--f-display);font-size:22px;color:var(--verde-700)}
+.carga-cifra--error b{color:var(--teja-osc)}
+.carga-cifra span{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--tinta-suave)}
+.vista-previa{width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:11px}
+.vista-previa th{text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--tinta-suave);padding:5px 7px;border-bottom:1.5px solid var(--linea)}
+.vista-previa td{padding:6px 7px;border-bottom:1px solid var(--linea)}
+.vista-previa tr.mal{background:rgba(196,85,45,.08);color:var(--teja-osc)}
+.columnas{list-style:none;display:flex;flex-direction:column;gap:7px;font-size:12.5px}
+.columnas li{display:flex;gap:9px;align-items:baseline;padding-bottom:6px;border-bottom:1px dashed var(--linea)}
+.columnas b{font-family:var(--f-mono);color:var(--verde-700);min-width:78px}
+.columnas span{color:var(--tinta-suave);font-size:11.5px}
+
+/* alta de cliente y referidos */
+.boton-nuevo-cliente{width:100%;margin-bottom:11px;font-weight:700}
+.nc-gps{
+  font-size:11.5px;color:var(--tinta-suave);background:rgba(46,125,79,.08);
+  border-radius:8px;padding:8px 11px;margin-bottom:13px;
+}
+.chip--referido{background:rgba(232,161,61,.2);color:var(--ambar-osc)}
+.cliente-item--nuevo{border-color:var(--verde-500);box-shadow:0 0 0 2.5px rgba(46,125,79,.14)}
+
+@media (max-width:760px){
+  .estructura__ops{flex-direction:column}
+  .estructura__ops .opcion{width:100%}
+}
+
 /* accesibilidad: respetar reducción de movimiento */
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
@@ -1789,8 +1900,39 @@ body.asesor-web .llamada__pc{
             <span aria-hidden="true">🔎</span>
             <input type="search" id="busca-cliente" placeholder="Buscar cliente, zona o contacto…" autocomplete="off">
           </label>
+          <button class="boton-fantasma boton-nuevo-cliente" id="btn-nuevo-cliente">➕ Registrar cliente nuevo</button>
           <ul class="lista-clientes" id="lista-clientes"></ul>
           <p class="lista-clientes__pie">412 clientes de la empresa · la cartera completa vive en la central</p>
+        </div>
+
+        <!-- ── pantalla: NUEVO CLIENTE (alta en campo) ── -->
+        <div class="pantalla-m" id="pm-nuevo">
+          <button class="volver" data-volver="clientes">← Clientes</button>
+          <h3 class="pedido__titulo">Cliente nuevo</h3>
+          <p class="pedido__sub">Lo capturado en la calle entra directo a la cartera de la empresa.</p>
+          <form id="form-nuevo-cliente">
+            <label class="campo"><span>Nombre del negocio</span>
+              <input id="nc-nombre" placeholder="Ej.: Granja San Antonio" autocomplete="off" required>
+            </label>
+            <label class="campo"><span>Persona de contacto y teléfono</span>
+              <input id="nc-contacto" placeholder="Sra. Ana Pérez · +507 6000-0000" autocomplete="off">
+            </label>
+            <label class="campo"><span>Dirección o referencia</span>
+              <input id="nc-direccion" placeholder="Vía Pacora, km 6" autocomplete="off">
+            </label>
+            <div class="campo-etiqueta">¿Cómo llegó este cliente?</div>
+            <div class="opciones-resultado" id="nc-origen">
+              <button type="button" class="opcion opcion--activa" data-origen="visita">🚶 Visita en frío</button>
+              <button type="button" class="opcion" data-origen="referido">🤝 Referido</button>
+              <button type="button" class="opcion" data-origen="campana">📣 Campaña / IA</button>
+              <button type="button" class="opcion" data-origen="local">🏪 Llegó al local</button>
+            </div>
+            <label class="campo" id="wrap-refiere" hidden><span>¿Quién lo refirió?</span>
+              <select id="nc-refiere"></select>
+            </label>
+            <p class="nc-gps">📍 Se guardará su coordenada actual: <span class="mono">9.07812° N, 79.28914° O</span></p>
+            <button class="boton-primario" type="submit">💾 Guardar cliente</button>
+          </form>
         </div>
 
         <!-- ── pantalla: TOMA DE PEDIDO ── -->
@@ -2389,7 +2531,27 @@ body.asesor-web .llamada__pc{
 
 <!-- ════════════════════ PORTAL DE LA PLATAFORMA (dueño del SaaS) ════════════════════ -->
 <section class="vista" id="vista-plataforma">
-<div class="escritorio">
+
+<!-- acceso restringido -->
+<div class="acceso" id="acceso-plataforma">
+  <form class="acceso__caja" id="form-acceso" autocomplete="on">
+    <div class="acceso__sello" aria-hidden="true">R</div>
+    <h2>Consola de plataforma</h2>
+    <p class="acceso__sub">Acceso restringido al administrador del SaaS</p>
+    <label class="acceso__campo">Correo
+      <input type="email" id="acceso-usuario" value="moiesbbuga@gmail.com" autocomplete="username">
+    </label>
+    <label class="acceso__campo">Contraseña
+      <input type="password" id="acceso-clave" placeholder="••••••••" autocomplete="current-password">
+    </label>
+    <p class="acceso__error" id="acceso-error" hidden>Correo o contraseña incorrectos.</p>
+    <button class="boton-primario" type="submit">Entrar</button>
+    <p class="acceso__pista">Clave para la demostración: <code>Rutero2026$demo</code></p>
+    <p class="acceso__nota">🔒 Maqueta de diseño: la validación real ocurre en el servidor, con la clave cifrada (bcrypt/Argon2) y segundo factor. <strong>No use aquí contraseñas reales.</strong></p>
+  </form>
+</div>
+
+<div class="escritorio" id="consola-plataforma" hidden>
 
   <aside class="lateral lateral--plat">
     <div class="plat-marca">
@@ -2399,6 +2561,9 @@ body.asesor-web .llamada__pc{
     <nav class="lateral__nav">
       <button class="plat-btn plat-btn--activo" data-ppanel="cuadre">💰 <span>Cuadre y cobros</span></button>
       <button class="plat-btn" data-ppanel="empresas">🏢 <span>Empresas y marcas</span></button>
+      <button class="plat-btn" data-ppanel="dispositivos">📲 <span>Dispositivos WhatsApp</span></button>
+      <button class="plat-btn" data-ppanel="usuarios">👤 <span>Usuarios y accesos</span></button>
+      <button class="plat-btn" data-ppanel="carga">📥 <span>Carga de clientes</span></button>
       <button class="plat-btn" data-ppanel="planes">🏷️ <span>Planes y precios</span></button>
       <button class="plat-btn" data-ppanel="pasarela">💳 <span>Pasarela (Wompi)</span></button>
       <button class="plat-btn" data-ppanel="paises">🌎 <span>Coordinadores país</span></button>
@@ -2662,6 +2827,199 @@ body.asesor-web .llamada__pc{
         <h3>El alcance manda sobre el permiso</h3>
         <p>Un mismo permiso rinde distinto según dónde esté parado el usuario. La jerarquía es
         <b>plataforma → empresa → marca blanca → país/zona → asesor</b>: el coordinador de marca ve todo lo suyo y nada de la marca vecina; el coordinador de país ve las empresas de su territorio; el asesor, solo su propia cartera.</p>
+      </div>
+    </div>
+
+    <!-- ── DISPOSITIVOS WHATSAPP (META) ── -->
+    <div class="panel-p" id="pp-dispositivos">
+      <header class="panel__titulo"><h2>Dispositivos de WhatsApp <small>números de la API de Meta, sincronizados y asignados a cada asesor</small></h2></header>
+
+      <form class="programar" id="form-dispositivo">
+        <label>Número de WhatsApp
+          <input id="disp-numero" placeholder="+507 6000-0000" autocomplete="off" required>
+        </label>
+        <label>Empresa · marca
+          <select id="disp-marca">
+            <option value="Itacol Agro">Itacol Agro</option>
+            <option value="Itacol Mascotas">Itacol Mascotas</option>
+            <option value="Itacol Foodservice">Itacol Foodservice</option>
+            <option value="Chen Agro">Chen Agro</option>
+            <option value="Chen Retail">Chen Retail</option>
+          </select>
+        </label>
+        <label>WABA ID
+          <input id="disp-waba" placeholder="1029384756" autocomplete="off">
+        </label>
+        <label>Phone number ID
+          <input id="disp-phone" placeholder="5566778899" autocomplete="off">
+        </label>
+        <button class="boton-primario" type="submit">📲 Registrar y sincronizar</button>
+      </form>
+
+      <div class="tabla-scroll">
+        <table class="tabla-cobros" id="tabla-dispositivos">
+          <thead>
+            <tr><th>Número</th><th>Empresa · marca</th><th>Asignado a</th><th>Estado</th><th>Acción</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>+507 6300-1180</strong><small class="mono">phone_id 5566778899</small></td>
+              <td>Itacol Agro</td>
+              <td class="celda-asignado">Luis Herrera</td>
+              <td><span class="estado estado--activa">conectado</span></td>
+              <td><button class="boton-fantasma boton-mini" data-disp="reasignar">⇄ Reasignar</button></td>
+            </tr>
+            <tr>
+              <td><strong>+507 6300-1181</strong><small class="mono">phone_id 5566778900</small></td>
+              <td>Itacol Agro</td>
+              <td class="celda-asignado">María Espinosa</td>
+              <td><span class="estado estado--activa">conectado</span></td>
+              <td><button class="boton-fantasma boton-mini" data-disp="reasignar">⇄ Reasignar</button></td>
+            </tr>
+            <tr>
+              <td><strong>+507 6300-1182</strong><small class="mono">phone_id 5566778901</small></td>
+              <td>Itacol Mascotas</td>
+              <td class="celda-asignado"><span class="td-vacio">sin asignar</span></td>
+              <td><span class="estado estado--porvencer">pendiente de verificación</span></td>
+              <td><button class="boton-fantasma boton-mini" data-disp="asignar">👤 Asignar</button></td>
+            </tr>
+            <tr>
+              <td><strong>+507 6300-1190</strong><small class="mono">phone_id 5566779010</small></td>
+              <td>Chen Agro</td>
+              <td class="celda-asignado">Carlos Ábrego</td>
+              <td><span class="estado estado--vencida">desconectado</span></td>
+              <td><button class="boton-fantasma boton-mini boton-mini--verde" data-disp="reconectar">🔄 Reconectar</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="aviso-seguridad">🔒 El <em>token</em> permanente de Meta no se muestra ni se guarda en el navegador: vive cifrado en el servidor y se rota desde aquí. Cada número queda atado a una marca blanca y a un asesor, de modo que ninguna conversación entra a un celular personal.</p>
+    </div>
+
+    <!-- ── USUARIOS Y ACCESOS ── -->
+    <div class="panel-p" id="pp-usuarios">
+      <header class="panel__titulo"><h2>Usuarios y accesos <small>estructura del equipo, roles y credenciales de ingreso</small></h2></header>
+
+      <div class="estructura">
+        <h3>¿Cómo se organiza esta empresa?</h3>
+        <div class="estructura__ops">
+          <button class="opcion opcion--activa" data-estructura="simple">Coordinador global + asesores</button>
+          <button class="opcion" data-estructura="area">Coordinadores por área</button>
+          <button class="opcion" data-estructura="zona">Asesores por zona</button>
+          <button class="opcion" data-estructura="categoria">Asesores por categoría</button>
+        </div>
+        <p class="estructura__nota" id="estructura-nota">Modelo simple: un coordinador global ve todo y los asesores se reparten el trabajo por llamadas y registros, sin división territorial.</p>
+      </div>
+
+      <form class="programar" id="form-usuario">
+        <label>Nombre completo
+          <input id="usr-nombre" placeholder="Ej.: Rosa Batista" autocomplete="off" required>
+        </label>
+        <label>Correo de acceso
+          <input id="usr-correo" type="email" placeholder="nombre@empresa.com" autocomplete="off" required>
+        </label>
+        <label>Empresa · marca
+          <select id="usr-marca">
+            <option>Itacol Agro</option><option>Itacol Mascotas</option><option>Itacol Foodservice</option>
+            <option>Chen Agro</option><option>Chen Retail</option>
+          </select>
+        </label>
+        <label>Rol
+          <select id="usr-rol">
+            <option value="coord-global">Coordinador global</option>
+            <option value="coord-area">Coordinador de área</option>
+            <option value="asesor" selected>Asesor comercial</option>
+          </select>
+        </label>
+        <label id="wrap-zona">Zona o área
+          <select id="usr-zona">
+            <option>Panamá Este</option><option>Panamá Centro</option><option>Panamá Oeste</option><option>Interior</option>
+          </select>
+        </label>
+        <label id="wrap-categoria" hidden>Categoría
+          <select id="usr-categoria">
+            <option>Aves</option><option>Porcinos</option><option>Ganado</option><option>Mascotas</option>
+          </select>
+        </label>
+        <label>Perfil de IA asignado
+          <select id="usr-ia">
+            <option>Agro — aves, cerdos y ganado</option>
+            <option>Mascotas — retail</option>
+            <option>Foodservice — hoteles y restaurantes</option>
+          </select>
+        </label>
+        <label>Número de WhatsApp
+          <select id="usr-disp">
+            <option value="">— asignar después —</option>
+            <option>+507 6300-1182</option>
+          </select>
+        </label>
+        <button class="boton-primario" type="submit">👤 Crear usuario y generar credenciales</button>
+      </form>
+
+      <div class="credencial-nueva" id="credencial-nueva" hidden></div>
+
+      <div class="tabla-scroll">
+        <table class="tabla-cobros" id="tabla-usuarios">
+          <thead><tr><th>Usuario</th><th>Empresa · marca</th><th>Rol</th><th>Alcance</th><th>WhatsApp</th><th>Estado</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>María Espinosa</strong><small>maria.e@itacol.com.pa</small></td>
+              <td>Itacol Agro</td><td><span class="chip chip--asesor">Coordinadora global</span></td>
+              <td>toda la empresa</td><td class="mono">+507 6300-1181</td>
+              <td><span class="estado estado--activa">activo</span></td>
+            </tr>
+            <tr>
+              <td><strong>Luis Herrera</strong><small>luis.herrera@itacol.com.pa</small></td>
+              <td>Itacol Agro</td><td><span class="chip chip--verde">Asesor</span></td>
+              <td>Panamá Este</td><td class="mono">+507 6300-1180</td>
+              <td><span class="estado estado--activa">activo</span></td>
+            </tr>
+            <tr>
+              <td><strong>Carlos Ábrego</strong><small>carlos.a@itacol.com.pa</small></td>
+              <td>Chen Agro</td><td><span class="chip chip--verde">Asesor</span></td>
+              <td>Panamá Oeste</td><td class="mono">+507 6300-1190</td>
+              <td><span class="estado estado--activa">activo</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── CARGA MASIVA DE CLIENTES ── -->
+    <div class="panel-p" id="pp-carga">
+      <header class="panel__titulo"><h2>Carga masiva de clientes <small>subir la cartera completa desde un archivo, sin teclear uno por uno</small></h2></header>
+
+      <div class="fila-doble">
+        <div class="tarjeta-panel">
+          <h3>📥 Subir archivo</h3>
+          <ol class="pasos-carga">
+            <li>Descargue la plantilla y llénela con su cartera.
+              <button class="boton-fantasma boton-mini" id="btn-plantilla">⬇️ Descargar plantilla</button>
+            </li>
+            <li>Suba el archivo (<code>.csv</code> aquí; en producción también <code>.xlsx</code>).
+              <label class="zona-archivo" id="zona-archivo">
+                <input type="file" id="archivo-clientes" accept=".csv,.xlsx,.xls" hidden>
+                <span>📄 Elegir archivo o arrastrarlo aquí</span>
+              </label>
+            </li>
+            <li>Revise la validación y confirme la importación.</li>
+          </ol>
+          <div class="resultado-carga" id="resultado-carga" hidden></div>
+        </div>
+        <div class="tarjeta-panel">
+          <h3>🧾 Columnas de la plantilla</h3>
+          <ul class="columnas">
+            <li><b>nombre</b> <span>obligatorio</span></li>
+            <li><b>contacto</b> <span>persona de contacto</span></li>
+            <li><b>telefono</b> <span>obligatorio · formato +507</span></li>
+            <li><b>direccion</b> <span>para el mapa</span></li>
+            <li><b>zona</b> <span>asigna al asesor de esa zona</span></li>
+            <li><b>categoria</b> <span>aves / porcinos / ganado / mascotas</span></li>
+            <li><b>asesor</b> <span>correo del responsable (opcional)</span></li>
+          </ul>
+          <p class="grafica-nota">Las filas sin nombre o sin teléfono se rechazan y se devuelven en un archivo de errores para corregirlas y volver a subirlas.</p>
+        </div>
       </div>
     </div>
 
@@ -2938,11 +3296,12 @@ function renderClientes(filtro = "") {
     li.className = "cliente-item";
     li.setAttribute("role", "button");
     li.tabIndex = 0;
-    const chipExtra = id === "sanisidro"
+    let chipExtra = id === "sanisidro"
       ? '<span class="chip" style="background:rgba(196,85,45,.13);color:var(--teja-osc)">cobro B/. 890</span>'
       : id === "fortuna"
         ? '<span class="chip chip--asesor">nuevo</span>'
         : `<span class="chip chip--verde">${c.promedio}</span>`;
+    if (c.referidos) chipExtra += `<span class="chip chip--referido">${c.referidos} referido${c.referidos > 1 ? "s" : ""}</span>`;
     li.innerHTML = `
       <span class="avatar avatar--cliente">${c.ini}</span>
       <div class="cliente-item__info"><strong>${c.nombre}</strong><small>${c.zona} · últ.: ${c.ultima}</small></div>
@@ -3974,6 +4333,323 @@ $("#btn-cerrar-turno").addEventListener("click", () => {
   $("#turno-detalle").textContent = `cerrado ${horaCorta()} · ${turno.puntos} puntos entregados`;
   $("#btn-cerrar-turno").textContent = "▶ Reabrir turno";
   avisar(`⏹ <strong>Turno cerrado.</strong> Se entregaron ${turno.puntos} puntos de recorrido; deja de registrarse la ubicación hasta el próximo turno.`);
+});
+
+/* ═══════════ v6: ACCESO, DISPOSITIVOS, USUARIOS, CARGA Y REFERIDOS ═══════════ */
+
+/* ── acceso a la consola de plataforma ──
+   Maqueta: la comprobación es local y la clave es de demostración a propósito.
+   En producción esto lo valida el servidor contra un hash (bcrypt/Argon2) + 2FA. */
+const ACCESO_DEMO = { usuario: "moiesbbuga@gmail.com", clave: "Rutero2026$demo" };
+let sesionPlataforma = false;
+
+$("#form-acceso").addEventListener("submit", e => {
+  e.preventDefault();
+  const u = $("#acceso-usuario").value.trim().toLowerCase();
+  const c = $("#acceso-clave").value;
+  if (u !== ACCESO_DEMO.usuario || c !== ACCESO_DEMO.clave) {
+    $("#acceso-error").hidden = false;
+    $("#acceso-clave").value = "";
+    $("#acceso-clave").focus();
+    return;
+  }
+  sesionPlataforma = true;
+  $("#acceso-error").hidden = true;
+  $("#acceso-plataforma").hidden = true;
+  $("#consola-plataforma").hidden = false;
+  avisar("🛡️ Sesión de plataforma iniciada. Bienvenido a la consola del administrador.");
+});
+
+/* ── dispositivos de WhatsApp ── */
+const ASESORES_DISP = ["Luis Herrera", "María Espinosa", "Carlos Ábrego", "Rosa Batista"];
+
+function accionesDispositivo(fila) {
+  fila.querySelectorAll("[data-disp]").forEach(b => {
+    if (b.dataset.enlazado) return;
+    b.dataset.enlazado = "1";
+    b.addEventListener("click", () => {
+      const tipo = b.dataset.disp;
+      const celda = fila.querySelector(".celda-asignado");
+      const numero = fila.querySelector("strong").textContent;
+      if (tipo === "reconectar") {
+        fila.children[3].innerHTML = '<span class="estado estado--activa">conectado</span>';
+        b.outerHTML = '<button class="boton-fantasma boton-mini" data-disp="reasignar">⇄ Reasignar</button>';
+        accionesDispositivo(fila);
+        socketEvento(`🔄 Dispositivo <b>${numero}</b> reconectado con la API de Meta`);
+        return avisar(`🔄 <strong>${numero}</strong> volvió a sincronizar con la API de Meta.`);
+      }
+      const actual = celda.textContent.includes("sin asignar") ? "" : celda.textContent.trim();
+      const libres = ASESORES_DISP.filter(a => a !== actual);
+      const siguiente = libres[Math.floor(Math.random() * libres.length)];
+      celda.textContent = siguiente;
+      if (fila.children[3].textContent.includes("pendiente")) {
+        fila.children[3].innerHTML = '<span class="estado estado--activa">conectado</span>';
+        b.outerHTML = '<button class="boton-fantasma boton-mini" data-disp="reasignar">⇄ Reasignar</button>';
+        accionesDispositivo(fila);
+      }
+      fila.classList.add("fila-cambiada");
+      setTimeout(() => fila.classList.remove("fila-cambiada"), 2200);
+      socketEvento(`📲 <b>${numero}</b> asignado a <b>${siguiente}</b>`);
+      avisar(`📲 <strong>${numero}</strong> quedó asignado a <strong>${siguiente}</strong>. Sus chats entran a la plataforma, no a su celular personal.`);
+    });
+  });
+}
+$$("#tabla-dispositivos tbody tr").forEach(accionesDispositivo);
+
+$("#form-dispositivo").addEventListener("submit", e => {
+  e.preventDefault();
+  const numero = $("#disp-numero").value.trim();
+  if (!numero) return;
+  const marca = $("#disp-marca").value;
+  const phone = $("#disp-phone").value.trim() || "—";
+  const fila = document.createElement("tr");
+  fila.innerHTML = `
+    <td><strong>${numero}</strong><small class="mono">phone_id ${phone}</small></td>
+    <td>${marca}</td>
+    <td class="celda-asignado"><span class="td-vacio">sin asignar</span></td>
+    <td><span class="estado estado--porvencer">pendiente de verificación</span></td>
+    <td><button class="boton-fantasma boton-mini" data-disp="asignar">👤 Asignar</button></td>`;
+  $("#tabla-dispositivos tbody").prepend(fila);
+  accionesDispositivo(fila);
+  const opcion = document.createElement("option");
+  opcion.textContent = numero;
+  $("#usr-disp").appendChild(opcion);
+  e.target.reset();
+  socketEvento(`📲 Dispositivo <b>${numero}</b> registrado en <b>${marca}</b>`);
+  avisar(`📲 <strong>${numero}</strong> registrado. Meta enviará el código de verificación; al confirmarlo queda listo para asignar.`);
+});
+
+/* ── estructura del equipo y alta de usuarios ── */
+const NOTAS_ESTRUCTURA = {
+  simple: "Modelo simple: un coordinador global ve todo y los asesores se reparten el trabajo por llamadas y registros, sin división territorial.",
+  area: "Coordinadores por área: cada uno responde por su área y solo ve a los asesores que cuelgan de ella.",
+  zona: "Asesores por zona: cada cliente cae automáticamente en la cartera del asesor de su zona geográfica.",
+  categoria: "Asesores por categoría: el reparto es por línea de producto (aves, porcinos, ganado, mascotas) sin importar la zona.",
+};
+$$("[data-estructura]").forEach(b => b.addEventListener("click", () => {
+  $$("[data-estructura]").forEach(x => x.classList.toggle("opcion--activa", x === b));
+  const modo = b.dataset.estructura;
+  $("#estructura-nota").textContent = NOTAS_ESTRUCTURA[modo];
+  $("#wrap-zona").hidden = modo === "categoria" || modo === "simple";
+  $("#wrap-categoria").hidden = modo !== "categoria";
+}));
+
+$("#usr-rol").addEventListener("change", e => {
+  const esAsesor = e.target.value === "asesor";
+  $("#wrap-zona").querySelector("select").disabled = false;
+  if (!esAsesor && e.target.value === "coord-global") $("#wrap-zona").hidden = true;
+  else if ($("[data-estructura].opcion--activa").dataset.estructura !== "categoria") $("#wrap-zona").hidden = false;
+});
+
+const ETIQUETA_ROL = {
+  "coord-global": ['<span class="chip chip--asesor">Coordinador global</span>', "toda la empresa"],
+  "coord-area": ['<span class="chip chip--asesor">Coordinador de área</span>', "su área"],
+  "asesor": ['<span class="chip chip--verde">Asesor</span>', ""],
+};
+function claveTemporal() {
+  const abc = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+  let s = "";
+  for (let i = 0; i < 10; i++) s += abc[Math.floor(Math.random() * abc.length)];
+  return "Rt-" + s;
+}
+
+$("#form-usuario").addEventListener("submit", e => {
+  e.preventDefault();
+  const nombre = $("#usr-nombre").value.trim();
+  const correo = $("#usr-correo").value.trim();
+  if (!nombre || !correo) return;
+  const marca = $("#usr-marca").value;
+  const rol = $("#usr-rol").value;
+  const [chipRol, alcanceBase] = ETIQUETA_ROL[rol];
+  const modo = $("[data-estructura].opcion--activa").dataset.estructura;
+  const alcance = rol === "coord-global" ? "toda la empresa"
+    : modo === "categoria" ? "categoría " + $("#usr-categoria").value
+    : alcanceBase || $("#usr-zona").value;
+  const disp = $("#usr-disp").value || "—";
+  const clave = claveTemporal();
+
+  const fila = document.createElement("tr");
+  fila.innerHTML = `
+    <td><strong>${nombre}</strong><small>${correo}</small></td>
+    <td>${marca}</td><td>${chipRol}</td><td>${alcance}</td>
+    <td class="mono">${disp}</td>
+    <td><span class="estado estado--activa">activo</span></td>`;
+  $("#tabla-usuarios tbody").prepend(fila);
+  fila.classList.add("fila-cambiada");
+  setTimeout(() => fila.classList.remove("fila-cambiada"), 2500);
+
+  const caja = $("#credencial-nueva");
+  caja.hidden = false;
+  caja.innerHTML = `
+    <h4>✅ Usuario creado — entregue estas credenciales</h4>
+    <dl>
+      <dt>Usuario</dt><dd>${correo}</dd>
+      <dt>Clave temporal</dt><dd>${clave}</dd>
+      <dt>Perfil de IA</dt><dd>${$("#usr-ia").value}</dd>
+      <dt>WhatsApp</dt><dd>${disp}</dd>
+    </dl>
+    <p>La clave se muestra una sola vez y el usuario debe cambiarla al primer ingreso. En producción se envía por correo, nunca por chat.</p>`;
+  e.target.reset();
+  socketEvento(`👤 Usuario <b>${nombre}</b> creado en <b>${marca}</b> · ${alcance}`);
+  avisar(`👤 <strong>${nombre}</strong> creado como ${rol === "asesor" ? "asesor" : "coordinador"} de ${alcance}.`);
+});
+
+/* ── carga masiva de clientes ── */
+const COLUMNAS = ["nombre", "contacto", "telefono", "direccion", "zona", "categoria", "asesor"];
+const PLANTILLA = COLUMNAS.join(",") + "\n" +
+  'Granja San Antonio,Ana Pérez,+507 6000-0001,"Vía Pacora km 6",Panamá Este,Porcinos,luis.herrera@itacol.com.pa\n' +
+  'Avícola El Roble,Marcos Him,+507 6000-0002,"Chilibre, entrada 3",Panamá Centro,Aves,maria.e@itacol.com.pa\n' +
+  'Minisúper La Espiga,Nury Batista,+507 6000-0003,"La Chorrera, calle 5",Panamá Oeste,Mascotas,carlos.a@itacol.com.pa\n';
+
+$("#btn-plantilla").addEventListener("click", () => {
+  const blob = new Blob(["﻿" + PLANTILLA], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "plantilla-clientes-rutero.csv";
+  a.click();
+  URL.revokeObjectURL(a.href);
+  avisar("⬇️ Plantilla descargada. Llénela y súbala tal cual.");
+});
+
+function partirLinea(linea) {
+  const campos = [];
+  let actual = "", comillas = false;
+  for (const ch of linea) {
+    if (ch === '"') comillas = !comillas;
+    else if (ch === "," && !comillas) { campos.push(actual.trim()); actual = ""; }
+    else actual += ch;
+  }
+  campos.push(actual.trim());
+  return campos;
+}
+
+function procesarCSV(texto, nombreArchivo) {
+  const lineas = texto.replace(/^﻿/, "").split(/\r?\n/).filter(l => l.trim());
+  if (!lineas.length) return;
+  const cabecera = partirLinea(lineas[0]).map(h => h.toLowerCase());
+  const iNombre = cabecera.indexOf("nombre"), iTel = cabecera.indexOf("telefono");
+  const filas = lineas.slice(1).map(l => partirLinea(l));
+  const validas = [], malas = [];
+  filas.forEach(f => {
+    const sinNombre = iNombre < 0 || !f[iNombre];
+    const sinTel = iTel < 0 || !f[iTel];
+    (sinNombre || sinTel ? malas : validas).push({ f, motivo: sinNombre ? "falta nombre" : "falta teléfono" });
+  });
+
+  const previa = [...validas, ...malas].slice(0, 5);
+  $("#resultado-carga").hidden = false;
+  $("#resultado-carga").innerHTML = `
+    <h4>📄 ${nombreArchivo}</h4>
+    <div class="carga-cifras">
+      <div class="carga-cifra"><b>${filas.length}</b><span>filas leídas</span></div>
+      <div class="carga-cifra"><b>${validas.length}</b><span>listas</span></div>
+      <div class="carga-cifra carga-cifra--error"><b>${malas.length}</b><span>con error</span></div>
+    </div>
+    <table class="vista-previa">
+      <thead><tr><th>Nombre</th><th>Teléfono</th><th>Zona</th><th>Estado</th></tr></thead>
+      <tbody>${previa.map(({ f, motivo }) => {
+        const ok = validas.some(v => v.f === f);
+        return `<tr class="${ok ? "" : "mal"}">
+          <td>${f[iNombre] || "—"}</td><td class="mono">${f[iTel] || "—"}</td>
+          <td>${f[cabecera.indexOf("zona")] || "—"}</td>
+          <td>${ok ? "✓ lista" : "✕ " + motivo}</td></tr>`;
+      }).join("")}</tbody>
+    </table>
+    <button class="boton-primario" id="btn-confirmar-carga">📥 Importar ${validas.length} clientes</button>`;
+
+  $("#btn-confirmar-carga").addEventListener("click", () => {
+    $("#resultado-carga").innerHTML = `
+      <h4>✅ Importación terminada</h4>
+      <div class="carga-cifras">
+        <div class="carga-cifra"><b>${validas.length}</b><span>importados</span></div>
+        <div class="carga-cifra carga-cifra--error"><b>${malas.length}</b><span>devueltos</span></div>
+      </div>
+      <p class="grafica-nota">Los clientes ya están repartidos entre los asesores según su zona. Las filas con error se descargan aparte para corregirlas y volver a subirlas.</p>`;
+    socketEvento(`📥 <b>${validas.length} clientes</b> importados desde ${nombreArchivo}`);
+    avisar(`📥 <strong>${validas.length} clientes importados</strong> y asignados por zona. ${malas.length ? malas.length + " filas quedaron pendientes de corrección." : ""}`);
+  });
+}
+
+const zonaArchivo = $("#zona-archivo");
+$("#archivo-clientes").addEventListener("change", e => {
+  const archivo = e.target.files[0];
+  if (!archivo) return;
+  if (!/\.csv$/i.test(archivo.name)) {
+    return avisar("📄 En esta maqueta se procesa <strong>.csv</strong>. El archivo .xlsx se admite en producción; use la plantilla para probarlo aquí.", "ambar", 5500);
+  }
+  archivo.text().then(t => procesarCSV(t, archivo.name));
+});
+["dragover", "dragleave", "drop"].forEach(ev => zonaArchivo.addEventListener(ev, e => {
+  e.preventDefault();
+  zonaArchivo.classList.toggle("zona-archivo--sobre", ev === "dragover");
+  if (ev === "drop") {
+    const archivo = e.dataTransfer.files[0];
+    if (archivo && /\.csv$/i.test(archivo.name)) archivo.text().then(t => procesarCSV(t, archivo.name));
+    else avisar("📄 Suba un archivo .csv (la plantilla ya viene con el formato).", "ambar");
+  }
+}));
+
+/* ── alta de cliente en campo y referidos ── */
+TAB_DE.nuevo = "clientes";
+$("#btn-nuevo-cliente").addEventListener("click", () => {
+  $("#nc-refiere").innerHTML = ORDEN_CLIENTES
+    .map(id => `<option value="${id}">${CLIENTES[id].nombre}</option>`).join("");
+  mostrarPantallaM("nuevo");
+});
+
+let origenNuevo = "visita";
+$$("#nc-origen .opcion").forEach(op => op.addEventListener("click", () => {
+  $$("#nc-origen .opcion").forEach(o => o.classList.remove("opcion--activa"));
+  op.classList.add("opcion--activa");
+  origenNuevo = op.dataset.origen;
+  $("#wrap-refiere").hidden = origenNuevo !== "referido";
+}));
+
+const ETIQUETA_ORIGEN = {
+  visita: "visita en frío", referido: "referido", campana: "campaña / IA", local: "llegó al local",
+};
+
+$("#form-nuevo-cliente").addEventListener("submit", e => {
+  e.preventDefault();
+  const nombre = $("#nc-nombre").value.trim();
+  if (!nombre) return;
+  const id = "c" + Date.now().toString(36);
+  const iniciales = nombre.split(" ").filter(p => p.length > 2).map(p => p[0]).join("").slice(0, 2).toUpperCase() || "NC";
+  const refId = origenNuevo === "referido" ? $("#nc-refiere").value : null;
+
+  CLIENTES[id] = {
+    nombre, ini: iniciales, zona: "Panamá Este",
+    sub: `Cliente nuevo · registrado hoy por Luis H.`,
+    promedio: "nuevo", frecuencia: "por definir", credito: "contado",
+    contacto: $("#nc-contacto").value.trim() || "sin contacto registrado",
+    direccion: $("#nc-direccion").value.trim() || "sin dirección",
+    ultima: "sin compras aún · alta en campo",
+    gps: "9.07812° N, 79.28914° O", gpsFin: "9.07809° N, 79.28921° O",
+    letrero: nombre.toUpperCase().slice(0, 18),
+    historial: [[`hoy · Luis H.`, `Alta en campo — origen: ${ETIQUETA_ORIGEN[origenNuevo]}${refId ? `, referido por ${CLIENTES[refId].nombre}` : ""}.`]],
+    nota: "", referidos: 0,
+  };
+  ORDEN_CLIENTES.unshift(id);
+
+  if (refId) {
+    CLIENTES[refId].referidos = (CLIENTES[refId].referidos || 0) + 1;
+    CLIENTES[refId].historial.unshift([`hoy · sistema`, `Refirió a <b>${nombre}</b> — cliente nuevo en la cartera.`]);
+  }
+
+  renderClientes();
+  const feed = $("#feed-actividad");
+  const item = document.createElement("li");
+  item.className = "nuevo";
+  item.innerHTML = `<span class="mono">${horaReloj()}</span> ➕ <b>Luis H.</b> registró en campo a <b>${nombre}</b> · ${ETIQUETA_ORIGEN[origenNuevo]}${refId ? ` (refiere: ${CLIENTES[refId].nombre})` : ""}`;
+  feed.prepend(item);
+  socketEvento(`➕ Cliente nuevo <b>${nombre}</b> capturado en campo`);
+
+  e.target.reset();
+  $("#wrap-refiere").hidden = true;
+  $$("#nc-origen .opcion").forEach((o, i) => o.classList.toggle("opcion--activa", i === 0));
+  origenNuevo = "visita";
+  abrirFicha(id);
+  avisar(`➕ <strong>${nombre}</strong> quedó en la cartera de la empresa con su coordenada${refId ? `, y se anotó la referencia de ${CLIENTES[refId].nombre}` : ""}.`);
 });
 
 /* ───────── estado inicial ───────── */
