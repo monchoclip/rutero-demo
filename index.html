@@ -1199,6 +1199,229 @@ body.asesor-web .chat{min-height:420px}
 
 .portada .portada__roles{margin:30px 0 10px}
 
+/* ═══════════════ MEJORAS v5: portal de plataforma (SaaS) ═══════════════ */
+
+.lateral--plat{background:var(--verde-950)}
+.plat-marca{
+  padding:4px 10px 14px;margin-bottom:8px;border-bottom:1.5px solid rgba(232,161,61,.3);
+}
+.plat-marca strong{
+  display:block;font-family:var(--f-display);font-size:20px;letter-spacing:.09em;color:var(--ambar);
+}
+.plat-marca small{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#8FA48C}
+.plat-btn{
+  display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:10px;width:100%;
+  font-weight:600;font-size:14px;color:#C8D6C3;transition:.15s;text-align:left;
+}
+.plat-btn:hover{background:rgba(251,248,239,.08);color:var(--papel)}
+.plat-btn--activo{background:var(--ambar);color:var(--verde-950);font-weight:700}
+.socket-estado{
+  margin-top:auto;display:flex;gap:10px;align-items:center;
+  border:1.5px solid rgba(46,125,79,.5);border-radius:12px;padding:12px;background:rgba(46,125,79,.12);
+}
+.socket-estado__punto{
+  width:11px;height:11px;border-radius:50%;background:#4ADE80;flex:none;
+  box-shadow:0 0 0 0 rgba(74,222,128,.6);animation:pulso-socket 2s infinite;
+}
+@keyframes pulso-socket{
+  0%{box-shadow:0 0 0 0 rgba(74,222,128,.55)}
+  70%{box-shadow:0 0 0 9px rgba(74,222,128,0)}
+  100%{box-shadow:0 0 0 0 rgba(74,222,128,0)}
+}
+.socket-estado strong{display:block;font-size:12.5px;color:var(--papel)}
+.socket-estado small{font-size:10.5px;color:#8FA48C;font-family:var(--f-mono)}
+
+.panel-p{display:none}
+.panel-p--activo{display:block;animation:aparecer .35s ease both}
+.kpi__alerta{color:var(--teja-osc);font-weight:700}
+
+/* tablas */
+.tabla-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tabla-cobros,.matriz{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}
+#pp-cuadre .fila-doble{grid-template-columns:1.95fr 1fr}
+@media (max-width:1180px){#pp-cuadre .fila-doble{grid-template-columns:1fr}}
+.tabla-cobros th,.matriz th{
+  text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--tinta-suave);
+  font-weight:700;padding:8px 10px;border-bottom:1.5px solid var(--linea);white-space:nowrap;
+}
+.tabla-cobros td{padding:11px 10px;border-bottom:1px solid var(--linea);vertical-align:middle}
+.tabla-cobros tr:last-child td{border-bottom:0}
+.tabla-cobros td strong{display:block;font-size:13px;line-height:1.2}
+.tabla-cobros td small{display:block;font-size:11px;color:var(--tinta-suave);margin-top:2px}
+.tabla-cobros tr.fila-cambiada{background:rgba(232,161,61,.12)}
+.td-vacio{color:var(--tinta-suave)}
+.boton-mini{padding:6px 10px;font-size:11.5px;white-space:nowrap}
+.boton-mini--rojo{border-color:rgba(196,85,45,.5);color:var(--teja-osc)}
+.boton-mini--verde{border-color:rgba(46,125,79,.5);color:var(--verde-700)}
+
+.estado{
+  display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.03em;
+  padding:3px 9px;border-radius:999px;white-space:nowrap;
+}
+.estado--activa{background:rgba(46,125,79,.14);color:var(--verde-700)}
+.estado--porvencer{background:rgba(232,161,61,.2);color:var(--ambar-osc)}
+.estado--vencida{background:rgba(196,85,45,.14);color:var(--teja-osc)}
+.estado--suspendida{background:#3A3A3A;color:#EDE8D8}
+.estado--muestra{background:rgba(91,141,184,.16);color:#38618C}
+
+/* feed de socket */
+.tarjeta-panel--socket{border-color:rgba(46,125,79,.45)}
+.chip--vivo{background:rgba(46,125,79,.14);color:var(--verde-700);display:inline-flex;align-items:center;gap:5px}
+.chip--vivo i{width:7px;height:7px;border-radius:50%;background:var(--verde-500);animation:latido 1.3s infinite}
+.socket-feed{list-style:none;display:flex;flex-direction:column;gap:7px;max-height:230px;overflow-y:auto}
+.socket-feed li{
+  font-size:12px;line-height:1.45;padding:8px 11px;border-radius:9px;
+  background:var(--papel);border:1px solid var(--linea);display:flex;gap:9px;align-items:baseline;
+  animation:aparecer .3s ease both;
+}
+.socket-feed li .mono{color:var(--verde-500);font-weight:700;font-size:11px;flex:none}
+.ciclo{list-style:none;counter-reset:c;display:flex;flex-direction:column;gap:8px}
+.ciclo li{
+  font-size:12.5px;line-height:1.5;color:var(--tinta-suave);padding-left:12px;
+  border-left:3px solid var(--verde-100);
+}
+.ciclo b{color:var(--verde-900);font-family:var(--f-mono);font-size:11.5px}
+
+/* empresas y marcas */
+.tenants{display:flex;flex-direction:column;gap:14px;margin-bottom:14px}
+.tenant{background:var(--papel-hueso);border:1.5px solid var(--linea);border-radius:13px;overflow:hidden}
+.tenant>header{display:flex;gap:12px;align-items:center;padding:14px 16px;background:var(--papel);border-bottom:1.5px solid var(--linea)}
+.tenant>header strong{display:block;font-size:15px}
+.tenant>header small{font-size:11.5px;color:var(--tinta-suave)}
+.tenant>header .estado{margin-left:auto}
+.tenant__logo{
+  width:40px;height:40px;border-radius:11px;display:grid;place-items:center;flex:none;
+  font-family:var(--f-display);font-weight:800;font-size:15px;color:var(--papel);background:var(--verde-700);
+}
+.tenant__logo--b{background:var(--azul-frio)}
+.tenant__logo--c{background:var(--ambar-osc)}
+.marcas{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;padding:13px 16px}
+.marca{background:var(--papel);border:1px solid var(--linea);border-radius:10px;padding:11px 12px;border-left:4px solid var(--ambar)}
+.marca b{display:block;font-size:13px}
+.marca small{display:block;font-size:11px;color:var(--tinta-suave);margin:2px 0 6px}
+.marca span{font-family:var(--f-mono);font-size:10.5px;color:var(--verde-700);font-weight:600}
+
+/* planes */
+.planes{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.plan{
+  background:var(--papel-hueso);border:1.5px solid var(--linea);border-radius:13px;padding:18px 16px;
+  display:flex;flex-direction:column;position:relative;
+}
+.plan h3{font-family:var(--f-display);font-size:19px;letter-spacing:.05em;text-transform:uppercase;color:var(--verde-900)}
+.plan__precio{font-family:var(--f-display);font-size:30px;color:var(--verde-700);line-height:1.1;margin-top:6px}
+.plan__precio em{font-style:normal;font-size:14px;color:var(--tinta-suave)}
+.plan>small{font-size:11px;color:var(--tinta-suave);margin-bottom:12px;display:block}
+.plan ul{list-style:none;display:flex;flex-direction:column;gap:6px;font-size:12.5px;color:var(--tinta-suave)}
+.plan li::before{content:"✓ ";color:var(--verde-500);font-weight:800}
+.plan--destacado{border-color:var(--ambar);box-shadow:var(--sombra-tarjeta);background:var(--papel)}
+.plan--destacado::after{
+  content:"MÁS CONTRATADO";position:absolute;top:-9px;right:12px;
+  font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:.08em;
+  background:var(--ambar);color:var(--verde-950);padding:3px 8px;border-radius:999px;
+}
+.plan--extra{background:transparent;border-style:dashed}
+.plan--extra .plan__precio{font-size:22px;color:var(--ambar-osc)}
+
+/* credenciales */
+.cred{display:flex;flex-direction:column;gap:12px}
+.cred label{
+  display:flex;flex-direction:column;gap:6px;
+  font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--tinta-suave);
+}
+.cred input{
+  font-family:var(--f-mono);font-size:12.5px;padding:10px 11px;border:1.5px solid var(--linea);
+  border-radius:9px;background:var(--papel);color:var(--tinta-suave);width:100%;
+}
+.modo-toggle{display:flex}
+.modo{
+  padding:8px 16px;border:1.5px solid var(--linea);font-size:12.5px;font-weight:700;
+  color:var(--tinta-suave);background:var(--papel);transition:.15s;
+}
+.modo:first-child{border-radius:8px 0 0 8px}
+.modo:last-child{border-radius:0 8px 8px 0;border-left:0}
+.modo--activo{background:var(--verde-700);color:var(--papel);border-color:var(--verde-700)}
+.aviso-seguridad{
+  margin-top:14px;font-size:12px;line-height:1.55;color:var(--tinta-suave);
+  background:rgba(196,85,45,.08);border:1.5px dashed rgba(196,85,45,.45);
+  border-radius:10px;padding:11px 13px;
+}
+.eventos-wompi{list-style:none;display:flex;flex-direction:column;gap:8px}
+.eventos-wompi li{
+  font-size:12px;line-height:1.5;padding:9px 11px;border-radius:9px;
+  background:var(--papel);border:1px solid var(--linea);display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+}
+
+/* países */
+.paises{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.pais{background:var(--papel-hueso);border:1.5px solid var(--linea);border-radius:13px;padding:15px}
+.pais--activo{border-color:var(--verde-500);background:var(--papel)}
+.pais>header{display:flex;gap:11px;align-items:center;margin-bottom:12px}
+.pais>header strong{display:block;font-size:15px}
+.pais>header small{font-size:11.5px;color:var(--tinta-suave)}
+.pais>header .estado{margin-left:auto}
+.pais__bandera{font-size:26px}
+.pais ul{list-style:none;display:flex;flex-direction:column;gap:9px}
+.pais li{display:flex;gap:10px;align-items:center}
+.pais li b{display:block;font-size:13px}
+.pais li small{display:block;font-size:11px;color:var(--tinta-suave)}
+.pais__nota{font-size:12px;line-height:1.5;color:var(--tinta-suave)}
+
+/* matriz de permisos */
+.matriz th small{display:block;font-weight:500;font-size:9.5px;text-transform:none;letter-spacing:0;color:var(--tinta-suave)}
+.matriz td{padding:9px 10px;border-bottom:1px solid var(--linea);text-align:center;font-size:14px}
+.matriz td:first-child{text-align:left;font-size:12.5px;font-weight:600}
+.matriz tbody tr:hover{background:var(--papel-hueso)}
+.matriz td:not(:first-child){color:var(--verde-600,var(--verde-500));font-weight:800}
+.leyenda-matriz{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-size:11.5px;color:var(--tinta-suave)}
+.leyenda-matriz b{color:var(--verde-700);font-size:14px}
+.alcances{
+  margin-top:16px;background:linear-gradient(150deg,var(--verde-900),var(--verde-700));
+  color:#E4EBDF;border-radius:13px;padding:17px 19px;
+}
+.alcances h3{color:var(--papel);font-size:15px;margin-bottom:7px}
+.alcances p{font-size:13px;line-height:1.6}
+.alcances b{color:var(--ambar);font-family:var(--f-mono);font-size:12px}
+
+/* llamada: marcador del teléfono y número visible en PC */
+.numero-marcar{
+  font-family:var(--f-mono);font-size:21px;font-weight:700;color:var(--verde-700);
+  text-decoration:none;letter-spacing:.02em;border-bottom:2px dashed rgba(46,125,79,.45);padding-bottom:2px;
+}
+.llamada__pc{display:none}
+body.asesor-web .llamada__pc{
+  display:flex;flex-wrap:wrap;gap:9px;align-items:center;justify-content:center;
+  font-size:12.5px;color:var(--tinta-suave);background:rgba(91,141,184,.1);
+  border:1.5px dashed rgba(91,141,184,.45);border-radius:10px;padding:10px 14px;max-width:420px;
+}
+.boton-volvi{max-width:280px;margin-top:6px}
+
+/* turno y rastro de ubicación */
+.turno{
+  background:var(--papel);border:1.5px solid var(--linea);border-radius:12px;
+  padding:13px 14px;margin-bottom:14px;border-left:4px solid var(--verde-500);
+}
+.turno--cerrado{border-left-color:var(--tinta-suave);opacity:.75}
+.turno__cabecera{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:9px}
+.turno__cabecera strong{font-size:14px;display:block}
+.turno__cabecera small{font-size:11.5px;color:var(--tinta-suave)}
+.turno__rastro{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;margin-bottom:8px}
+.turno__rastro b{font-family:var(--f-mono);color:var(--verde-700)}
+.turno__cola{color:var(--teja-osc)}
+.turno__cola b{color:var(--teja-osc)}
+.turno__nota{font-size:11.5px;line-height:1.5;color:var(--tinta-suave);margin-bottom:10px}
+.turno__acciones{display:flex;gap:8px;flex-wrap:wrap}
+
+@media (max-width:760px){
+  .planes,.paises{grid-template-columns:1fr}
+  .marcas{grid-template-columns:1fr}
+  .lateral--plat{flex-direction:row;align-items:center}
+  .plat-marca,.socket-estado{display:none}
+  .plat-btn{padding:9px 11px;font-size:12.5px;white-space:nowrap;width:auto}
+  .plat-btn span{display:none}
+  .tenant>header{flex-wrap:wrap}
+  .leyenda-matriz{gap:10px}
+}
+
 /* accesibilidad: respetar reducción de movimiento */
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
@@ -1218,7 +1441,8 @@ body.asesor-web .chat{min-height:420px}
   </button>
   <nav class="cambio-rol" aria-label="Cambiar de rol">
     <button class="cambio-rol__btn" data-rol="asesor">📱 Asesor <span>en campo</span></button>
-    <button class="cambio-rol__btn" data-rol="coordinador">🗂️ Coordinador <span>en oficina</span></button>
+    <button class="cambio-rol__btn" data-rol="coordinador">🗂️ Coordinador <span>de la empresa</span></button>
+    <button class="cambio-rol__btn" data-rol="plataforma">🛡️ Plataforma <span>dueño del SaaS</span></button>
   </nav>
   <span class="chip-demo">DEMO · marca blanca</span>
 </header>
@@ -1593,6 +1817,21 @@ body.asesor-web .chat{min-height:420px}
             <div><strong id="perfil-pedidos">B/. 1,580</strong><span>vendido hoy</span></div>
             <div><strong>4 h 32 m</strong><span>en ruta</span></div>
           </div>
+          <div class="turno" id="turno">
+            <div class="turno__cabecera">
+              <div><strong>Turno de hoy</strong><small id="turno-detalle">abierto 7:58 a.m. · rastro de ubicación activo</small></div>
+              <span class="chip chip--verde" id="turno-chip">● en turno</span>
+            </div>
+            <div class="turno__rastro">
+              <span>📍 <b id="turno-puntos">126</b> puntos de recorrido</span>
+              <span id="turno-cola" class="turno__cola" hidden>💾 <b id="turno-pendientes">0</b> guardados sin señal</span>
+            </div>
+            <p class="turno__nota">Si se cae la red, el teléfono <strong>sigue guardando el recorrido</strong> y lo sube completo al reconectar — hasta que cierre el turno.</p>
+            <div class="turno__acciones">
+              <button class="boton-fantasma boton-mini" id="btn-compartir-ubicacion">📤 Compartir mi ubicación</button>
+              <button class="boton-fantasma boton-mini" id="btn-cerrar-turno">⏹ Cerrar turno</button>
+            </div>
+          </div>
           <div class="racha">🏅 <strong>18 días seguidos</strong> con el 100 % de visitas verificadas</div>
           <div class="ranking">
             <h4>Ranking semanal del equipo</h4>
@@ -1606,13 +1845,17 @@ body.asesor-web .chat{min-height:420px}
         <!-- ── pantalla: LLAMADA DESDE LA APP ── -->
         <div class="pantalla-m" id="pm-llamada">
           <div class="llamada" id="caja-llamada">
-            <div class="llamada__estado" id="llamada-estado"><i></i> <span>EN LLAMADA · NÚMERO CORPORATIVO</span></div>
+            <div class="llamada__estado" id="llamada-estado"><i></i> <span>MARCANDO DESDE EL TELÉFONO</span></div>
             <span class="avatar avatar--cliente avatar--grande" id="llamada-avatar">AN</span>
             <h3 id="llamada-nombre">Avícola La Nube</h3>
-            <p class="llamada__sub" id="llamada-sub">Sr. Ovidio Sánchez · +507 6900-3417</p>
+            <p class="llamada__sub" id="llamada-sub">Sr. Ovidio Sánchez</p>
+            <a class="numero-marcar" id="numero-marcar" href="tel:+50769003417">+507 6900-3417</a>
+            <p class="llamada__pc">🖥️ Está en la computadora: <strong>marque este número desde su teléfono</strong>. El conteo ya arrancó.
+              <button class="boton-fantasma boton-mini" id="btn-copiar-numero">📋 Copiar número</button>
+            </p>
             <div class="cronometro cronometro--llamada" id="crono-llamada">00:00</div>
-            <p class="nota-acelerada">⏩ tiempo acelerado ×8 para la demostración</p>
-            <button class="boton-colgar" id="btn-colgar" aria-label="Colgar llamada"><span>📞</span></button>
+            <p class="nota-acelerada">⏩ tiempo acelerado ×8 · el conteo corre desde que marca hasta que vuelve a la app</p>
+            <button class="boton-primario boton-volvi" id="btn-colgar">✓ Terminé la llamada</button>
           </div>
           <div class="registro-llamada" id="registro-llamada" hidden>
             <h4>Registro de la llamada <span class="chip chip--verde">queda en el cronograma</span></h4>
@@ -2137,6 +2380,288 @@ body.asesor-web .chat{min-height:420px}
           <button class="boton-primario boton-primario--ambar" id="btn-simular-salida">Simular salida de Luis Herrera</button>
           <button class="enlace" id="btn-restaurar-simulacro" hidden>↺ Restaurar el simulacro</button>
         </div>
+      </div>
+    </div>
+
+  </section>
+</div>
+</section>
+
+<!-- ════════════════════ PORTAL DE LA PLATAFORMA (dueño del SaaS) ════════════════════ -->
+<section class="vista" id="vista-plataforma">
+<div class="escritorio">
+
+  <aside class="lateral lateral--plat">
+    <div class="plat-marca">
+      <strong>RUTERO</strong>
+      <small>consola de plataforma</small>
+    </div>
+    <nav class="lateral__nav">
+      <button class="plat-btn plat-btn--activo" data-ppanel="cuadre">💰 <span>Cuadre y cobros</span></button>
+      <button class="plat-btn" data-ppanel="empresas">🏢 <span>Empresas y marcas</span></button>
+      <button class="plat-btn" data-ppanel="planes">🏷️ <span>Planes y precios</span></button>
+      <button class="plat-btn" data-ppanel="pasarela">💳 <span>Pasarela (Wompi)</span></button>
+      <button class="plat-btn" data-ppanel="paises">🌎 <span>Coordinadores país</span></button>
+      <button class="plat-btn" data-ppanel="perfiles">🔐 <span>Perfiles y permisos</span></button>
+    </nav>
+    <div class="socket-estado">
+      <span class="socket-estado__punto"></span>
+      <div>
+        <strong>Tiempo real activo</strong>
+        <small id="socket-detalle">socket conectado · 48 sesiones</small>
+      </div>
+    </div>
+  </aside>
+
+  <section class="panel-zona">
+
+    <!-- ── CUADRE Y COBROS ── -->
+    <div class="panel-p panel-p--activo" id="pp-cuadre">
+      <header class="panel__titulo">
+        <h2>Cuadre y cobros <small>ingresos, vencimientos y cortes de toda la plataforma</small></h2>
+        <span class="mono">julio 2026</span>
+      </header>
+
+      <div class="kpis">
+        <div class="kpi"><strong id="kpi-mrr">B/. 817</strong><span>ingreso recurrente mensual (MRR)</span><small class="kpi__ok">▲ 12% vs. junio</small></div>
+        <div class="kpi"><strong>B/. 565</strong><span>cobrado en julio</span><small class="kpi__ok">1 cobro exitoso vía Wompi</small></div>
+        <div class="kpi"><strong id="kpi-porcobrar">B/. 252</strong><span>por cobrar (vence o venció)</span><small class="kpi__neutro">2 empresas</small></div>
+        <div class="kpi"><strong id="kpi-riesgo">B/. 1,800</strong><span>en riesgo por impago</span><small class="kpi__alerta">1 empresa suspendida</small></div>
+      </div>
+
+      <div class="fila-doble">
+        <div class="col-apilada">
+          <div class="tarjeta-panel">
+            <h3>🧾 Estado de cobro por empresa <small class="grafica__unidad">el ciclo completo, con acciones reales</small></h3>
+            <div class="tabla-scroll">
+              <table class="tabla-cobros" id="tabla-cobros">
+                <thead>
+                  <tr><th>Empresa</th><th>Plan</th><th>Usuarios</th><th>Importe</th><th>Estado</th><th>Acción</th></tr>
+                </thead>
+                <tbody>
+                  <tr data-empresa="itacol" data-mrr="565">
+                    <td><strong>Alimentos Itacol S.A.</strong><small>3 marcas blancas · Panamá</small></td>
+                    <td>Mensual + premium</td><td>21</td><td class="mono">B/. 565</td>
+                    <td><span class="estado estado--activa">activa</span><small>próx. cobro 5 ago</small></td>
+                    <td><span class="td-vacio">—</span></td>
+                  </tr>
+                  <tr data-empresa="chen" data-mrr="144">
+                    <td><strong>Distribuidora Chen</strong><small>2 marcas blancas · Panamá</small></td>
+                    <td>Mensual</td><td>8</td><td class="mono">B/. 144</td>
+                    <td><span class="estado estado--porvencer">por vencer</span><small>vence en 3 días</small></td>
+                    <td><button class="boton-fantasma boton-mini" data-cobro="recordar">🔔 Recordar</button></td>
+                  </tr>
+                  <tr data-empresa="veraguas" data-mrr="108">
+                    <td><strong>AgroVeraguas</strong><small>1 marca blanca · Panamá</small></td>
+                    <td>Mensual</td><td>6</td><td class="mono">B/. 108</td>
+                    <td><span class="estado estado--vencida">vencida</span><small>gracia hasta 28 jul</small></td>
+                    <td><button class="boton-fantasma boton-mini boton-mini--rojo" data-cobro="cortar">⛔ Aplicar corte</button></td>
+                  </tr>
+                  <tr data-empresa="istmo" data-mrr="0">
+                    <td><strong>Pecuaria del Istmo</strong><small>1 marca blanca · Panamá</small></td>
+                    <td>Muestra (prueba)</td><td>3</td><td class="mono">B/. 0</td>
+                    <td><span class="estado estado--muestra">muestra</span><small>día 9 de 14</small></td>
+                    <td><button class="boton-fantasma boton-mini" data-cobro="convertir">⭐ Convertir a plan</button></td>
+                  </tr>
+                  <tr data-empresa="machetazo" data-mrr="0">
+                    <td><strong>Comercial El Machetazo</strong><small>1 marca blanca · Panamá</small></td>
+                    <td>Anual</td><td>10</td><td class="mono">B/. 150</td>
+                    <td><span class="estado estado--suspendida">suspendida</span><small>impago desde 15 jul</small></td>
+                    <td><button class="boton-fantasma boton-mini boton-mini--verde" data-cobro="pagar">💳 Registrar pago</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="grafica-nota">El corte no borra nada: la empresa pierde el acceso, los datos quedan intactos y se reactivan con el pago.</p>
+          </div>
+        </div>
+
+        <div class="col-apilada">
+          <div class="tarjeta-panel tarjeta-panel--socket">
+            <h3>📡 Eventos en tiempo real <span class="chip chip--vivo"><i></i> socket</span></h3>
+            <ul class="socket-feed" id="socket-feed">
+              <li><span class="mono">11:52</span> 🔌 48 sesiones conectadas · 12 asesores en campo</li>
+            </ul>
+          </div>
+          <div class="tarjeta-panel">
+            <h3>⏰ Ciclo de cobro automático</h3>
+            <ol class="ciclo">
+              <li><b>D-7 / D-3 / D-1</b> recordatorio al administrador de la empresa (correo + aviso dentro de la app)</li>
+              <li><b>Día 0</b> intento de cobro automático con la tarjeta guardada en Wompi</li>
+              <li><b>D+1 a D+7</b> período de gracia, con banner rojo dentro de la plataforma</li>
+              <li><b>D+8</b> suspensión: se corta el acceso, se conservan los datos</li>
+              <li><b>Pago</b> el webhook de Wompi reactiva el servicio en segundos</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── EMPRESAS Y MARCAS BLANCAS ── -->
+    <div class="panel-p" id="pp-empresas">
+      <header class="panel__titulo"><h2>Empresas y marcas blancas <small>cada empresa gestiona sus marcas por separado, con datos aislados</small></h2></header>
+      <div class="tenants">
+        <article class="tenant">
+          <header>
+            <span class="tenant__logo">IT</span>
+            <div><strong>Alimentos Itacol S.A.</strong><small>Panamá · admin: gerencia@itacol.com.pa</small></div>
+            <span class="estado estado--activa">activa</span>
+          </header>
+          <div class="marcas">
+            <div class="marca"><b>Itacol Agro</b><small>alimento para aves, cerdos y ganado</small><span>12 usuarios · coord. Panamá Este</span></div>
+            <div class="marca"><b>Itacol Mascotas</b><small>línea retail de mascotas</small><span>5 usuarios · coord. Centro</span></div>
+            <div class="marca"><b>Itacol Foodservice</b><small>canal hotelero y restaurantes</small><span>4 usuarios · coord. Oeste</span></div>
+          </div>
+        </article>
+        <article class="tenant">
+          <header>
+            <span class="tenant__logo tenant__logo--b">DC</span>
+            <div><strong>Distribuidora Chen</strong><small>Panamá · admin: r.chen@dchen.com</small></div>
+            <span class="estado estado--porvencer">por vencer</span>
+          </header>
+          <div class="marcas">
+            <div class="marca"><b>Chen Agro</b><small>concentrados</small><span>5 usuarios</span></div>
+            <div class="marca"><b>Chen Retail</b><small>abarrotes y mascotas</small><span>3 usuarios</span></div>
+          </div>
+        </article>
+        <article class="tenant">
+          <header>
+            <span class="tenant__logo tenant__logo--c">PI</span>
+            <div><strong>Pecuaria del Istmo</strong><small>Panamá · en período de muestra</small></div>
+            <span class="estado estado--muestra">muestra</span>
+          </header>
+          <div class="marcas">
+            <div class="marca"><b>Pecuaria Istmo</b><small>marca única</small><span>3 usuarios · tope de la muestra</span></div>
+          </div>
+        </article>
+      </div>
+      <p class="grafica-nota">Aislamiento total: cada marca blanca tiene su catálogo, sus clientes, sus chats y su coordinador. Ningún dato cruza entre marcas ni entre empresas.</p>
+    </div>
+
+    <!-- ── PLANES ── -->
+    <div class="panel-p" id="pp-planes">
+      <header class="panel__titulo"><h2>Planes y precios <small>lo que ve el cliente al contratar</small></h2></header>
+      <div class="planes">
+        <article class="plan">
+          <h3>Muestra</h3><p class="plan__precio">B/. 0</p><small>14 días</small>
+          <ul><li>3 usuarios</li><li>1 marca blanca</li><li>IA con catálogo de ejemplo</li><li>Sin tarjeta por adelantado</li></ul>
+        </article>
+        <article class="plan plan--destacado">
+          <h3>Mensual</h3><p class="plan__precio">B/. 18<em>/usuario</em></p><small>mínimo 5 usuarios</small>
+          <ul><li>Marcas blancas ilimitadas</li><li>IA entrenada con su catálogo</li><li>Mapa, cronogramas y analíticas</li><li>Cobro automático con Wompi</li></ul>
+        </article>
+        <article class="plan">
+          <h3>Anual</h3><p class="plan__precio">B/. 15<em>/usuario</em></p><small>facturado anual · ahorra 17%</small>
+          <ul><li>Todo lo del plan mensual</li><li>Precio congelado 12 meses</li><li>Prioridad en la cola de soporte</li></ul>
+        </article>
+        <article class="plan plan--extra">
+          <h3>Soporte premium</h3><p class="plan__precio">B/. 250<em>/mes</em></p><small>por empresa</small>
+          <ul><li>Acompañamiento y configuración</li><li>Entrenamiento continuo de la IA</li><li>Ajustes a la medida del negocio</li></ul>
+        </article>
+        <article class="plan plan--extra">
+          <h3>Integraciones ERP</h3><p class="plan__precio">A cotizar</p><small>no incluido en los planes</small>
+          <ul><li>Conexión con el ERP del cliente</li><li>Sincronía de catálogo y pedidos</li><li>Alcance y precio por proyecto</li></ul>
+        </article>
+      </div>
+    </div>
+
+    <!-- ── PASARELA WOMPI ── -->
+    <div class="panel-p" id="pp-pasarela">
+      <header class="panel__titulo"><h2>Pasarela de cobro · Wompi <small>la cuenta que recauda por toda la plataforma</small></h2></header>
+      <div class="fila-doble">
+        <div class="tarjeta-panel">
+          <h3>🔑 Credenciales</h3>
+          <div class="cred">
+            <label>Modo
+              <div class="modo-toggle"><button class="modo modo--activo">Pruebas</button><button class="modo">Producción</button></div>
+            </label>
+            <label>Llave pública
+              <input type="text" value="pub_test_XXXXXXXXXXXXXXXX" readonly>
+            </label>
+            <label>Llave privada
+              <input type="password" value="XXXXXXXXXXXXXXXXXXXX" readonly>
+            </label>
+            <label>URL de eventos (webhook)
+              <input type="text" value="https://api.rutero.app/wompi/webhook" readonly>
+            </label>
+          </div>
+          <p class="aviso-seguridad">🔒 <strong>Este demo no guarda credenciales reales</strong> — los valores de arriba son de utilería. En producción las llaves viven cifradas en el servidor y nunca llegan al navegador: el frontend solo recibe el token de cada transacción.</p>
+        </div>
+        <div class="tarjeta-panel">
+          <h3>📥 Últimos eventos recibidos</h3>
+          <ul class="eventos-wompi" id="eventos-wompi">
+            <li><span class="estado estado--activa">APPROVED</span> <b>Alimentos Itacol S.A.</b> · B/. 565.00 · <span class="mono">5 jul 09:02</span></li>
+            <li><span class="estado estado--vencida">DECLINED</span> <b>AgroVeraguas</b> · B/. 108.00 · <span class="mono">21 jul 06:15</span> · fondos insuficientes</li>
+            <li><span class="estado estado--vencida">DECLINED</span> <b>Comercial El Machetazo</b> · B/. 150.00 · <span class="mono">15 jul 06:12</span> · tarjeta vencida</li>
+          </ul>
+          <p class="grafica-nota">Cada evento del webhook mueve la suscripción solo: aprobado reactiva el servicio, rechazado arranca el ciclo de recordatorios y, si no hay pago, el corte.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── COORDINADORES POR PAÍS ── -->
+    <div class="panel-p" id="pp-paises">
+      <header class="panel__titulo"><h2>Coordinadores por país <small>cada país tiene quien coordine las empresas de su territorio</small></h2></header>
+      <div class="paises">
+        <article class="pais pais--activo">
+          <header><span class="pais__bandera">🇵🇦</span><div><strong>Panamá</strong><small>operación en marcha</small></div><span class="estado estado--activa">activo</span></header>
+          <ul>
+            <li><span class="avatar avatar--me">ME</span><div><b>María Espinosa</b><small>coordinadora país · 5 empresas · 48 usuarios</small></div></li>
+            <li><span class="avatar avatar--ca">CA</span><div><b>Carlos Ábrego</b><small>coordinador de marca · Itacol Agro</small></div></li>
+          </ul>
+        </article>
+        <article class="pais">
+          <header><span class="pais__bandera">🇨🇷</span><div><strong>Costa Rica</strong><small>previsto — sin habilitar</small></div><span class="estado estado--muestra">previsto</span></header>
+          <p class="pais__nota">Al habilitar un país se crea su coordinador, su moneda y sus zonas. Nada más cambia en la plataforma.</p>
+        </article>
+        <article class="pais">
+          <header><span class="pais__bandera">🇨🇴</span><div><strong>Colombia</strong><small>previsto — sin habilitar</small></div><span class="estado estado--muestra">previsto</span></header>
+          <p class="pais__nota">Wompi también opera en Colombia: la misma pasarela sirve para ese mercado.</p>
+        </article>
+      </div>
+    </div>
+
+    <!-- ── PERFILES Y PERMISOS ── -->
+    <div class="panel-p" id="pp-perfiles">
+      <header class="panel__titulo"><h2>Perfiles y permisos <small>quién puede hacer qué, y sobre qué alcance</small></h2></header>
+      <div class="tabla-scroll">
+        <table class="matriz">
+          <thead>
+            <tr>
+              <th>Permiso</th>
+              <th>Superadmin<small>plataforma</small></th>
+              <th>Finanzas<small>plataforma</small></th>
+              <th>Soporte<small>premium</small></th>
+              <th>Admin<small>empresa</small></th>
+              <th>Coord.<small>país</small></th>
+              <th>Coord.<small>marca</small></th>
+              <th>Asesor<small>campo</small></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Ver mapa y ubicación en vivo</td><td>✓</td><td>—</td><td>◐</td><td>✓</td><td>◐</td><td>◐</td><td>◐</td></tr>
+            <tr><td>Programar visitas, llamadas y seguimientos</td><td>✓</td><td>—</td><td>—</td><td>✓</td><td>◐</td><td>◐</td><td>—</td></tr>
+            <tr><td>Chatear con clientes</td><td>—</td><td>—</td><td>—</td><td>✓</td><td>◐</td><td>◐</td><td>◐</td></tr>
+            <tr><td>Ver analíticas comerciales</td><td>✓</td><td>—</td><td>◐</td><td>✓</td><td>◐</td><td>◐</td><td>◐</td></tr>
+            <tr><td>Crear y configurar marcas blancas</td><td>✓</td><td>—</td><td>◐</td><td>✓</td><td>—</td><td>—</td><td>—</td></tr>
+            <tr><td>Gestionar usuarios y asignar roles</td><td>✓</td><td>—</td><td>—</td><td>✓</td><td>◐</td><td>◐</td><td>—</td></tr>
+            <tr><td>Entrenar y ajustar la IA</td><td>✓</td><td>—</td><td>✓</td><td>◐</td><td>—</td><td>—</td><td>—</td></tr>
+            <tr><td>Ver facturación y consumo</td><td>✓</td><td>✓</td><td>—</td><td>✓</td><td>—</td><td>—</td><td>—</td></tr>
+            <tr><td>Configurar la pasarela de cobro</td><td>✓</td><td>✓</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+            <tr><td>Aplicar corte / reactivar servicio</td><td>✓</td><td>✓</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+            <tr><td>Definir planes y precios</td><td>✓</td><td>◐</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="leyenda-matriz">
+        <span><b>✓</b> completo</span>
+        <span><b>◐</b> limitado a su alcance (país, marca o cartera propia)</span>
+        <span><b>—</b> sin acceso</span>
+      </div>
+      <div class="alcances">
+        <h3>El alcance manda sobre el permiso</h3>
+        <p>Un mismo permiso rinde distinto según dónde esté parado el usuario. La jerarquía es
+        <b>plataforma → empresa → marca blanca → país/zona → asesor</b>: el coordinador de marca ve todo lo suyo y nada de la marca vecina; el coordinador de país ve las empresas de su territorio; el asesor, solo su propia cartera.</p>
       </div>
     </div>
 
@@ -3072,12 +3597,16 @@ function abrirLlamada(clienteId, liTarea, cronoLi) {
   Object.assign(llamada, { clienteId, li: liTarea, cronoLi, seg: 0 });
   $("#llamada-avatar").textContent = c.ini;
   $("#llamada-nombre").textContent = c.nombre;
-  $("#llamada-sub").textContent = c.contacto;
+  const [persona, numero] = (c.contacto || "").split("·").map(t => t.trim());
+  $("#llamada-sub").textContent = persona || "";
+  const enlace = $("#numero-marcar");
+  enlace.textContent = numero || "—";
+  enlace.href = "tel:" + (numero || "").replace(/[^+\d]/g, "");
   $("#crono-llamada").textContent = "00:00";
   $("#registro-llamada").hidden = true;
   $("#resumen-llamada").value = "";
   $("#caja-llamada").classList.remove("llamada--colgada");
-  $("#llamada-estado span").textContent = "EN LLAMADA · NÚMERO CORPORATIVO";
+  $("#llamada-estado span").textContent = "MARCANDO DESDE EL TELÉFONO";
   $$("#clasificacion-llamada .opcion").forEach((o, i) => o.classList.toggle("opcion--activa", i === 0));
   clearInterval(llamada.timer);
   llamada.timer = setInterval(() => {
@@ -3086,7 +3615,7 @@ function abrirLlamada(clienteId, liTarea, cronoLi) {
     $("#crono-llamada").textContent = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   }, 1000);
   mostrarPantallaM("llamada");
-  avisar("📞 Llamando desde el número corporativo — el cliente nunca ve el celular personal del asesor.");
+  avisar("📞 La app abre el marcador del teléfono y <strong>arranca el conteo</strong>. Al volver, pedirá el resumen.");
 }
 
 $("#btn-colgar").addEventListener("click", () => {
@@ -3095,6 +3624,13 @@ $("#btn-colgar").addEventListener("click", () => {
   const min = Math.max(1, Math.round(llamada.seg / 60));
   $("#llamada-estado span").textContent = `LLAMADA FINALIZADA · ${min} MIN`;
   $("#registro-llamada").hidden = false;
+  $("#resumen-llamada").focus();
+});
+
+$("#btn-copiar-numero").addEventListener("click", () => {
+  const num = $("#numero-marcar").textContent;
+  navigator.clipboard?.writeText(num);
+  avisar(`📋 Número copiado: <strong>${num}</strong>`);
 });
 
 $$("#clasificacion-llamada .opcion").forEach(op => op.addEventListener("click", () => {
@@ -3267,6 +3803,178 @@ const observador = new IntersectionObserver(entradas => entradas.forEach(en => {
 $$(".revelar").forEach(el => observador.observe(el));
 /* red de seguridad: nada queda oculto si el observer no dispara */
 setTimeout(() => $$(".revelar").forEach(el => el.classList.add("revelar--visible")), 3000);
+
+/* ═══════════ v5: PORTAL DE LA PLATAFORMA (dueño del SaaS) ═══════════ */
+
+/* navegación del portal */
+$$(".plat-btn").forEach(b => b.addEventListener("click", () => {
+  $$(".panel-p").forEach(p => p.classList.remove("panel-p--activo"));
+  $("#pp-" + b.dataset.ppanel).classList.add("panel-p--activo");
+  $$(".plat-btn").forEach(x => x.classList.toggle("plat-btn--activo", x === b));
+}));
+
+/* ── ciclo de cobro: montos, estados y recálculo del cuadre ── */
+const MONTOS = { itacol: 565, chen: 144, veraguas: 108, istmo: 0, machetazo: 150 };
+const SUSCRIPCIONES = {
+  itacol: "activa", chen: "porvencer", veraguas: "vencida",
+  istmo: "muestra", machetazo: "suspendida",
+};
+const NOMBRE_EMPRESA = {
+  itacol: "Alimentos Itacol S.A.", chen: "Distribuidora Chen", veraguas: "AgroVeraguas",
+  istmo: "Pecuaria del Istmo", machetazo: "Comercial El Machetazo",
+};
+
+const plural = (n, sing, plu) => `${n} ${n === 1 ? sing : plu}`;
+
+function recalcularCuadre() {
+  let mrr = 0, porCobrar = 0, riesgo = 0, suspendidas = 0, pendientes = 0;
+  for (const [id, est] of Object.entries(SUSCRIPCIONES)) {
+    const m = MONTOS[id];
+    if (est === "activa" || est === "porvencer" || est === "vencida") mrr += m;
+    if (est === "porvencer" || est === "vencida") { porCobrar += m; pendientes++; }
+    if (est === "suspendida") { riesgo += m * 12; suspendidas++; }
+  }
+  $("#kpi-mrr").textContent = "B/. " + mrr.toLocaleString("en-US");
+  $("#kpi-porcobrar").textContent = "B/. " + porCobrar.toLocaleString("en-US");
+  $("#kpi-riesgo").textContent = "B/. " + riesgo.toLocaleString("en-US");
+  $("#kpi-porcobrar").parentElement.querySelector("small").textContent =
+    pendientes === 0 ? "todo al día ✓" : plural(pendientes, "empresa", "empresas");
+  $("#kpi-riesgo").parentElement.querySelector("small").textContent =
+    suspendidas === 0 ? "sin empresas suspendidas ✓" : plural(suspendidas, "empresa suspendida", "empresas suspendidas");
+}
+
+function pintarFilaCobro(id, estado, etiqueta, sub, accionHTML) {
+  const fila = $(`#tabla-cobros tr[data-empresa="${id}"]`);
+  const celdaEstado = fila.children[4];
+  celdaEstado.innerHTML = `<span class="estado estado--${estado}">${etiqueta}</span><small>${sub}</small>`;
+  fila.children[5].innerHTML = accionHTML;
+  fila.children[3].textContent = "B/. " + MONTOS[id];
+  fila.classList.add("fila-cambiada");
+  setTimeout(() => fila.classList.remove("fila-cambiada"), 2200);
+  enlazarAccionesCobro();
+}
+
+function eventoWompi(tipo, empresaId, monto, detalle = "") {
+  const li = document.createElement("li");
+  li.innerHTML = `<span class="estado estado--${tipo === "APPROVED" ? "activa" : "vencida"}">${tipo}</span> <b>${NOMBRE_EMPRESA[empresaId]}</b> · B/. ${monto}.00 · <span class="mono">hoy ${horaReloj()}</span>${detalle ? " · " + detalle : ""}`;
+  $("#eventos-wompi").prepend(li);
+}
+
+const ACCIONES_COBRO = {
+  recordar(id) {
+    SUSCRIPCIONES[id] = "porvencer";
+    pintarFilaCobro(id, "porvencer", "recordatorio enviado", "aviso por correo y en la app", '<span class="td-vacio">esperando pago</span>');
+    socketEvento(`🔔 Recordatorio de cobro enviado a <b>${NOMBRE_EMPRESA[id]}</b>`);
+    avisar(`🔔 Recordatorio enviado al administrador de <strong>${NOMBRE_EMPRESA[id]}</strong> (D-3). Se repite en D-1.`);
+  },
+  cortar(id) {
+    SUSCRIPCIONES[id] = "suspendida";
+    pintarFilaCobro(id, "suspendida", "suspendida", "corte aplicado hoy", '<button class="boton-fantasma boton-mini boton-mini--verde" data-cobro="pagar">💳 Registrar pago</button>');
+    socketEvento(`⛔ Servicio suspendido para <b>${NOMBRE_EMPRESA[id]}</b> · 6 usuarios desconectados`);
+    avisar(`⛔ <strong>Corte aplicado a ${NOMBRE_EMPRESA[id]}.</strong> Sus usuarios pierden el acceso; los datos quedan guardados y vuelven con el pago.`, "teja", 6000);
+  },
+  convertir(id) {
+    MONTOS[id] = 54; // 3 usuarios × B/. 18
+    SUSCRIPCIONES[id] = "activa";
+    pintarFilaCobro(id, "activa", "activa", "plan mensual · próx. cobro en 30 días", '<span class="td-vacio">—</span>');
+    eventoWompi("APPROVED", id, 54);
+    socketEvento(`⭐ <b>${NOMBRE_EMPRESA[id]}</b> pasó de muestra a plan mensual`);
+    avisar(`⭐ <strong>${NOMBRE_EMPRESA[id]}</strong> convirtió la muestra en plan mensual: B/. 54/mes por 3 usuarios.`);
+  },
+  pagar(id) {
+    SUSCRIPCIONES[id] = "activa";
+    pintarFilaCobro(id, "activa", "activa", "reactivada por webhook de Wompi", '<span class="td-vacio">—</span>');
+    eventoWompi("APPROVED", id, MONTOS[id], "reactivación automática");
+    socketEvento(`💳 Pago aprobado de <b>${NOMBRE_EMPRESA[id]}</b> · servicio reactivado`);
+    avisar(`💳 <strong>Pago recibido.</strong> El webhook de Wompi reactivó a ${NOMBRE_EMPRESA[id]} en segundos, sin tocar nada a mano.`);
+  },
+};
+
+function enlazarAccionesCobro() {
+  $$("#tabla-cobros [data-cobro]").forEach(b => {
+    if (b.dataset.enlazado) return;
+    b.dataset.enlazado = "1";
+    b.addEventListener("click", () => {
+      const id = b.closest("tr").dataset.empresa;
+      ACCIONES_COBRO[b.dataset.cobro](id);
+      recalcularCuadre();
+    });
+  });
+}
+enlazarAccionesCobro();
+recalcularCuadre();
+
+/* ── tiempo real (socket simulado) ── */
+const EVENTOS_SOCKET = [
+  "📍 <b>Luis H.</b> actualizó su ubicación · Pacora",
+  "💬 Mensaje nuevo de <b>Granja Bella Vista</b> · la IA respondió",
+  "🧭 <b>María E.</b> cerró visita con foto y GPS · Itacol Mascotas",
+  "📞 Llamada registrada · <b>Carlos Á.</b> · 4 min · interesado",
+  "🔌 Nueva sesión conectada · asesor de <b>Chen Agro</b>",
+  "🧾 Pedido nuevo por B/. 320 · <b>Itacol Agro</b>",
+  "📤 <b>Luis H.</b> compartió su ubicación con la central",
+];
+let idxSocket = 0;
+function socketEvento(html) {
+  const feed = $("#socket-feed");
+  if (!feed) return;
+  const li = document.createElement("li");
+  li.innerHTML = `<span class="mono">${horaReloj()}</span> ${html}`;
+  feed.prepend(li);
+  while (feed.children.length > 8) feed.lastElementChild.remove();
+}
+setInterval(() => {
+  if (document.hidden) return;
+  if (!$("#vista-plataforma").classList.contains("vista--activa")) return;
+  socketEvento(EVENTOS_SOCKET[idxSocket++ % EVENTOS_SOCKET.length]);
+  const sesiones = 46 + Math.floor(Math.random() * 6);
+  $("#socket-detalle").textContent = `socket conectado · ${sesiones} sesiones`;
+}, 4200);
+
+/* ═══════════ v5: turno y rastro de ubicación offline ═══════════ */
+const turno = { abierto: true, puntos: 126, pendientes: 0, ultimoOnline: true };
+setInterval(() => {
+  if (!turno.abierto || document.hidden) return;
+  if (estado.online) {
+    if (!turno.ultimoOnline && turno.pendientes) {
+      turno.puntos += turno.pendientes;
+      avisar(`📤 <strong>${turno.pendientes} puntos de recorrido</strong> guardados sin señal se subieron a la central.`);
+      turno.pendientes = 0;
+      $("#turno-cola").hidden = true;
+    }
+    turno.puntos++;
+  } else {
+    turno.pendientes++;
+    $("#turno-cola").hidden = false;
+    $("#turno-pendientes").textContent = turno.pendientes;
+  }
+  turno.ultimoOnline = estado.online;
+  $("#turno-puntos").textContent = turno.puntos;
+}, 5000);
+
+$("#btn-compartir-ubicacion").addEventListener("click", () => {
+  avisar("📤 Ubicación compartida con la central y con el coordinador de su marca (enlace válido por 2 horas).");
+  socketEvento("📤 <b>Luis H.</b> compartió su ubicación en vivo");
+});
+
+$("#btn-cerrar-turno").addEventListener("click", () => {
+  if (!turno.abierto) {
+    turno.abierto = true;
+    $("#turno").classList.remove("turno--cerrado");
+    $("#turno-chip").className = "chip chip--verde";
+    $("#turno-chip").textContent = "● en turno";
+    $("#turno-detalle").textContent = "turno reabierto · rastro de ubicación activo";
+    $("#btn-cerrar-turno").textContent = "⏹ Cerrar turno";
+    return avisar("▶ Turno reabierto: vuelve a registrarse el recorrido.");
+  }
+  turno.abierto = false;
+  $("#turno").classList.add("turno--cerrado");
+  $("#turno-chip").className = "chip";
+  $("#turno-chip").textContent = "turno cerrado";
+  $("#turno-detalle").textContent = `cerrado ${horaCorta()} · ${turno.puntos} puntos entregados`;
+  $("#btn-cerrar-turno").textContent = "▶ Reabrir turno";
+  avisar(`⏹ <strong>Turno cerrado.</strong> Se entregaron ${turno.puntos} puntos de recorrido; deja de registrarse la ubicación hasta el próximo turno.`);
+});
 
 /* ───────── estado inicial ───────── */
 renderClientes();
