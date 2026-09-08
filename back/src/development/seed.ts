@@ -5,7 +5,14 @@ import {
   DEMO_ORGANIZATION_ID,
   defaultBillingConfig,
 } from "../billing/BillingTypes.js";
+import { encryptSecret } from "../shared/secrets.js";
 export const DEMO_PASSWORD = "Ruts68.Demo2026!";
+export const demoPlatformUser = {
+  id: "68000000-0000-4000-8000-000000000010",
+  name: "Diana Plataforma",
+  email: "plataforma@ruts68.test",
+  role: "super_admin" as const,
+};
 export const demoUsers = [
   {
     id: "68000000-0000-4000-8000-000000000011",
@@ -76,6 +83,15 @@ export async function seedDemo(db: PrismaClient) {
       trialEndsAt: addCalendarMonth(new Date()),
     },
   });
+  await db.user.upsert({
+    where: { id: demoPlatformUser.id },
+    update: {},
+    create: {
+      ...demoPlatformUser,
+      organizationId: null,
+      passwordHash,
+    },
+  });
   for (const user of demoUsers)
     await db.user.upsert({
       where: { id: user.id },
@@ -92,9 +108,13 @@ export async function seedDemo(db: PrismaClient) {
   });
   for (const [index, customer] of customers.entries())
     await seedCustomer(db, index, customer);
+  await seedWhatsApp(db);
   return {
     organizationId: DEMO_ORGANIZATION_ID,
-    accounts: demoUsers.map(({ email, role }) => ({ email, role })),
+    accounts: [demoPlatformUser, ...demoUsers].map(({ email, role }) => ({
+      email,
+      role,
+    })),
     password: DEMO_PASSWORD,
   };
 }
@@ -163,4 +183,90 @@ async function seedCustomer(
         availableAt: new Date(dueAt.getTime() - 900000),
       },
     });
+}
+async function seedWhatsApp(db: PrismaClient) {
+  const numberId = "68000000-0000-4000-8000-000000000301";
+  const advisorId = demoUsers[1].id;
+  await db.whatsAppNumber.upsert({
+    where: { id: numberId },
+    update: {},
+    create: {
+      id: numberId,
+      organizationId: DEMO_ORGANIZATION_ID,
+      phoneNumberId: "680000000301",
+      displayPhoneNumber: "+57 300 000 0301",
+      label: "Línea comercial · demostración",
+      accessTokenCipher: encryptSecret("demo-fake-token-not-a-real-credential"),
+      advisorId,
+    },
+  });
+  const linkedAt = new Date(Date.now() - 3_600_000);
+  await db.whatsAppConversation.upsert({
+    where: { id: "68000000-0000-4000-8000-000000000401" },
+    update: {},
+    create: {
+      id: "68000000-0000-4000-8000-000000000401",
+      organizationId: DEMO_ORGANIZATION_ID,
+      whatsAppNumberId: numberId,
+      contactPhone: "573001110001",
+      contactName: "Laura Gómez",
+      clientId: "68000000-0000-4000-8000-000000000100",
+      lastMessageAt: new Date(linkedAt.getTime() + 900_000),
+    },
+  });
+  await db.whatsAppMessage.upsert({
+    where: { waMessageId: "demo-wamid-in-401" },
+    update: {},
+    create: {
+      organizationId: DEMO_ORGANIZATION_ID,
+      conversationId: "68000000-0000-4000-8000-000000000401",
+      direction: "inbound",
+      type: "text",
+      body: "Hola, quiero saber si tienen disponibilidad esta semana",
+      waMessageId: "demo-wamid-in-401",
+      status: "received",
+      createdAt: linkedAt,
+    },
+  });
+  await db.whatsAppMessage.upsert({
+    where: { waMessageId: "demo-wamid-out-401" },
+    update: {},
+    create: {
+      organizationId: DEMO_ORGANIZATION_ID,
+      conversationId: "68000000-0000-4000-8000-000000000401",
+      direction: "outbound",
+      type: "text",
+      body: "¡Hola Laura! Claro, tenemos disponibilidad el jueves y viernes.",
+      senderId: advisorId,
+      waMessageId: "demo-wamid-out-401",
+      status: "sent",
+      createdAt: new Date(linkedAt.getTime() + 900_000),
+    },
+  });
+  const leadAt = new Date(Date.now() - 1_200_000);
+  await db.whatsAppConversation.upsert({
+    where: { id: "68000000-0000-4000-8000-000000000402" },
+    update: {},
+    create: {
+      id: "68000000-0000-4000-8000-000000000402",
+      organizationId: DEMO_ORGANIZATION_ID,
+      whatsAppNumberId: numberId,
+      contactPhone: "573001110002",
+      lastMessageAt: leadAt,
+    },
+  });
+  await db.whatsAppMessage.upsert({
+    where: { waMessageId: "demo-wamid-in-402" },
+    update: {},
+    create: {
+      organizationId: DEMO_ORGANIZATION_ID,
+      conversationId: "68000000-0000-4000-8000-000000000402",
+      direction: "inbound",
+      type: "text",
+      body: "Buenas, vi su anuncio y quiero más información",
+      waMessageId: "demo-wamid-in-402",
+      status: "received",
+      createdAt: leadAt,
+    },
+  });
 }

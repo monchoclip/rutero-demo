@@ -200,6 +200,7 @@ export function Home() {
             <a href="/ingresar/">Iniciar sesión</a>
             <a href="/ingresar/?register=1">Registrar mi empresa</a>
             <a href="/ingresar/?demo=coordinator">Demo para coordinadores</a>
+            <a href="/ingresar/?demo=platform">Demo de plataforma</a>
           </div>
         </div>
         <div className="footer-bottom">

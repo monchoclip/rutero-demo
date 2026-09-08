@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api, ApiError } from "../lib/api";
 import type { User } from "../lib/types";
 import { Auth } from "./Auth";
+import { PlatformConsole } from "./PlatformConsole";
 import { Workspace } from "./Workspace";
 export function Access() {
   const [user, setUser] = useState<User | null>(null);
@@ -10,9 +11,9 @@ export function Access() {
   const [error, setError] = useState("");
   const [invitation, setInvitation] = useState<string | null>(null);
   const [register, setRegister] = useState(false);
-  const [demoRole, setDemoRole] = useState<"advisor" | "coordinator" | null>(
-    null,
-  );
+  const [demoRole, setDemoRole] = useState<
+    "advisor" | "coordinator" | "platform" | null
+  >(null);
   const logout = useCallback(() => {
     window.location.assign("/ingresar/");
   }, []);
@@ -22,7 +23,8 @@ export function Access() {
     setInvitation(token);
     setRegister(query.get("register") === "1");
     const demo = query.get("demo");
-    if (demo === "advisor" || demo === "coordinator") setDemoRole(demo);
+    if (demo === "advisor" || demo === "coordinator" || demo === "platform")
+      setDemoRole(demo);
     if (token || demo || query.has("register")) {
       setLoading(false);
       return;
@@ -52,7 +54,9 @@ export function Access() {
         <a href="/">Volver al inicio</a>
       </main>
     );
-  return user ? (
+  return user?.role === "super_admin" ? (
+    <PlatformConsole user={user} onLogout={logout} />
+  ) : user ? (
     <Workspace user={user} onLogout={logout} />
   ) : (
     <Auth

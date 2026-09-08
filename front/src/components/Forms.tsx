@@ -30,6 +30,7 @@ export function FormDialog({
   clients,
   activity,
   client,
+  prefill,
   onClose,
   onSaved,
 }: {
@@ -39,6 +40,7 @@ export function FormDialog({
   clients: Client[];
   activity?: Activity;
   client?: Client;
+  prefill?: { phone?: string; contactName?: string };
   onClose: () => void;
   onSaved: () => Promise<void>;
 }) {
@@ -149,15 +151,31 @@ export function FormDialog({
       <form onSubmit={submit}>
         {kind === "client" && (
           <>
+            {prefill && (
+              <p className="hint chosen-client">
+                Identificado por el número de WhatsApp que escribió.
+              </p>
+            )}
             <Field label="Nombre del cliente o negocio">
               <input name="name" required minLength={2} maxLength={160} />
             </Field>
             <div className="form-grid">
               <Field label="Persona de contacto">
-                <input name="contactName" required minLength={2} />
+                <input
+                  name="contactName"
+                  required
+                  minLength={2}
+                  defaultValue={prefill?.contactName}
+                />
               </Field>
               <Field label="Teléfono">
-                <input name="phone" type="tel" required minLength={5} />
+                <input
+                  name="phone"
+                  type="tel"
+                  required
+                  minLength={5}
+                  defaultValue={prefill?.phone}
+                />
               </Field>
             </div>
             <div className="form-grid">

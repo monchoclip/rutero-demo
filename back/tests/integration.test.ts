@@ -6,6 +6,9 @@ import { NotificationService } from "../src/notifications/NotificationService.js
 import { NotificationRepository } from "../src/notifications/NotificationRepository.js";
 import { seedDemo, DEMO_PASSWORD } from "../src/development/seed.js";
 import { DEMO_ORGANIZATION_ID } from "../src/billing/BillingTypes.js";
+import { hashPassword } from "../src/shared/security.js";
+import { createHmac } from "node:crypto";
+import type { WhatsAppTransport } from "../src/whatsapp/WhatsAppTypes.js";
 const url = process.env.TEST_DATABASE_URL;
 if (!url || new URL(url).pathname !== "/ruts68_test")
   throw new Error("Use npm run test:integration from the project root");
@@ -418,6 +421,7 @@ describe.sequential("billing simulation restricted to the demo company", () => {
   const demoAddress = `2001:db8:${suffix.slice(9, 13)}:${suffix.slice(14, 18)}::2`;
   let coordinator = "";
   let demoAdvisor = "";
+  let platform = "";
   let version = 0;
   async function login(email: string) {
     const response = await request(
@@ -434,7 +438,25 @@ describe.sequential("billing simulation restricted to the demo company", () => {
     await seedDemo(db);
     coordinator = await login("coordinador@ruts68.test");
     demoAdvisor = await login("asesor@ruts68.test");
+    platform = await login("plataforma@ruts68.test");
   }, 30000);
+  it("seeds a platform user for the visual WhatsApp number console", async () => {
+    const response = await request(
+      "GET",
+      "/platform/whatsapp-numbers",
+      undefined,
+      platform,
+    );
+    expect(response.statusCode).toBe(200);
+    expect(
+      response
+        .json()
+        .data.some(
+          (number: { organization: { id: string } }) =>
+            number.organization.id === DEMO_ORGANIZATION_ID,
+        ),
+    ).toBe(true);
+  });
   it("hides the simulation from other companies and from anonymous visitors", async () => {
     expect((await request("GET", "/billing/settings")).statusCode).toBe(401);
     for (const [method, path] of [
@@ -622,5 +644,537 @@ describe.sequential("billing simulation restricted to the demo company", () => {
         },
       }),
     ).toBeGreaterThan(0);
+  });
+});
+describe.sequential("WhatsApp chat: numbers, webhook and conversations", () => {
+  const waSuffix = suffix.slice(0, 8);
+  const appSecret = `wa-app-secret-${waSuffix}`;
+  const verifyToken = `wa-verify-token-${waSuffix}`;
+  const phoneNumberId = `wa-phone-${waSuffix}`;
+  const contactPhone = `57300${waSuffix}`;
+  let whatsappApp: FastifyInstance;
+  let sent: {
+    to: string;
+    body?: string;
+    templateName?: string;
+    languageCode?: string;
+    variables?: string[];
+  }[] = [];
+  let shouldFail = false;
+  const fakeTransport: WhatsAppTransport = {
+    async sendText({ to, body }) {
+      sent.push({ to, body });
+      if (shouldFail) throw new Error("simulated delivery failure");
+      return { waMessageId: `wamid.out.${waSuffix}.${sent.length}` };
+    },
+    async sendTemplate({ to, templateName, languageCode, variables }) {
+      sent.push({ to, templateName, languageCode, variables });
+      if (shouldFail) throw new Error("simulated template failure");
+      return { waMessageId: `wamid.template.${waSuffix}.${sent.length}` };
+    },
+    async downloadMedia({ mediaId }) {
+      return {
+        mimeType: "image/png",
+        bytes: new TextEncoder().encode(`downloaded:${mediaId}`),
+      };
+    },
+  };
+  let admin: { cookie: string; id: string };
+  // advisor.cookie was already revoked by the "revokes sessions on logout"
+  // test earlier in this file; this suite needs its own live advisor.
+  let waAdvisor: { cookie: string; id: string };
+  let numberId: string;
+  let conversationId: string;
+  async function wa(
+    method: "GET" | "POST" | "PATCH",
+    path: string,
+    body?: unknown,
+    cookie = "",
+  ) {
+    return whatsappApp.inject({
+      method,
+      url: path,
+      remoteAddress,
+      headers: { origin, "x-ruts68-request": "1", cookie },
+      ...(body === undefined
+        ? {}
+        : { payload: body as Record<string, unknown> }),
+    });
+  }
+  function inboundEvent(overrides: {
+    waMessageId: string;
+    body?: string;
+    type?: "text" | "image";
+    mediaId?: string;
+  }) {
+    return JSON.stringify({
+      entry: [
+        {
+          changes: [
+            {
+              value: {
+                metadata: { phone_number_id: phoneNumberId },
+                contacts: [
+                  {
+                    wa_id: contactPhone,
+                    profile: { name: "Cliente de prueba" },
+                  },
+                ],
+                messages: [
+                  overrides.type === "image"
+                    ? {
+                        from: contactPhone,
+                        id: overrides.waMessageId,
+                        type: "image",
+                        image: {
+                          id: overrides.mediaId,
+                          caption: overrides.body ?? "",
+                        },
+                      }
+                    : {
+                        from: contactPhone,
+                        id: overrides.waMessageId,
+                        type: "text",
+                        text: { body: overrides.body ?? "Hola" },
+                      },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    });
+  }
+  function sign(rawBody: string) {
+    return (
+      "sha256=" + createHmac("sha256", appSecret).update(rawBody).digest("hex")
+    );
+  }
+  beforeAll(async () => {
+    whatsappApp = await createApp(db, {
+      origin,
+      production: false,
+      localMail: true,
+      metaWebhookVerifyToken: verifyToken,
+      metaAppSecret: appSecret,
+      whatsappTransport: fakeTransport,
+    });
+    const adminEmail = `admin-${waSuffix}@example.test`;
+    await db.user.create({
+      data: {
+        organizationId: null,
+        name: "Admin de plataforma",
+        email: adminEmail,
+        passwordHash: await hashPassword(password),
+        role: "super_admin",
+      },
+    });
+    const login = await wa("POST", "/auth/login", {
+      email: adminEmail,
+      password,
+    });
+    admin = { cookie: session(login), id: login.json().data.id };
+    waAdvisor = await invite(owner, `WaAsesor-${waSuffix}`);
+  }, 30000);
+  afterAll(async () => {
+    await whatsappApp?.close();
+  });
+  it("only a platform user can register a number, scoped to one company", async () => {
+    expect(
+      (
+        await wa(
+          "POST",
+          "/platform/whatsapp-numbers",
+          {
+            organizationId: owner.organizationId,
+            phoneNumberId,
+            displayPhoneNumber: "+57 300 000 0000",
+            label: "Línea comercial",
+            accessToken: "EAAG" + "x".repeat(40),
+          },
+          owner.cookie,
+        )
+      ).statusCode,
+    ).toBe(403);
+    const created = await wa(
+      "POST",
+      "/platform/whatsapp-numbers",
+      {
+        organizationId: owner.organizationId,
+        phoneNumberId,
+        displayPhoneNumber: "+57 300 000 0000",
+        label: "Línea comercial",
+        accessToken: "EAAG" + "x".repeat(40),
+      },
+      admin.cookie,
+    );
+    expect(created.statusCode).toBe(201);
+    numberId = created.json().data.id;
+    expect(created.json().data.accessTokenCipher).not.toContain("EAAG");
+    expect(
+      await db.auditEvent.count({
+        where: {
+          organizationId: owner.organizationId,
+          action: "whatsapp.number.registered",
+          resourceId: numberId,
+        },
+      }),
+    ).toBe(1);
+  });
+  it("only shows a company the numbers registered for it, unassigned until the coordinator assigns one", async () => {
+    const list = await wa("GET", "/whatsapp/numbers", undefined, owner.cookie);
+    expect(list.statusCode).toBe(200);
+    expect(list.json().data).toHaveLength(1);
+    expect(list.json().data[0].advisor).toBeNull();
+    expect(
+      (await wa("GET", "/whatsapp/numbers", undefined, other.cookie)).json()
+        .data,
+    ).toEqual([]);
+  });
+  it("requires commercial coordination to assign, and rejects an advisor from another company", async () => {
+    expect(
+      (
+        await wa(
+          "PATCH",
+          `/whatsapp/numbers/${numberId}/assignment`,
+          { advisorId: waAdvisor.id },
+          waAdvisor.cookie,
+        )
+      ).statusCode,
+    ).toBe(403);
+    expect(
+      (
+        await wa(
+          "PATCH",
+          `/whatsapp/numbers/${numberId}/assignment`,
+          { advisorId: externalAdvisor.id },
+          owner.cookie,
+        )
+      ).statusCode,
+    ).toBe(422);
+    const assigned = await wa(
+      "PATCH",
+      `/whatsapp/numbers/${numberId}/assignment`,
+      { advisorId: waAdvisor.id },
+      owner.cookie,
+    );
+    expect(assigned.statusCode).toBe(200);
+    expect(assigned.json().data.advisor.id).toBe(waAdvisor.id);
+  });
+  it("lets an advisor read only their own assigned number, not the rest of the company's", async () => {
+    const mine = await wa(
+      "GET",
+      "/whatsapp/numbers",
+      undefined,
+      waAdvisor.cookie,
+    );
+    expect(mine.json().data).toHaveLength(1);
+    expect(mine.json().data[0].id).toBe(numberId);
+    expect(
+      (
+        await wa("GET", "/whatsapp/numbers", undefined, secondAdvisor.cookie)
+      ).json().data,
+    ).toEqual([]);
+  });
+  it("rejects the GET handshake with the wrong verify token and echoes the challenge with the right one", async () => {
+    const wrong = await whatsappApp.inject({
+      method: "GET",
+      url: `/webhooks/whatsapp?hub.mode=subscribe&hub.verify_token=nope&hub.challenge=123`,
+    });
+    expect(wrong.statusCode).toBe(403);
+    const right = await whatsappApp.inject({
+      method: "GET",
+      url: `/webhooks/whatsapp?hub.mode=subscribe&hub.verify_token=${verifyToken}&hub.challenge=echo-me`,
+    });
+    expect(right.statusCode).toBe(200);
+    expect(right.body).toBe("echo-me");
+  });
+  it("rejects a POST event with a missing or wrong signature", async () => {
+    const body = inboundEvent({ waMessageId: `wamid.rejected.${waSuffix}` });
+    expect(
+      (
+        await whatsappApp.inject({
+          method: "POST",
+          url: "/webhooks/whatsapp",
+          headers: { "content-type": "application/json" },
+          payload: body,
+        })
+      ).statusCode,
+    ).toBe(401);
+    expect(
+      (
+        await whatsappApp.inject({
+          method: "POST",
+          url: "/webhooks/whatsapp",
+          headers: {
+            "content-type": "application/json",
+            "x-hub-signature-256": "sha256=wrong",
+          },
+          payload: body,
+        })
+      ).statusCode,
+    ).toBe(401);
+    expect(
+      await db.whatsAppMessage.count({
+        where: { waMessageId: `wamid.rejected.${waSuffix}` },
+      }),
+    ).toBe(0);
+  });
+  it("ingests a verified inbound message into a new conversation, visible only to its assigned advisor and to the coordinator", async () => {
+    const body = inboundEvent({
+      waMessageId: `wamid.in.${waSuffix}`,
+      body: "Hola, quiero información",
+    });
+    const response = await whatsappApp.inject({
+      method: "POST",
+      url: "/webhooks/whatsapp",
+      headers: {
+        "content-type": "application/json",
+        "x-hub-signature-256": sign(body),
+      },
+      payload: body,
+    });
+    expect(response.statusCode).toBe(200);
+    const asAdvisor = await wa(
+      "GET",
+      "/whatsapp/conversations",
+      undefined,
+      waAdvisor.cookie,
+    );
+    expect(asAdvisor.json().data).toHaveLength(1);
+    conversationId = asAdvisor.json().data[0].id;
+    expect(asAdvisor.json().data[0].contactPhone).toBe(contactPhone);
+    expect(
+      (
+        await wa("GET", "/whatsapp/conversations", undefined, owner.cookie)
+      ).json().data,
+    ).toHaveLength(1);
+    expect(
+      (
+        await wa(
+          "GET",
+          "/whatsapp/conversations",
+          undefined,
+          secondAdvisor.cookie,
+        )
+      ).json().data,
+    ).toEqual([]);
+    const messages = await wa(
+      "GET",
+      `/whatsapp/conversations/${conversationId}/messages`,
+      undefined,
+      waAdvisor.cookie,
+    );
+    expect(messages.json().data).toHaveLength(1);
+    expect(messages.json().data[0]).toMatchObject({
+      direction: "inbound",
+      body: "Hola, quiero información",
+    });
+  });
+  it("delivers the same inbound event only once even if Meta retries it", async () => {
+    const body = inboundEvent({
+      waMessageId: `wamid.in.${waSuffix}`,
+      body: "Hola, quiero información",
+    });
+    const retry = await whatsappApp.inject({
+      method: "POST",
+      url: "/webhooks/whatsapp",
+      headers: {
+        "content-type": "application/json",
+        "x-hub-signature-256": sign(body),
+      },
+      payload: body,
+    });
+    expect(retry.statusCode).toBe(200);
+    expect(
+      await db.whatsAppMessage.count({
+        where: { waMessageId: `wamid.in.${waSuffix}` },
+      }),
+    ).toBe(1);
+  });
+  it("downloads supported inbound media when the transport can retrieve it", async () => {
+    const body = inboundEvent({
+      waMessageId: `wamid.media.${waSuffix}`,
+      body: "Foto de referencia",
+      type: "image",
+      mediaId: `media.${waSuffix}`,
+    });
+    const response = await whatsappApp.inject({
+      method: "POST",
+      url: "/webhooks/whatsapp",
+      headers: {
+        "content-type": "application/json",
+        "x-hub-signature-256": sign(body),
+      },
+      payload: body,
+    });
+    expect(response.statusCode).toBe(200);
+    const messages = await wa(
+      "GET",
+      `/whatsapp/conversations/${conversationId}/messages`,
+      undefined,
+      waAdvisor.cookie,
+    );
+    const media = messages
+      .json()
+      .data.find(
+        (message: { waMessageId: string }) =>
+          message.waMessageId === `wamid.media.${waSuffix}`,
+      );
+    expect(media).toMatchObject({
+      type: "image",
+      body: "Foto de referencia",
+      mediaId: `media.${waSuffix}`,
+    });
+    expect(media.mediaUrl).toMatch(/^data:image\/png;base64,/);
+  });
+  it("links an existing conversation when a client is created from its phone", async () => {
+    const created = await wa(
+      "POST",
+      "/clients",
+      {
+        name: "Cliente desde WhatsApp",
+        contactName: "Cliente de prueba",
+        phone: contactPhone,
+        city: "Bogotá",
+        advisorId: waAdvisor.id,
+        notes: "Creado desde una conversación previa.",
+      },
+      owner.cookie,
+    );
+    expect(created.statusCode).toBe(201);
+    const clientId = created.json().data.id as string;
+    const conversations = await wa(
+      "GET",
+      "/whatsapp/conversations",
+      undefined,
+      owner.cookie,
+    );
+    const linked = conversations
+      .json()
+      .data.find(
+        (conversation: { id: string }) => conversation.id === conversationId,
+      );
+    expect(linked.client).toMatchObject({
+      id: clientId,
+      name: "Cliente desde WhatsApp",
+    });
+    expect(
+      await db.auditEvent.count({
+        where: {
+          organizationId: owner.organizationId,
+          action: "client.linked_from_whatsapp",
+          resourceId: clientId,
+        },
+      }),
+    ).toBe(1);
+  });
+  it("only the number's assigned advisor or the coordinator can send, and a failed delivery is recorded honestly", async () => {
+    expect(
+      (
+        await wa(
+          "POST",
+          `/whatsapp/conversations/${conversationId}/messages`,
+          { body: "No debería poder" },
+          secondAdvisor.cookie,
+        )
+      ).statusCode,
+    ).toBe(404);
+    const okSend = await wa(
+      "POST",
+      `/whatsapp/conversations/${conversationId}/messages`,
+      { body: "Claro, te comparto la información" },
+      waAdvisor.cookie,
+    );
+    expect(okSend.statusCode).toBe(201);
+    expect(okSend.json().data.status).toBe("sent");
+    expect(sent.at(-1)).toMatchObject({
+      to: contactPhone,
+      body: "Claro, te comparto la información",
+    });
+    shouldFail = true;
+    const failedSend = await wa(
+      "POST",
+      `/whatsapp/conversations/${conversationId}/messages`,
+      { body: "Este envío va a fallar" },
+      owner.cookie,
+    );
+    expect(failedSend.statusCode).toBe(201);
+    expect(failedSend.json().data.status).toBe("failed");
+    shouldFail = false;
+  });
+  it("sends approved Meta templates through the same conversation permissions", async () => {
+    expect(
+      (
+        await wa(
+          "POST",
+          `/whatsapp/conversations/${conversationId}/templates`,
+          {
+            templateName: "seguimiento_cliente",
+            languageCode: "es_CO",
+            variables: ["Laura", "jueves"],
+          },
+          secondAdvisor.cookie,
+        )
+      ).statusCode,
+    ).toBe(404);
+    const sentTemplate = await wa(
+      "POST",
+      `/whatsapp/conversations/${conversationId}/templates`,
+      {
+        templateName: "seguimiento_cliente",
+        languageCode: "es_CO",
+        variables: ["Laura", "jueves"],
+      },
+      owner.cookie,
+    );
+    expect(sentTemplate.statusCode).toBe(201);
+    expect(sentTemplate.json().data.status).toBe("sent");
+    expect(sentTemplate.json().data.body).toContain(
+      "Plantilla Meta seguimiento_cliente",
+    );
+    expect(sent.at(-1)).toMatchObject({
+      to: contactPhone,
+      templateName: "seguimiento_cliente",
+      languageCode: "es_CO",
+      variables: ["Laura", "jueves"],
+    });
+  });
+  it("marks a message delivered when Meta reports its status", async () => {
+    const okSend = await wa(
+      "POST",
+      `/whatsapp/conversations/${conversationId}/messages`,
+      { body: "Un mensaje más para confirmar entrega" },
+      waAdvisor.cookie,
+    );
+    const waMessageId = okSend.json().data.waMessageId as string;
+    const statusBody = JSON.stringify({
+      entry: [
+        {
+          changes: [
+            {
+              value: {
+                metadata: { phone_number_id: phoneNumberId },
+                statuses: [{ id: waMessageId, status: "delivered" }],
+              },
+            },
+          ],
+        },
+      ],
+    });
+    const response = await whatsappApp.inject({
+      method: "POST",
+      url: "/webhooks/whatsapp",
+      headers: {
+        "content-type": "application/json",
+        "x-hub-signature-256": sign(statusBody),
+      },
+      payload: statusBody,
+    });
+    expect(response.statusCode).toBe(200);
+    expect(
+      (await db.whatsAppMessage.findUniqueOrThrow({ where: { waMessageId } }))
+        .status,
+    ).toBe("delivered");
   });
 });

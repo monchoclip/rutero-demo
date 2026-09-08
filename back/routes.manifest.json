@@ -152,5 +152,75 @@
     "operation": "billingHistory",
     "authenticated": true,
     "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "POST",
+    "path": "/platform/whatsapp-numbers",
+    "operation": "platformRegisterNumber",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "GET",
+    "path": "/platform/whatsapp-numbers",
+    "operation": "platformListNumbers",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "GET",
+    "path": "/whatsapp/numbers",
+    "operation": "whatsappNumbers",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "PATCH",
+    "path": "/whatsapp/numbers/:id/assignment",
+    "operation": "whatsappAssign",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "GET",
+    "path": "/whatsapp/conversations",
+    "operation": "whatsappConversations",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "GET",
+    "path": "/whatsapp/conversations/:id/messages",
+    "operation": "whatsappMessages",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "POST",
+    "path": "/whatsapp/conversations/:id/messages",
+    "operation": "whatsappSend",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "POST",
+    "path": "/whatsapp/conversations/:id/templates",
+    "operation": "whatsappSendTemplate",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "GET",
+    "path": "/webhooks/whatsapp",
+    "operation": "whatsappWebhookVerify",
+    "authenticated": false,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "POST",
+    "path": "/webhooks/whatsapp",
+    "operation": "whatsappWebhookEvents",
+    "authenticated": false,
+    "entry": "src/lambda.entry.ts"
   }
 ]

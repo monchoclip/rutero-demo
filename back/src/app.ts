@@ -16,9 +16,21 @@ import { routes } from "./routes.js";
 import { BillingRepository } from "./billing/BillingRepository.js";
 import { BillingService } from "./billing/BillingService.js";
 import { billingHandlers } from "./billing/handlers/index.js";
+import { WhatsAppRepository } from "./whatsapp/WhatsAppRepository.js";
+import { WhatsAppService } from "./whatsapp/WhatsAppService.js";
+import { whatsAppHandlers } from "./whatsapp/handlers/index.js";
+import { metaTransport } from "./whatsapp/MetaTransport.js";
+import type { WhatsAppTransport } from "./whatsapp/WhatsAppTypes.js";
 export async function createApp(
   db: PrismaClient,
-  options: { origin: string; production: boolean; localMail: boolean },
+  options: {
+    origin: string;
+    production: boolean;
+    localMail: boolean;
+    metaWebhookVerifyToken?: string;
+    metaAppSecret?: string;
+    whatsappTransport?: WhatsAppTransport;
+  },
 ) {
   const app = Fastify({
     logger: {
@@ -28,6 +40,22 @@ export async function createApp(
     bodyLimit: 65536,
     trustProxy: false,
   });
+  // JSON bodies are parsed as usual, but the raw string is kept on the
+  // request too: Meta's webhook signature is an HMAC over the exact raw
+  // bytes, which a re-serialized JSON.stringify(parsed) would not match.
+  app.addContentTypeParser(
+    "application/json",
+    { parseAs: "string" },
+    (request, body, done) => {
+      request.rawBody = body as string;
+      if (!body) return done(null, {});
+      try {
+        done(null, JSON.parse(body as string));
+      } catch (error) {
+        done(error as Error, undefined);
+      }
+    },
+  );
   await app.register(cookie);
   await app.register(cors, {
     origin: options.origin,
@@ -47,17 +75,27 @@ export async function createApp(
     new BillingRepository(db),
     !options.production && options.localMail,
   );
+  const whatsapp = new WhatsAppService(
+    new WhatsAppRepository(db),
+    options.whatsappTransport ?? metaTransport,
+    options.metaAppSecret,
+  );
   const handlers = {
     ...identityHandlers(services),
     ...crmHandlers(services),
     ...billingHandlers(billing),
+    ...whatsAppHandlers(whatsapp, options.metaWebhookVerifyToken),
   };
   app.get("/health", async () => ({ status: "ok" }));
-  for (const [method, url, operation, protectedRoute] of routes) {
+  for (const [method, url, operation, protectedRoute, external] of routes) {
     app.route({
       method,
       url,
       preHandler: async (request) => {
+        // External routes are called by Meta, not the browser: no same-
+        // origin cookie, no custom header, no login-attempt rate limit.
+        // Their own signature verification is the real gate.
+        if (external) return;
         if (
           method !== "GET" &&
           (request.headers.origin !== options.origin ||
@@ -72,6 +110,7 @@ export async function createApp(
       },
       handler: async (request, reply) => {
         const result = await handlers[operation](request, reply);
+        if (external) return result;
         const meta = {
           requestId: request.id,
           timestamp: new Date().toISOString(),

@@ -10,5 +10,7 @@ export function getConfig() {
     databaseUrl: process.env.DATABASE_URL,
     port: Number(process.env.PORT ?? 4068),
     mailTransport: process.env.MAIL_TRANSPORT ?? "local",
+    metaWebhookVerifyToken: process.env.META_WEBHOOK_VERIFY_TOKEN,
+    metaAppSecret: process.env.META_APP_SECRET,
   };
 }

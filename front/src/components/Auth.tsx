@@ -12,7 +12,7 @@ export function Auth({
   onLogin: (user: User) => void;
   invitation: string | null;
   initialRegister?: boolean;
-  demoRole?: "advisor" | "coordinator" | null;
+  demoRole?: "advisor" | "coordinator" | "platform" | null;
 }) {
   const [register, setRegister] = useState(initialRegister);
   const [error, setError] = useState("");
@@ -94,7 +94,11 @@ export function Auth({
               <div className="demo-access-note">
                 <strong>
                   Demostración ·{" "}
-                  {demoRole === "advisor" ? "Asesor" : "Coordinador"}
+                  {demoRole === "advisor"
+                    ? "Asesor"
+                    : demoRole === "platform"
+                      ? "Plataforma"
+                      : "Coordinador"}
                 </strong>
                 <p>
                   Datos ficticios y pagos simulados. La cuenta está lista para
@@ -148,9 +152,13 @@ export function Auth({
                   autoComplete="email"
                   placeholder="tu@empresa.com"
                   defaultValue={
-                    demoRole
-                      ? `${demoRole === "advisor" ? "asesor" : "coordinador"}@ruts68.test`
-                      : ""
+                    demoRole === "advisor"
+                      ? "asesor@ruts68.test"
+                      : demoRole === "platform"
+                        ? "plataforma@ruts68.test"
+                        : demoRole === "coordinator"
+                          ? "coordinador@ruts68.test"
+                          : ""
                   }
                   required
                 />

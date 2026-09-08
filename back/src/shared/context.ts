@@ -5,6 +5,7 @@ import type { Actor } from "../identity/IdentityTypes.js";
 declare module "fastify" {
   interface FastifyRequest {
     actor: Actor | null;
+    rawBody: string;
   }
 }
 export type Services = {

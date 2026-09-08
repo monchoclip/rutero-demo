@@ -40,6 +40,9 @@ model Organization {
   emails EmailJob[]
   billingSettings BillingSettings?
   paymentSimulations PaymentSimulation[]
+  whatsAppNumbers WhatsAppNumber[]
+  whatsAppConversations WhatsAppConversation[]
+  whatsAppMessages WhatsAppMessage[]
 }
 model User {
   id String @id @default(uuid())
@@ -55,6 +58,8 @@ model User {
   sessions Session[]
   clients Client[]
   activities Activity[]
+  assignedWhatsAppNumbers WhatsAppNumber[] @relation("WhatsAppNumberAdvisor")
+  sentWhatsAppMessages WhatsAppMessage[] @relation("WhatsAppMessageSender")
   @@unique([organizationId,id])
 }
 model Session {
@@ -96,6 +101,7 @@ model Client {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   activities Activity[]
+  whatsAppConversations WhatsAppConversation[]
   @@unique([organizationId,id])
   @@index([organizationId,advisorId,createdAt])
 }
@@ -179,4 +185,74 @@ model PaymentSimulation {
   updatedAt DateTime @updatedAt
   @@unique([organizationId, idempotencyKey])
   @@index([organizationId, createdAt])
+}
+enum WhatsAppDirection {
+  inbound
+  outbound
+}
+enum WhatsAppMessageType {
+  text
+  image
+  video
+  audio
+  document
+}
+enum WhatsAppMessageStatus {
+  queued
+  sent
+  delivered
+  read
+  failed
+  received
+}
+model WhatsAppNumber {
+  id String @id @default(uuid())
+  organizationId String
+  organization Organization @relation(fields: [organizationId], references: [id])
+  phoneNumberId String @unique
+  displayPhoneNumber String
+  label String
+  accessTokenCipher String
+  advisorId String?
+  advisor User? @relation("WhatsAppNumberAdvisor", fields: [organizationId, advisorId], references: [organizationId, id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  conversations WhatsAppConversation[]
+  @@index([organizationId])
+}
+model WhatsAppConversation {
+  id String @id @default(uuid())
+  organizationId String
+  organization Organization @relation(fields: [organizationId], references: [id])
+  whatsAppNumberId String
+  whatsAppNumber WhatsAppNumber @relation(fields: [whatsAppNumberId], references: [id])
+  contactPhone String
+  contactName String?
+  clientId String?
+  client Client? @relation(fields: [organizationId, clientId], references: [organizationId, id])
+  lastMessageAt DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  messages WhatsAppMessage[]
+  @@unique([whatsAppNumberId, contactPhone])
+  @@index([organizationId, lastMessageAt])
+}
+model WhatsAppMessage {
+  id String @id @default(uuid())
+  organizationId String
+  organization Organization @relation(fields: [organizationId], references: [id])
+  conversationId String
+  conversation WhatsAppConversation @relation(fields: [conversationId], references: [id])
+  direction WhatsAppDirection
+  type WhatsAppMessageType
+  body String @default("")
+  mediaId String?
+  mediaUrl String?
+  waMessageId String? @unique
+  status WhatsAppMessageStatus @default(queued)
+  senderId String?
+  sender User? @relation("WhatsAppMessageSender", fields: [organizationId, senderId], references: [organizationId, id])
+  createdAt DateTime @default(now())
+  @@index([conversationId, createdAt])
+  @@index([organizationId])
 }

@@ -6,12 +6,13 @@ export async function startDatabase() {
   const directory = resolve(".local");
   mkdirSync(directory, { recursive: true });
   const configFile = resolve(directory, "database.json");
-  if (!existsSync(configFile))
-    writeFileSync(
-      configFile,
-      JSON.stringify({ password: randomBytes(24).toString("hex") }),
-    );
-  const { password } = JSON.parse(readFileSync(configFile, "utf8"));
+  const config = existsSync(configFile)
+    ? JSON.parse(readFileSync(configFile, "utf8"))
+    : {};
+  config.password ??= randomBytes(24).toString("hex");
+  config.whatsappTokenKey ??= randomBytes(32).toString("hex");
+  writeFileSync(configFile, JSON.stringify(config));
+  const { password, whatsappTokenKey } = config;
   const databaseDir = resolve(directory, "postgres");
   const database = new EmbeddedPostgres({
     databaseDir,
@@ -41,6 +42,7 @@ export async function startDatabase() {
   return {
     database,
     url: `postgresql://ruts68:${password}@127.0.0.1:55468/ruts68`,
+    whatsappTokenKey,
   };
 }
 if (

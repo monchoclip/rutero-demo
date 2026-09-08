@@ -29,15 +29,25 @@ No se crean usuarios ni datos de ejemplo automáticamente en la base de desarrol
 
 ## Empresa de demostración
 
-Los enlaces «Explorar la demo» de la portada llevan a `/ingresar/?demo=advisor` o `?demo=coordinator` y precargan una cuenta sembrada. Para crearla:
+Los enlaces de demostración de la portada llevan a `/ingresar/?demo=advisor`, `?demo=coordinator` o `?demo=platform` y precargan una cuenta sembrada. Para crearla:
 
 ```powershell
 npm run demo:seed
 ```
 
-Siembra la empresa de demostración con dos asesores, un coordinador comercial, seis clientes ficticios, actividades y la configuración de tarifas de ensayo. Es idempotente: repetirlo no duplica registros. El script rechaza cualquier base que no sea `ruts68` o `ruts68_test` en localhost, y la contraseña de esas cuentas es conocida y se muestra en pantalla: son cuentas de práctica, no de un entorno publicado.
+Siembra la empresa de demostración con dos asesores, un coordinador comercial, un superadministrador de plataforma, seis clientes ficticios, actividades y la configuración de tarifas de ensayo. Es idempotente: repetirlo no duplica registros. El script rechaza cualquier base que no sea `ruts68` o `ruts68_test` en localhost, y la contraseña de esas cuentas es conocida y se muestra en pantalla: son cuentas de práctica, no de un entorno publicado.
 
 La pestaña «Cobro simulado» solo aparece en esa empresa y para perfiles de coordinación. Calcula el desglose en el servidor y guarda ensayos con su resultado. No conecta con Wompi, no pide datos de tarjeta y no activa suscripciones.
+
+El sembrado también da de alta un número de WhatsApp de la empresa de demostración, asignado a un asesor, con dos conversaciones de ejemplo (una vinculada a un cliente, otra sin vincular). La pestaña «WhatsApp» solo aparece si la cuenta tiene al menos un número visible para su rol. El token de ese número es ficticio: un envío real desde la demo llega a fallar honestamente contra la API de Meta, mostrado como mensaje "fallido" en la burbuja, en vez de simular un éxito falso.
+
+## WhatsApp: variables de entorno
+
+`npm run dev` genera y persiste una clave aleatoria de cifrado en `.local/database.json` (ignorado por Git) y la usa como `WHATSAPP_TOKEN_ENCRYPTION_KEY` para cifrar el token de acceso de cada número (AES-256-GCM). En cualquier otro entorno hay que definir esa variable explícitamente antes de registrar un número real; ver `back/.env.example`.
+
+`META_WEBHOOK_VERIFY_TOKEN` y `META_APP_SECRET` pertenecen a una sola app de Meta compartida por la plataforma (no por empresa) y se usan para el handshake y la verificación de firma del webhook en `/webhooks/whatsapp`. Sin definirlas, el webhook responde 503 en vez de aceptar eventos sin verificar.
+
+Registrar un número se puede hacer desde la demo de plataforma (`plataforma@ruts68.test`) o con `POST /platform/whatsapp-numbers` autenticado como un usuario `super_admin`. La coordinación comercial de la empresa destino puede entonces asignarlo a un asesor desde la pestaña «WhatsApp». La descarga de multimedia entrante y las plantillas aprobadas están implementadas contra el contrato de Meta, pero siguen sin validación externa hasta tener credenciales reales y plantillas aprobadas.
 
 ## Pruebas y compilación
 

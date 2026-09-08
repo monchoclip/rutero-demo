@@ -131,3 +131,51 @@ export const outcomeLabels: Record<SimulationOutcome, string> = {
   declined: "Rechazado",
   pending: "Pendiente",
 };
+export type WhatsAppNumber = {
+  id: string;
+  phoneNumberId: string;
+  displayPhoneNumber: string;
+  label: string;
+  advisor: User | null;
+};
+export type PlatformWhatsAppNumber = WhatsAppNumber & {
+  organization: { id: string; name: string };
+};
+export type WhatsAppConversation = {
+  id: string;
+  contactPhone: string;
+  contactName: string | null;
+  lastMessageAt: string;
+  whatsAppNumber: { id: string; label: string; advisorId: string | null };
+  client: { id: string; name: string } | null;
+};
+export type WhatsAppMessageType =
+  | "text"
+  | "image"
+  | "video"
+  | "audio"
+  | "document";
+export type WhatsAppMessageStatus =
+  | "queued"
+  | "sent"
+  | "delivered"
+  | "read"
+  | "failed"
+  | "received";
+export type WhatsAppMessage = {
+  id: string;
+  direction: "inbound" | "outbound";
+  type: WhatsAppMessageType;
+  body: string;
+  mediaId: string | null;
+  mediaUrl: string | null;
+  waMessageId: string | null;
+  status: WhatsAppMessageStatus;
+  sender: User | null;
+  createdAt: string;
+};
+export type WhatsAppTemplateRequest = {
+  templateName: string;
+  languageCode: string;
+  variables: string[];
+};

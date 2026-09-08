@@ -78,6 +78,16 @@ export class CrmRepository {
         },
       });
       await this.audit(tx, actor, "client.created", client.id);
+      const linked = await tx.whatsAppConversation.updateMany({
+        where: {
+          organizationId: tenantId(actor),
+          contactPhone: data.phone,
+          clientId: null,
+        },
+        data: { clientId: client.id },
+      });
+      if (linked.count)
+        await this.audit(tx, actor, "client.linked_from_whatsapp", client.id);
       return client;
     });
   }

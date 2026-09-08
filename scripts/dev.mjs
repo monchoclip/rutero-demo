@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { startDatabase } from "./database.mjs";
-const { database, url } = await startDatabase();
+const { database, url, whatsappTokenKey } = await startDatabase();
 const npmCli = process.env.npm_execpath;
 const env = {
   ...process.env,
@@ -8,6 +8,7 @@ const env = {
   APP_ORIGIN: "http://localhost:3068",
   NEXT_PUBLIC_API_URL: "http://localhost:4068",
   MAIL_TRANSPORT: "local",
+  WHATSAPP_TOKEN_ENCRYPTION_KEY: whatsappTokenKey,
 };
 function run(args, extra = {}) {
   return spawn(process.execPath, [npmCli, ...args], {

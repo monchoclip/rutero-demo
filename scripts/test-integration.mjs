@@ -3,16 +3,17 @@ import { spawn } from "node:child_process";
 import { startDatabase } from "./database.mjs";
 let owned;
 let databaseUrl = process.env.TEST_DATABASE_URL;
+let whatsappTokenKey = process.env.WHATSAPP_TOKEN_ENCRYPTION_KEY;
 if (!databaseUrl) {
   if (existsSync(".local/postgres/postmaster.pid")) {
-    const { password } = JSON.parse(
-      readFileSync(".local/database.json", "utf8"),
-    );
-    databaseUrl = `postgresql://ruts68:${password}@127.0.0.1:55468/ruts68_test`;
+    const config = JSON.parse(readFileSync(".local/database.json", "utf8"));
+    databaseUrl = `postgresql://ruts68:${config.password}@127.0.0.1:55468/ruts68_test`;
+    whatsappTokenKey ??= config.whatsappTokenKey;
   } else {
     const started = await startDatabase();
     owned = started.database;
     databaseUrl = started.url.replace(/\/ruts68$/, "/ruts68_test");
+    whatsappTokenKey ??= started.whatsappTokenKey;
   }
 }
 if (new URL(databaseUrl).pathname !== "/ruts68_test")
@@ -21,6 +22,7 @@ const env = {
   ...process.env,
   DATABASE_URL: databaseUrl,
   TEST_DATABASE_URL: databaseUrl,
+  WHATSAPP_TOKEN_ENCRYPTION_KEY: whatsappTokenKey,
   LOG_LEVEL: "silent",
 };
 function run(args) {

@@ -14,6 +14,17 @@ import {
 import type { Actor } from "../src/identity/IdentityTypes.js";
 import { completeSchema, clientSchema } from "../src/crm/CrmSchema.js";
 import {
+  verifyHandshake,
+  verifySignature,
+  parseInboundEvents,
+} from "../src/whatsapp/meta.js";
+import {
+  registerNumberSchema,
+  templateMessageSchema,
+} from "../src/whatsapp/WhatsAppSchema.js";
+import { encryptSecret, decryptSecret } from "../src/shared/secrets.js";
+import { createHmac } from "node:crypto";
+import {
   calculateQuote,
   defaultBillingConfig,
 } from "../src/billing/BillingTypes.js";
@@ -185,5 +196,169 @@ describe("billing simulation math", () => {
     expect(
       simulationSchema.safeParse({ ...valid, expectedVersion: 0 }).success,
     ).toBe(false);
+  });
+});
+describe("WhatsApp webhook verification and parsing", () => {
+  const secret = "unit-test-app-secret";
+  const sign = (body: string) =>
+    "sha256=" + createHmac("sha256", secret).update(body).digest("hex");
+  it("echoes the challenge only for a correctly matched handshake", () => {
+    const query = {
+      "hub.mode": "subscribe",
+      "hub.verify_token": "right-token",
+      "hub.challenge": "12345",
+    };
+    expect(verifyHandshake(query, "right-token")).toBe("12345");
+    expect(verifyHandshake(query, "wrong-token")).toBeNull();
+    expect(
+      verifyHandshake({ ...query, "hub.mode": "unsubscribe" }, "right-token"),
+    ).toBeNull();
+    expect(
+      verifyHandshake({ "hub.mode": "subscribe" }, "right-token"),
+    ).toBeNull();
+  });
+  it("only accepts an HMAC-SHA256 signature over the exact raw body", () => {
+    const body = JSON.stringify({ entry: [] });
+    expect(verifySignature(body, sign(body), secret)).toBe(true);
+    expect(verifySignature(body, sign(body), "other-secret")).toBe(false);
+    expect(verifySignature(body + " ", sign(body), secret)).toBe(false);
+    expect(verifySignature(body, "not-a-real-signature", secret)).toBe(false);
+    expect(verifySignature(body, undefined, secret)).toBe(false);
+  });
+  it("extracts inbound text and media messages with the sender's profile name", () => {
+    const payload = {
+      entry: [
+        {
+          changes: [
+            {
+              value: {
+                metadata: { phone_number_id: "999" },
+                contacts: [
+                  { wa_id: "573001234567", profile: { name: "Laura" } },
+                ],
+                messages: [
+                  {
+                    from: "573001234567",
+                    id: "wamid.TEXT1",
+                    type: "text",
+                    text: { body: "Hola, quiero información" },
+                  },
+                  {
+                    from: "573001234567",
+                    id: "wamid.IMG1",
+                    type: "image",
+                    image: { id: "media-abc", caption: "Foto del producto" },
+                  },
+                  {
+                    from: "573001234567",
+                    id: "wamid.STICKER1",
+                    type: "sticker",
+                    sticker: { id: "media-xyz" },
+                  },
+                ],
+                statuses: [
+                  { id: "wamid.OUT1", status: "delivered" },
+                  { id: "wamid.OUT2", status: "bogus-status" },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    };
+    const { messages, statuses } = parseInboundEvents(JSON.stringify(payload));
+    expect(messages).toHaveLength(2);
+    expect(messages[0]).toMatchObject({
+      phoneNumberId: "999",
+      contactPhone: "573001234567",
+      contactName: "Laura",
+      waMessageId: "wamid.TEXT1",
+      type: "text",
+      body: "Hola, quiero información",
+      mediaId: null,
+    });
+    expect(messages[1]).toMatchObject({
+      waMessageId: "wamid.IMG1",
+      type: "image",
+      body: "Foto del producto",
+      mediaId: "media-abc",
+    });
+    expect(statuses).toEqual([
+      { waMessageId: "wamid.OUT1", status: "delivered" },
+    ]);
+  });
+  it("returns empty results instead of throwing on malformed or unrelated payloads", () => {
+    expect(parseInboundEvents("not json")).toEqual({
+      messages: [],
+      statuses: [],
+    });
+    expect(parseInboundEvents(JSON.stringify({}))).toEqual({
+      messages: [],
+      statuses: [],
+    });
+    expect(
+      parseInboundEvents(
+        JSON.stringify({ entry: [{ changes: [{ value: {} }] }] }),
+      ),
+    ).toEqual({ messages: [], statuses: [] });
+  });
+  it("requires a plausible access token and phone number id to register a number", () => {
+    const valid = {
+      organizationId: crypto.randomUUID(),
+      phoneNumberId: "123456789012345",
+      displayPhoneNumber: "+57 300 000 0000",
+      label: "Línea comercial",
+      accessToken: "EAAG" + "x".repeat(40),
+    };
+    expect(registerNumberSchema.safeParse(valid).success).toBe(true);
+    expect(
+      registerNumberSchema.safeParse({ ...valid, accessToken: "short" })
+        .success,
+    ).toBe(false);
+    expect(
+      registerNumberSchema.safeParse({ ...valid, organizationId: "not-a-uuid" })
+        .success,
+    ).toBe(false);
+  });
+  it("accepts only Meta-style template names and language codes", () => {
+    const valid = {
+      templateName: "seguimiento_cliente",
+      languageCode: "es_CO",
+      variables: ["Laura", "jueves"],
+    };
+    expect(templateMessageSchema.safeParse(valid).success).toBe(true);
+    expect(
+      templateMessageSchema.safeParse({ ...valid, templateName: "Seguimiento" })
+        .success,
+    ).toBe(false);
+    expect(
+      templateMessageSchema.safeParse({ ...valid, languageCode: "spanish" })
+        .success,
+    ).toBe(false);
+    expect(
+      templateMessageSchema.safeParse({
+        ...valid,
+        variables: Array.from({ length: 11 }, (_, index) => String(index)),
+      }).success,
+    ).toBe(false);
+  });
+});
+describe("WhatsApp token encryption", () => {
+  it("round-trips a token and never stores it in plain text", async () => {
+    process.env.WHATSAPP_TOKEN_ENCRYPTION_KEY = "unit-test-encryption-key";
+    const token = "EAAG-real-looking-access-token-value";
+    const cipherText = encryptSecret(token);
+    expect(cipherText).not.toContain(token);
+    expect(decryptSecret(cipherText)).toBe(token);
+    expect(encryptSecret(token)).not.toBe(cipherText);
+  });
+  it("fails closed when the encryption key is missing or wrong", () => {
+    process.env.WHATSAPP_TOKEN_ENCRYPTION_KEY = "unit-test-encryption-key";
+    const cipherText = encryptSecret("a-token");
+    process.env.WHATSAPP_TOKEN_ENCRYPTION_KEY = "a-different-key";
+    expect(() => decryptSecret(cipherText)).toThrow();
+    delete process.env.WHATSAPP_TOKEN_ENCRYPTION_KEY;
+    expect(() => encryptSecret("a-token")).toThrow();
+    process.env.WHATSAPP_TOKEN_ENCRYPTION_KEY = "unit-test-encryption-key";
   });
 });

@@ -28,6 +28,7 @@ import {
   Clock,
   Building2,
   Receipt,
+  MessageCircle,
 } from "lucide-react";
 import { api, post, ApiError } from "../lib/api";
 import {
@@ -38,15 +39,25 @@ import {
   type Activity,
   type Mail as MailItem,
   type Invitation,
+  type WhatsAppNumber,
 } from "../lib/types";
 import { FormDialog, type FormKind } from "./Forms";
 import { Billing } from "./Billing";
-type Tab = "overview" | "clients" | "agenda" | "team" | "billing" | "mail";
+import { Chat } from "./Chat";
+type Tab =
+  | "overview"
+  | "clients"
+  | "agenda"
+  | "team"
+  | "chats"
+  | "billing"
+  | "mail";
 const tabs = [
   { id: "overview", label: "Resumen", icon: LayoutDashboard },
   { id: "clients", label: "Clientes", icon: ContactRound },
   { id: "agenda", label: "Agenda", icon: CalendarDays },
   { id: "team", label: "Mi equipo", icon: Users },
+  { id: "chats", label: "WhatsApp", icon: MessageCircle },
   { id: "billing", label: "Cobro simulado", icon: Receipt },
   { id: "mail", label: "Correo de prueba", icon: Mail },
 ] as const;
@@ -66,6 +77,10 @@ const headings: Record<Tab, { title: string; text: string }> = {
   team: {
     title: "Las personas detrás de cada venta",
     text: "Invita a tus asesores y empieza a asignarles clientes.",
+  },
+  chats: {
+    title: "Cada conversación, con un responsable",
+    text: "Los chats de WhatsApp de tu línea, en un solo lugar.",
   },
   billing: {
     title: "Un ensayo antes del primer cobro",
@@ -104,6 +119,20 @@ async function available(path: string) {
     throw error;
   }
 }
+// Every role can call this once a number is registered, scoped to what they
+// may see; an empty list means WhatsApp isn't set up for this company yet.
+async function hasWhatsAppNumbers() {
+  try {
+    return (await api<WhatsAppNumber[]>("/whatsapp/numbers")).length > 0;
+  } catch (error) {
+    if (
+      error instanceof ApiError &&
+      (error.status === 403 || error.status === 404)
+    )
+      return false;
+    throw error;
+  }
+}
 export function Workspace({
   user,
   onLogout,
@@ -120,6 +149,7 @@ export function Workspace({
   const [mail, setMail] = useState<MailItem[]>([]);
   const [localMail, setLocalMail] = useState(false);
   const [billing, setBilling] = useState(false);
+  const [whatsapp, setWhatsapp] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState("");
@@ -128,6 +158,7 @@ export function Workspace({
     kind: FormKind;
     activity?: Activity;
     client?: Client;
+    prefill?: { phone?: string; contactName?: string };
   } | null>(null);
   const [detail, setDetail] = useState<Client | null>(null);
   const [history, setHistory] = useState<Activity[]>([]);
@@ -150,6 +181,7 @@ export function Workspace({
       setActivities(tasks);
       if (commercial) setInvitations(await api<Invitation[]>("/invitations"));
       if (coordinator) setBilling(await available("/billing/settings"));
+      setWhatsapp(await hasWhatsAppNumbers());
       try {
         setMail(await api<MailItem[]>("/development/mailbox"));
         setLocalMail(true);
@@ -255,6 +287,7 @@ export function Workspace({
             .filter(
               (t) =>
                 (t.id !== "team" || commercial) &&
+                (t.id !== "chats" || whatsapp) &&
                 (t.id !== "billing" || billing) &&
                 (t.id !== "mail" || localMail),
             )
@@ -338,7 +371,7 @@ export function Workspace({
               <h1>{headings[tab].title}</h1>
               <p>{headings[tab].text}</p>
             </div>
-            {writer && tab !== "billing" && (
+            {writer && tab !== "billing" && tab !== "chats" && (
               <button
                 className="primary"
                 onClick={() =>
@@ -667,6 +700,17 @@ export function Workspace({
                     )}
                   </section>
                 </>
+              )}
+              {tab === "chats" && (
+                <Chat
+                  commercial={commercial}
+                  writer={writer}
+                  currentUserId={user.id}
+                  users={users}
+                  onCreateClient={(prefill) =>
+                    setForm({ kind: "client", prefill })
+                  }
+                />
               )}
               {tab === "billing" && <Billing commercial={commercial} />}
               {tab === "mail" && (
