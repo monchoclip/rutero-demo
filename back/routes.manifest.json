@@ -1,0 +1,156 @@
+[
+  {
+    "method": "POST",
+    "path": "/auth/register",
+    "operation": "register",
+    "authenticated": false,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "POST",
+    "path": "/auth/login",
+    "operation": "login",
+    "authenticated": false,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "POST",
+    "path": "/auth/accept-invitation",
+    "operation": "acceptInvitation",
+    "authenticated": false,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "POST",
+    "path": "/auth/logout",
+    "operation": "logout",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "GET",
+    "path": "/auth/me",
+    "operation": "me",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "GET",
+    "path": "/organization",
+    "operation": "organization",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "GET",
+    "path": "/users",
+    "operation": "users",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "GET",
+    "path": "/invitations",
+    "operation": "invitations",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "POST",
+    "path": "/invitations",
+    "operation": "invite",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "GET",
+    "path": "/clients",
+    "operation": "clients",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "POST",
+    "path": "/clients",
+    "operation": "createClient",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "PATCH",
+    "path": "/clients/:id/assignment",
+    "operation": "reassignClient",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "GET",
+    "path": "/clients/:id/history",
+    "operation": "history",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "GET",
+    "path": "/activities",
+    "operation": "activities",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "POST",
+    "path": "/activities",
+    "operation": "createActivity",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "POST",
+    "path": "/activities/:id/complete",
+    "operation": "completeActivity",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "GET",
+    "path": "/development/mailbox",
+    "operation": "mailbox",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "GET",
+    "path": "/billing/settings",
+    "operation": "billingSettings",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "PATCH",
+    "path": "/billing/settings",
+    "operation": "updateBillingSettings",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "POST",
+    "path": "/billing/quote",
+    "operation": "billingQuote",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "POST",
+    "path": "/billing/simulations",
+    "operation": "billingSimulate",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "GET",
+    "path": "/billing/simulations",
+    "operation": "billingHistory",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  }
+]

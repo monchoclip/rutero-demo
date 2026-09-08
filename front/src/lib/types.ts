@@ -1,0 +1,133 @@
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  role:
+    | "super_admin"
+    | "commercial_coordinator"
+    | "administrative_coordinator"
+    | "advisor";
+  active: boolean;
+};
+export type Organization = {
+  id: string;
+  name: string;
+  sector: string;
+  trialEndsAt: string;
+  timeZone: string;
+};
+export type Client = {
+  id: string;
+  name: string;
+  contactName: string;
+  email: string | null;
+  phone: string;
+  city: string;
+  notes: string;
+  advisorId: string;
+  advisor: User;
+  createdAt: string;
+};
+export type Activity = {
+  id: string;
+  clientId: string;
+  type: "call" | "visit" | "follow_up";
+  status: "scheduled" | "completed" | "cancelled";
+  dueAt: string;
+  notes: string;
+  outcome: string | null;
+  durationSeconds: number | null;
+  createdAt: string;
+  completedAt: string | null;
+  client: { name: string };
+  advisor: User;
+};
+export type Mail = {
+  id: string;
+  recipient: string;
+  subject: string;
+  body: string;
+  sentAt: string | null;
+  cancelledAt: string | null;
+  availableAt: string;
+};
+export type Invitation = {
+  id: string;
+  name: string;
+  email: string;
+  expiresAt: string;
+};
+export const roleLabels: Record<User["role"], string> = {
+  super_admin: "Superadministrador",
+  commercial_coordinator: "Coordinador comercial",
+  administrative_coordinator: "Coordinador administrativo",
+  advisor: "Asesor",
+};
+export const activityLabels = {
+  call: "Llamada",
+  visit: "Visita",
+  follow_up: "Seguimiento",
+};
+export const activityStatusLabels: Record<Activity["status"], string> = {
+  scheduled: "Programado",
+  completed: "Realizado",
+  cancelled: "Cancelado",
+};
+export const activityOutcomeLabels: Record<string, string> = {
+  contacted: "Contacto realizado",
+  no_answer: "No respondió",
+  interested: "Tiene interés",
+  not_interested: "Sin interés por ahora",
+};
+export type BillingPlan = {
+  id: "essential" | "growth" | "enterprise";
+  name: string;
+  baseMinor: number;
+  includedUsers: number;
+  userMinor: number;
+};
+export type BillingConfiguration = {
+  mode: "simulation";
+  currency: string;
+  trialMonths: number;
+  supportFixedMinor: number;
+  supportBps: number;
+  gatewayFixedMinor: number;
+  gatewayBps: number;
+  taxBps: number;
+  plans: BillingPlan[];
+};
+export type BillingSettings = {
+  version: number;
+  configuration: BillingConfiguration;
+};
+export type BillingQuote = {
+  version: number;
+  mode: "simulation";
+  currency: string;
+  planId: BillingPlan["id"];
+  planName: string;
+  users: number;
+  includedUsers: number;
+  additionalUsers: number;
+  baseMinor: number;
+  extraUsersMinor: number;
+  subtotalMinor: number;
+  supportMinor: number;
+  gatewayMinor: number;
+  taxMinor: number;
+  totalMinor: number;
+};
+export type SimulationOutcome = "approved" | "declined" | "pending";
+export type PaymentSimulation = {
+  id: string;
+  configurationVersion: number;
+  outcome: SimulationOutcome;
+  snapshot: { quote: BillingQuote };
+  createdAt: string;
+};
+export const outcomeLabels: Record<SimulationOutcome, string> = {
+  approved: "Aprobado",
+  declined: "Rechazado",
+  pending: "Pendiente",
+};

@@ -1,0 +1,76 @@
+# Estado de desarrollo de Ruts68
+
+Actualización: 2026-09-08. Este documento describe evidencia local; nada está publicado en AWS.
+
+## Clasificación por módulo y etapa
+
+| Etapa | Módulo | Estado | Evidencia / siguiente entrega |
+| --- | --- | --- | --- |
+| F1 | Guía de desarrollo | Implementado | CLAUDE raíz, AGENTS, guías front/back y revisión comparativa de Kuvvi. |
+| F1 | Estructura de aplicación | Implementado localmente | Next.js estático + Fastify + Prisma/PostgreSQL; scripts y lockfile. |
+| F1 | Empresas | Implementado localmente | Registro atómico de empresa/coordinador y mes calendario de prueba persistido. |
+| F1 | Identidad | Implementado localmente, alcance inicial | Registro, login, sesión con cookie, logout revocable. Recuperación de contraseña y verificación del correo del fundador pendientes. |
+| F1 | Equipo | Implementado localmente, alcance inicial | Invitación de asesor, aceptación con contraseña y enlace de un solo uso. Edición, desactivación y alta de coordinadores administrativos pendientes. |
+| F1 | Clientes | Implementado localmente, alcance inicial | Crear, listar, consultar ficha/historial y reasignar cartera; restricciones por empresa y asesor. Ficha rediseñada: contacto, notas, indicadores reales, próximo contacto destacado y línea de tiempo con el asesor responsable de cada gestión pasada. Reasignación con selección explícita del nuevo asesor (el actual queda deshabilitado en la lista) y tamaño de cartera visible por asesor. Edición completa/importación pendientes. |
+| F1 | Agenda y llamadas | Implementado localmente | Programar actividad, registrar resultado y duración, crear siguiente seguimiento en transacción. No realiza llamadas telefónicas. |
+| F1 | Recordatorios | Implementado localmente / proveedor preparado | Cola persistente, disponibilidad 15 min antes, cancelación de recordatorio al completar, worker y archivos locales. SES requiere configuración, entrega real y planificación del worker en staging. |
+| F1 | Auditoría | Implementado localmente, alcance inicial | Altas de clientes/invitaciones, aceptación, reasignación, actividad y configuración/registro de simulaciones de cobro. Visor y auditoría ampliada pendientes. |
+| F1 | Sitio público y acceso de demostración | Implementado localmente | Portada con secciones de soluciones, planes ilustrativos, seguridad, novedades y preguntas; hoja `front/src/app/home.css` propia. `/ingresar/?demo=advisor|coordinator` precarga las cuentas del sembrado local. |
+| F1 | Rendimiento del equipo (coordinador) | Implementado localmente | Tarjeta por asesor con cartera, programadas, vencidas, completadas de los últimos 7 días, tasa de cumplimiento y tiempo promedio de resolución/llamada — todo calculado en el navegador a partir de `Client`/`Activity` ya cargados, sin endpoint ni tabla nueva. Sin datos de campañas, porque esa entidad todavía no existe (F2). |
+| F1 | Panel de resumen y agenda con diseño renovado | Implementado localmente | Tarjetas de indicador con tendencia semanal real (comparando `completedAt` de los últimos 7 días contra los 7 anteriores), agenda agrupada en Vencidos/Hoy/Próximos, animaciones de entrada con `prefers-reduced-motion` respetado. |
+| F2 | Catálogo, ofertas y campañas | Pendiente | Productos/servicios, precios, vigencias y participación histórica de clientes. |
+| F3 | Pedidos y ERP | Pendiente | Pedido con precios congelados, adaptador ERP, reintentos y estado verificable. |
+| F4 | Visitas verificadas y ubicación | Pendiente | La agenda admite tipo visita; GPS, evidencia, tracking y consola administrativa real aún no existen. |
+| F5 | Simulación de cobro | Implementado localmente, solo empresa de demostración | Tarifas versionadas en base de datos, cotización calculada en el servidor en unidades menores enteras, registro idempotente del resultado ensayado y auditoría. No mueve dinero ni activa suscripciones. |
+| F5 | Planes y suscripciones | Pendiente, salvo prueba inicial y simulación | Faltan planes comerciales reales, duración configurable, usuarios facturables efectivos, soporte contratado y reglas de vencimiento/suspensión. |
+| F5 | Wompi | Pendiente | Contrato/país/tarifas, sandbox, checkout, firma, webhook, conciliación y renovaciones. La simulación local no toca la pasarela ni pide datos de tarjeta. |
+| F5 | Superadministrador | Pendiente | Enum reservado con acceso a carteras cerrado; falta consola y operaciones autorizadas. |
+| F6 | AWS y dominio | Preparación inicial / pendiente | Front exportable y adaptador Lambda; faltan infraestructura, secretos, IAM, presupuesto, staging y DNS. |
+
+## Validación ejecutada
+
+- `npm run typecheck`: frontend y backend sin errores.
+- `npm test`: 17 pruebas unitarias aprobadas.
+- `npm run test:integration`: 14 pruebas de recorrido con PostgreSQL real en `ruts68_test` aprobadas, incluida una que verifica que el historial del cliente conserva el asesor real de cada actividad pasada tras una reasignación (no solo la cuenta de registros).
+- `npm run routes:check`: manifiesto generado coincide con registro de rutas.
+- `npm run build`: exportación estática de Next y compilación del backend completadas. La portada importaba `./home.css`, un archivo que no existía y que rompía el build; la hoja se escribió y el build vuelve a pasar.
+- Recorrido real en navegador contra el entorno local: portada a 1440 px y a 375 px sin desbordamiento horizontal y con el menú móvil activo; ingreso con la cuenta de coordinación de demostración; pestaña «Cobro simulado» con cotización del servidor y un ensayo guardado con su resultado en el historial.
+- Migración inicial aplicada a la base de desarrollo y a la base separada de pruebas.
+- Workflow de CI preparado; todavía no ejecutado en GitHub porque no se hizo push.
+
+Casos incluidos: mes calendario y fin de mes/año bisiesto, contraseñas con sal, sesiones revocadas, invitación no reutilizable, campos de privilegios rechazados, origen de escritura rechazado, acceso entre empresas bloqueado, cliente no asignable a asesor externo, asesor sin acceso a otra cartera, recordatorio persistido, clave de idempotencia con distinta carga rechazada, seguimientos sin duplicar ante solicitudes concurrentes y reasignación con retiro de acceso al asesor anterior.
+
+Casos de la simulación de cobro: importes en enteros de unidad menor con redondeo hacia arriba de los puntos básicos, usuarios adicionales sobre los incluidos, plan inexistente rechazado, configuración con planes repetidos o tasas fuera de rango rechazada, esquema que exige clave de idempotencia y resultado conocido, módulo invisible para otra empresa y para visitantes sin sesión, lectura restringida a perfiles de coordinación y escritura al coordinador comercial, una sola simulación por clave de idempotencia con repetición idéntica devuelta y carga distinta rechazada, guardado de tarifas con versión vencida rechazado y cotización previa a un cambio de tarifas rechazada al registrar.
+
+## Límites técnicos abiertos
+
+- Auditoría npm reporta tres avisos altos derivados de `deepmerge-ts` 7.1.5 usado por la configuración de Prisma 6.19.3 (GHSA-ggr8-5vv4-36mx). No se presenta la dependencia como corregida. Evaluar actualización compatible de Prisma/toolchain y verificar el lockfile antes de publicar; no usar `audit fix --force` como sustituto de una migración comprobada.
+- Porcentajes de cobertura de services/utils todavía no medidos. No se afirma cumplimiento del objetivo 80%/100% de Kuvvi.
+- Front limita la carga inicial a 100 clientes y 200 actividades. Completar paginación de UI e indicadores totales antes de usar carteras grandes.
+- Horarios en UTC en datos y zona del dispositivo en interfaz; falta selección y presentación por zona de empresa.
+- Falta cierre robusto de procesos en todas las plataformas, configuración de seguridad/retención para producción, cuotas públicas y monitoreo.
+- La entrega SES puede repetirse ante un fallo después de aceptación del proveedor y antes de guardar el resultado. Hace falta política de conciliación; no existe promesa de exactly-once.
+- La simulación de cobro solo se habilita en la empresa de demostración sembrada localmente y con correo local activo. Los planes, el soporte, el recargo de pasarela y la base gravable son valores de ensayo: no son tarifas contractuales ni la fórmula que liquidará Wompi. No hay checkout, firma de eventos, webhook ni conciliación.
+- Las cuentas de demostración usan una contraseña conocida y visible en la pantalla de ingreso. `back/scripts/seed-demo.ts` rechaza bases que no sean `ruts68` o `ruts68_test` en localhost; antes de cualquier despliegue hay que confirmar que ese sembrado no se ejecute.
+- La portada muestra precios ilustrativos que no coinciden con el desglose del módulo de simulación, porque no incluyen soporte, pasarela ni impuestos. Al fijar tarifas reales hay que unificar ambas fuentes.
+- El rendimiento del equipo no incluye campañas porque esa entidad no existe todavía (F2). "Tiempo promedio para resolver una gestión" se calcula como `completedAt - createdAt` de cada actividad cerrada; puede quedar corto si un asesor crea la actividad mucho antes de que corresponda contactarla, porque no distingue tiempo de espera planificado de tiempo de gestión real.
+
+## Revisión de referencia con Kuvvi (2026-09-08)
+
+Se comparó, solo en modo lectura, el patrón de Wompi y de WhatsApp del repositorio hermano `kuvvi` para evaluar qué se puede reutilizar en Ruts68 antes de construir cobro real y un módulo de chat:
+
+- **Wompi**: el patrón de verificación de firma de Kuvvi (`properties + timestamp + secreto`, SHA256, sobre el webhook como única autoridad) coincide con la regla ya escrita en la sección de Dinero y sí es una referencia directa reutilizable cuando llegue esa etapa.
+- **WhatsApp**: en Kuvvi **no existe** un número por asesor ni una bandeja de conversación entrante con historial y multimedia. Lo que hay es notificación saliente (OTP, recordatorios) a través de un número único por plataforma, con un webhook que hoy solo registra en log lo que llega, sin persistirlo. Un módulo de chat con número por asesor, alta de cliente desde un mensaje entrante y bandeja compartida es un desarrollo nuevo, no algo transportable de Kuvvi.
+- Los commits `508e638` y `af3c716` del historial de este repositorio (portal de plataforma, Wompi, dispositivos de WhatsApp) modificaron únicamente el demo estático `index.html`; no tienen contraparte en `front/`/`back/`.
+
+## Próximo incremento
+
+Se acordó con el usuario priorizar primero el rediseño de UX/UI del espacio de trabajo antes de campañas, Wompi o el chat de WhatsApp. Entregado en esta iteración: tarjetas de indicador con tendencia semanal real, agenda agrupada por urgencia (Vencidos/Hoy/Próximos) y panel de rendimiento por asesor para el coordinador, con animaciones de entrada. Todo calculado en el cliente a partir de datos ya expuestos por la API; no se agregó ningún endpoint ni tabla.
+
+Continuación de la misma iteración: ficha del cliente rediseñada (contacto, notas, indicadores, próximo contacto destacado, línea de tiempo con el asesor de cada gestión) y flujo de reasignación más claro (el asesor actual queda deshabilitado en la lista, cada opción muestra su cartera actual, y la ficha permanece abierta y se refresca en vez de cerrarse tras guardar). Requirió un cambio real de backend, pequeño y de solo lectura: `/clients/:id/history` ahora incluye el asesor de cada actividad (antes solo la lista general lo traía), lo que además queda cubierto por una prueba de integración nueva que confirma que las actividades pasadas conservan el asesor que las trabajó tras una reasignación.
+
+Siguiente: completar administración de usuarios, recuperación/verificación de acceso y paginación; después catálogo/campañas y pedidos. Antes de activar Wompi se necesitan país y cuenta del comercio, tarifas y planes. Antes de enviar al ERP se necesita su contrato de integración. El chat de WhatsApp queda como fase propia una vez definido el modelo de conversaciones/medios/plantillas; el usuario confirmó que el número que planea usar es de la API oficial de Meta (Cloud API), lo que sí lo hace técnicamente viable.
+
+Sobre la simulación de cobro, el siguiente paso no es conectar la pasarela sino cerrar las decisiones comerciales: precios y vigencias, qué usuarios se facturan, base gravable del impuesto y moneda que espera el contrato. Con eso definido, la configuración versionada actual sirve de punto de partida para la cotización inmutable de la etapa F5.
+
+El demo original permanece intacto. Kuvvi se revisó en modo lectura. Los cambios previos del dominio se conservaron; no se hicieron commits, push ni despliegues.

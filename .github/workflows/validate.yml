@@ -1,0 +1,34 @@
+name: Validate Ruts68
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: ruts68
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: ruts68_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ruts68 -d ruts68_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://ruts68:ci-only-password@localhost:5432/ruts68_test
+      TEST_DATABASE_URL: postgresql://ruts68:ci-only-password@localhost:5432/ruts68_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run db:generate -w back
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run test:integration
+      - run: npm run routes:check
+      - run: npm run build

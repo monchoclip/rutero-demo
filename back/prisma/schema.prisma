@@ -1,0 +1,182 @@
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+enum Role {
+  super_admin
+  commercial_coordinator
+  administrative_coordinator
+  advisor
+}
+enum ActivityType {
+  call
+  visit
+  follow_up
+}
+enum ActivityStatus {
+  scheduled
+  completed
+  cancelled
+}
+model Organization {
+  id String @id @default(uuid())
+  name String
+  sector String
+  timeZone String @default("America/Bogota")
+  currency String @default("COP")
+  trialStartedAt DateTime @default(now())
+  trialEndsAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  users User[]
+  clients Client[]
+  invitations Invitation[]
+  activities Activity[]
+  audits AuditEvent[]
+  emails EmailJob[]
+  billingSettings BillingSettings?
+  paymentSimulations PaymentSimulation[]
+}
+model User {
+  id String @id @default(uuid())
+  organizationId String?
+  organization Organization? @relation(fields:[organizationId], references:[id])
+  name String
+  email String @unique
+  passwordHash String
+  role Role
+  active Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sessions Session[]
+  clients Client[]
+  activities Activity[]
+  @@unique([organizationId,id])
+}
+model Session {
+  id String @id @default(uuid())
+  tokenHash String @unique
+  userId String
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([expiresAt])
+}
+model Invitation {
+  id String @id @default(uuid())
+  organizationId String
+  organization Organization @relation(fields:[organizationId],references:[id])
+  name String
+  email String
+  role Role @default(advisor)
+  tokenHash String @unique
+  expiresAt DateTime
+  acceptedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([organizationId,email])
+}
+model Client {
+  id String @id @default(uuid())
+  organizationId String
+  organization Organization @relation(fields:[organizationId],references:[id])
+  advisorId String
+  advisor User @relation(fields:[organizationId,advisorId],references:[organizationId,id])
+  name String
+  contactName String
+  email String?
+  phone String
+  city String
+  notes String @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  activities Activity[]
+  @@unique([organizationId,id])
+  @@index([organizationId,advisorId,createdAt])
+}
+model Activity {
+  id String @id @default(uuid())
+  organizationId String
+  organization Organization @relation(fields:[organizationId],references:[id])
+  clientId String
+  client Client @relation(fields:[organizationId,clientId],references:[organizationId,id])
+  advisorId String
+  advisor User @relation(fields:[organizationId,advisorId],references:[organizationId,id])
+  type ActivityType
+  status ActivityStatus @default(scheduled)
+  dueAt DateTime
+  completedAt DateTime?
+  notes String
+  outcome String?
+  durationSeconds Int?
+  idempotencyKey String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  email EmailJob?
+  @@unique([organizationId,idempotencyKey])
+  @@index([organizationId,advisorId,dueAt])
+}
+model EmailJob {
+  id String @id @default(uuid())
+  organizationId String
+  organization Organization @relation(fields:[organizationId],references:[id])
+  activityId String? @unique
+  activity Activity? @relation(fields:[activityId],references:[id])
+  recipient String
+  subject String
+  body String
+  availableAt DateTime
+  sentAt DateTime?
+  cancelledAt DateTime?
+  lockedUntil DateTime?
+  attempts Int @default(0)
+  lastError String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([sentAt,availableAt])
+}
+model AuditEvent {
+  id String @id @default(uuid())
+  organizationId String
+  organization Organization @relation(fields:[organizationId],references:[id])
+  actorId String
+  action String
+  resourceId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([organizationId,createdAt])
+}
+model AuthAttempt {
+  id String @id
+  attempts Int @default(1)
+  resetAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+model BillingSettings {
+  id String @id @default(uuid())
+  organizationId String @unique
+  organization Organization @relation(fields: [organizationId], references: [id])
+  version Int @default(1)
+  configuration Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+model PaymentSimulation {
+  id String @id @default(uuid())
+  organizationId String
+  organization Organization @relation(fields: [organizationId], references: [id])
+  idempotencyKey String
+  configurationVersion Int
+  outcome String
+  snapshot Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([organizationId, idempotencyKey])
+  @@index([organizationId, createdAt])
+}
