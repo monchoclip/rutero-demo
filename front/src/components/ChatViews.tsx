@@ -162,7 +162,14 @@ export function NumberRow({
     <div className="number-row">
       <div>
         <strong>{number.label}</strong>
-        <small>{number.displayPhoneNumber}</small>
+        <small>
+          {number.displayPhoneNumber} ·{" "}
+          {number.connectionStatus === "verified"
+            ? "Conectada"
+            : number.connectionStatus === "error"
+              ? "Revisar conexión"
+              : "Pendiente de validar"}
+        </small>
       </div>
       <select
         value={number.advisor?.id ?? ""}

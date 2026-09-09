@@ -200,6 +200,7 @@ async function seedWhatsApp(db: PrismaClient) {
       id: numberId,
       organizationId: DEMO_ORGANIZATION_ID,
       phoneNumberId: "680000000301",
+      businessAccountId: "demo-waba-680000000301",
       displayPhoneNumber: "+57 300 000 0301",
       label: "Línea comercial · demostración",
       accessTokenCipher: encryptSecret("demo-fake-token-not-a-real-credential"),

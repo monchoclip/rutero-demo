@@ -9,6 +9,7 @@ import {
 } from "../CrmSchema.js";
 import { AppError } from "../../shared/errors.js";
 import type { Handler, Services } from "../../shared/context.js";
+import { modulesUpdateSchema } from "../OrganizationSchema.js";
 export function crmHandlers({
   crm,
   production,
@@ -16,6 +17,14 @@ export function crmHandlers({
 }: Services): Record<string, Handler> {
   return {
     organization: async (r) => crm.organization(r.actor!),
+    platformUpdateModules: async (r) => {
+      const params = idSchema.parse(r.params);
+      return crm.platformUpdateModules(
+        r.actor!,
+        params.id,
+        modulesUpdateSchema.parse(r.body).modules,
+      );
+    },
     users: async (r) => crm.users(r.actor!),
     invitations: async (r) => crm.invitations(r.actor!),
     invite: async (r, reply) => {

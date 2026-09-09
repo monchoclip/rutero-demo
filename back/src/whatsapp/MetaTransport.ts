@@ -18,6 +18,23 @@ type MetaMediaResponse = {
 // Real Meta Cloud API adapter. No local credentials exist to exercise this
 // against Meta's servers, so it is prepared, not externally validated.
 export const metaTransport: WhatsAppTransport = {
+  async verifyNumber({ phoneNumberId, accessToken }) {
+    const response = await fetch(
+      `${graphBaseUrl}/${phoneNumberId}?fields=id,display_phone_number,verified_name,quality_rating`,
+      { headers: { Authorization: `Bearer ${accessToken}` } },
+    );
+    const body = (await response.json().catch(() => null)) as {
+      display_phone_number?: string;
+      error?: { message?: string };
+    } | null;
+    if (!response.ok || !body)
+      throw new AppError(
+        502,
+        "WHATSAPP_CREDENTIALS_INVALID",
+        body?.error?.message ?? "Meta rechazó las credenciales de esta línea.",
+      );
+    return { displayPhoneNumber: body.display_phone_number };
+  },
   async sendText({ phoneNumberId, accessToken, to, body }) {
     const response = await sendMessage(phoneNumberId, accessToken, {
       messaging_product: "whatsapp",

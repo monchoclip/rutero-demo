@@ -41,6 +41,7 @@ import {
   type Mail as MailItem,
   type Invitation,
   type WhatsAppNumber,
+  type ModuleKey,
 } from "../lib/types";
 import { FormDialog, type FormKind } from "./Forms";
 import { Billing } from "./Billing";
@@ -65,6 +66,16 @@ const tabs = [
   { id: "billing", label: "Cobro simulado", icon: Receipt },
   { id: "mail", label: "Correo de prueba", icon: Mail },
 ] as const;
+const defaultModuleConfig: Record<ModuleKey, boolean> = {
+  overview: true,
+  sequence: true,
+  clients: true,
+  agenda: true,
+  team: true,
+  chats: true,
+  billing: true,
+  mail: false,
+};
 const headings: Record<Tab, { title: string; text: string }> = {
   overview: {
     title: "Tu equipo en movimiento",
@@ -287,6 +298,19 @@ export function Workspace({
   const hasAdvisors = users.some((u) => u.role === "advisor");
   const advisors = users.filter((u) => u.role === "advisor");
   const coordinators = users.filter((u) => u.role !== "advisor");
+  const enabledModules = organization?.moduleConfig ?? defaultModuleConfig;
+  const visibleTabs = tabs.filter(
+    (t) =>
+      enabledModules[t.id] &&
+      (t.id !== "team" || coordinator) &&
+      (t.id !== "chats" || whatsapp) &&
+      (t.id !== "billing" || billing) &&
+      (t.id !== "mail" || localMail),
+  );
+  useEffect(() => {
+    if (!visibleTabs.some((item) => item.id === tab))
+      setTab(visibleTabs[0]?.id ?? "overview");
+  }, [tab, visibleTabs]);
   const completionTrend = weeklyTrend(activities, () => true);
   return (
     <div className="workspace">
@@ -308,32 +332,24 @@ export function Workspace({
         </div>
         <span className="nav-label">GESTIÓN COMERCIAL</span>
         <nav aria-label="Navegación principal">
-          {tabs
-            .filter(
-              (t) =>
-                (t.id !== "team" || coordinator) &&
-                (t.id !== "chats" || whatsapp) &&
-                (t.id !== "billing" || billing) &&
-                (t.id !== "mail" || localMail),
-            )
-            .map((t) => (
-              <button
-                key={t.id}
-                onClick={() => {
-                  setTab(t.id);
-                  setDetail(null);
-                  setNotice("");
-                }}
-                className={tab === t.id ? "nav-item active" : "nav-item"}
-                aria-current={tab === t.id ? "page" : undefined}
-              >
-                <t.icon size={19} />
-                {t.label}
-                {t.id === "agenda" && scheduled.length > 0 && (
-                  <span className="nav-count">{scheduled.length}</span>
-                )}
-              </button>
-            ))}
+          {visibleTabs.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => {
+                setTab(t.id);
+                setDetail(null);
+                setNotice("");
+              }}
+              className={tab === t.id ? "nav-item active" : "nav-item"}
+              aria-current={tab === t.id ? "page" : undefined}
+            >
+              <t.icon size={19} />
+              {t.label}
+              {t.id === "agenda" && scheduled.length > 0 && (
+                <span className="nav-count">{scheduled.length}</span>
+              )}
+            </button>
+          ))}
         </nav>
         <div className="sidebar-bottom">
           <div className="trial-card">

@@ -40,6 +40,39 @@ export class WhatsAppService {
     requireSuperAdmin(actor);
     return this.repository.platformNumbers();
   }
+  async verifyNumber(actor: Actor, id: string) {
+    requireSuperAdmin(actor);
+    const number = await this.repository.platformNumber(id);
+    if (!number) notFound();
+    if (!this.transport.verifyNumber)
+      return this.repository.updateConnection(
+        id,
+        "error",
+        "El adaptador de WhatsApp no tiene habilitada la verificación.",
+      );
+    try {
+      const result = await this.transport.verifyNumber({
+        phoneNumberId: number.phoneNumberId,
+        accessToken: decryptSecret(number.accessTokenCipher),
+      });
+      return this.repository.updateConnection(
+        id,
+        "verified",
+        null,
+        result.displayPhoneNumber,
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "No pudimos validar las credenciales.";
+      return this.repository.updateConnection(
+        id,
+        "error",
+        message.slice(0, 500),
+      );
+    }
+  }
   // Coordination reads every number the company has; an advisor only ever
   // sees their own, which also lets the UI decide whether to show the tab
   // at all without a separate "is WhatsApp enabled" check.

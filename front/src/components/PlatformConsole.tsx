@@ -1,14 +1,31 @@
 "use client";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { LogOut, Plus, RefreshCw, Route, Smartphone } from "lucide-react";
-import { api, post } from "../lib/api";
+import {
+  LogOut,
+  Plus,
+  RefreshCw,
+  Route,
+  Save,
+  Smartphone,
+  ShieldCheck,
+} from "lucide-react";
+import { api, post, patch } from "../lib/api";
 import type {
   PlatformOrganization,
   PlatformWhatsAppNumber,
   User,
 } from "../lib/types";
 
-const demoOrganizationId = "68000000-0000-4000-8000-000000000001";
+const moduleLabels = {
+  overview: "Resumen",
+  sequence: "Secuencia",
+  clients: "Clientes",
+  agenda: "Agenda",
+  team: "Mi equipo",
+  chats: "WhatsApp",
+  billing: "Cobros",
+  mail: "Correo de prueba",
+} as const;
 
 export function PlatformConsole({
   user,
@@ -25,6 +42,10 @@ export function PlatformConsole({
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [verifying, setVerifying] = useState<string | null>(null);
+  const [moduleDrafts, setModuleDrafts] = useState<
+    Record<string, Record<string, boolean>>
+  >({});
   const load = useCallback(async () => {
     setError("");
     try {
@@ -34,6 +55,14 @@ export function PlatformConsole({
       ]);
       setNumbers(registeredNumbers);
       setOrganizations(registeredOrganizations);
+      setModuleDrafts(
+        Object.fromEntries(
+          registeredOrganizations.map((organization) => [
+            organization.id,
+            organization.moduleConfig,
+          ]),
+        ),
+      );
     } catch (failure) {
       setError((failure as Error).message);
     } finally {
@@ -105,13 +134,28 @@ export function PlatformConsole({
           <form onSubmit={submit}>
             <label>
               Empresa
-              <input
-                name="organizationId"
-                defaultValue={demoOrganizationId}
-                required
-              />
+              <select name="organizationId" required defaultValue="">
+                <option value="" disabled>
+                  Selecciona una empresa
+                </option>
+                {organizations.map((organization) => (
+                  <option value={organization.id} key={organization.id}>
+                    {organization.name}
+                  </option>
+                ))}
+              </select>
             </label>
             <div className="form-grid">
+              <label>
+                WhatsApp Business Account ID (WABA)
+                <input
+                  name="businessAccountId"
+                  placeholder="123456789012345"
+                  required
+                  minLength={5}
+                  maxLength={80}
+                />
+              </label>
               <label>
                 Phone number ID
                 <input
@@ -143,7 +187,7 @@ export function PlatformConsole({
               />
             </label>
             <label>
-              Token de acceso del número
+              Token de acceso permanente
               <textarea
                 name="accessToken"
                 required
@@ -151,6 +195,10 @@ export function PlatformConsole({
                 maxLength={4000}
               />
             </label>
+            <p className="hint">
+              El token se cifra al guardar y nunca vuelve a mostrarse. Después
+              podrás probar la conexión contra Meta.
+            </p>
             <button className="primary" disabled={busy}>
               <Plus size={17} />
               {busy ? "Registrando..." : "Registrar número"}
@@ -181,12 +229,47 @@ export function PlatformConsole({
                   <div>
                     <strong>{number.label}</strong>
                     <small>
-                      {number.displayPhoneNumber} · {number.organization.name}
+                      {number.displayPhoneNumber} · {number.organization.name} ·
+                      WABA {number.businessAccountId}
                     </small>
                   </div>
                   <span className="badge">
                     {number.advisor ? number.advisor.name : "Sin asesor"}
                   </span>
+                  <span
+                    className={`badge ${number.connectionStatus === "verified" ? "completed" : number.connectionStatus === "error" ? "failed" : ""}`}
+                  >
+                    {number.connectionStatus === "verified"
+                      ? "Verificada"
+                      : number.connectionStatus === "error"
+                        ? "Revisar credenciales"
+                        : "Pendiente"}
+                  </span>
+                  <button
+                    className="text-button"
+                    disabled={verifying === number.id}
+                    onClick={async () => {
+                      setVerifying(number.id);
+                      setError("");
+                      setNotice("");
+                      try {
+                        await post(
+                          `/platform/whatsapp-numbers/${number.id}/verify`,
+                          {},
+                        );
+                        setNotice("Conexión verificada contra Meta.");
+                        await load();
+                      } catch (failure) {
+                        setError((failure as Error).message);
+                        await load();
+                      } finally {
+                        setVerifying(null);
+                      }
+                    }}
+                  >
+                    <ShieldCheck size={15} />
+                    {verifying === number.id ? "Validando…" : "Probar conexión"}
+                  </button>
                 </article>
               ))}
             </div>
@@ -208,7 +291,7 @@ export function PlatformConsole({
             <div className="organization-list">
               {organizations.map((organization) => (
                 <article className="organization-row" key={organization.id}>
-                  <div>
+                  <div className="organization-main">
                     <strong>{organization.name}</strong>
                     <small>
                       {organization.sector} · {organization._count.users}{" "}
@@ -222,6 +305,59 @@ export function PlatformConsole({
                       ? `${organization.membershipPlan} · ${organization.membershipStatus}`
                       : `Prueba · ${organization.membershipStatus}`}
                   </span>
+                  <div
+                    className="module-controls"
+                    aria-label={`Módulos de ${organization.name}`}
+                  >
+                    {Object.entries(moduleLabels).map(([key, label]) => {
+                      const enabled =
+                        moduleDrafts[organization.id]?.[key] ?? false;
+                      return (
+                        <label className="module-toggle" key={key}>
+                          <input
+                            type="checkbox"
+                            checked={enabled}
+                            onChange={(event) =>
+                              setModuleDrafts((current) => ({
+                                ...current,
+                                [organization.id]: {
+                                  ...current[organization.id],
+                                  [key]: event.target.checked,
+                                },
+                              }))
+                            }
+                          />
+                          <span>{label}</span>
+                        </label>
+                      );
+                    })}
+                    <button
+                      className="secondary"
+                      onClick={async () => {
+                        const modules = moduleDrafts[organization.id];
+                        if (!modules) return;
+                        setBusy(true);
+                        setError("");
+                        try {
+                          await patch(
+                            `/platform/organizations/${organization.id}/modules`,
+                            { modules },
+                          );
+                          setNotice(
+                            `Módulos de ${organization.name} actualizados.`,
+                          );
+                          await load();
+                        } catch (failure) {
+                          setError((failure as Error).message);
+                        } finally {
+                          setBusy(false);
+                        }
+                      }}
+                      disabled={busy}
+                    >
+                      <Save size={15} /> Guardar módulos
+                    </button>
+                  </div>
                 </article>
               ))}
             </div>

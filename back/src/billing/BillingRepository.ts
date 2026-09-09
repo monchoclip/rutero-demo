@@ -134,6 +134,7 @@ export class BillingRepository {
         membershipStartedAt: true,
         membershipEndsAt: true,
         trialEndsAt: true,
+        moduleConfig: true,
         _count: { select: { users: true, clients: true } },
       },
       orderBy: { name: "asc" },

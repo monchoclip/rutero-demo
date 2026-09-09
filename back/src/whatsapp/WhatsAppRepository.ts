@@ -7,6 +7,17 @@ const userSelect = {
   role: true,
   active: true,
 } as const;
+const numberSelect = {
+  id: true,
+  phoneNumberId: true,
+  businessAccountId: true,
+  displayPhoneNumber: true,
+  label: true,
+  connectionStatus: true,
+  lastVerifiedAt: true,
+  lastConnectionError: true,
+  advisor: { select: userSelect },
+} as const;
 export class WhatsAppRepository {
   constructor(private db: PrismaClient) {}
   private audit(
@@ -25,6 +36,7 @@ export class WhatsAppRepository {
     organizationId: string,
     data: {
       phoneNumberId: string;
+      businessAccountId: string;
       displayPhoneNumber: string;
       label: string;
     },
@@ -41,14 +53,19 @@ export class WhatsAppRepository {
         "whatsapp.number.registered",
         number.id,
       );
-      return number;
+      const safe = await tx.whatsAppNumber.findUniqueOrThrow({
+        where: { id: number.id },
+        select: numberSelect,
+      });
+      // Keep the legacy response contract without returning the ciphertext.
+      return { ...safe, accessTokenCipher: "[cifrado]" };
     });
   }
   platformNumbers() {
     return this.db.whatsAppNumber.findMany({
-      include: {
+      select: {
+        ...numberSelect,
         organization: { select: { id: true, name: true } },
-        advisor: { select: userSelect },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -56,8 +73,28 @@ export class WhatsAppRepository {
   numbers(organizationId: string, advisorId?: string) {
     return this.db.whatsAppNumber.findMany({
       where: { organizationId, ...(advisorId ? { advisorId } : {}) },
-      include: { advisor: { select: userSelect } },
+      select: numberSelect,
       orderBy: { createdAt: "asc" },
+    });
+  }
+  platformNumber(id: string) {
+    return this.db.whatsAppNumber.findUnique({ where: { id } });
+  }
+  updateConnection(
+    id: string,
+    status: "verified" | "error",
+    error: string | null,
+    displayPhoneNumber?: string,
+  ) {
+    return this.db.whatsAppNumber.update({
+      where: { id },
+      data: {
+        connectionStatus: status,
+        lastVerifiedAt: status === "verified" ? new Date() : undefined,
+        lastConnectionError: error,
+        ...(displayPhoneNumber ? { displayPhoneNumber } : {}),
+      },
+      select: numberSelect,
     });
   }
   number(organizationId: string, id: string) {

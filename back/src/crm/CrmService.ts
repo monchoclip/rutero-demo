@@ -10,13 +10,36 @@ import type {
   completeSchema,
   listSchema,
 } from "./CrmSchema.js";
+import {
+  moduleConfigSchema,
+  normalizeModuleConfig,
+  type ModuleConfig,
+} from "./OrganizationSchema.js";
 export class CrmService {
   constructor(
     private repository: CrmRepository,
     private origin: string,
   ) {}
   organization(actor: Actor) {
-    return this.repository.organization(actor);
+    return this.repository.organization(actor).then((organization) => ({
+      ...organization,
+      moduleConfig: normalizeModuleConfig(organization.moduleConfig),
+    }));
+  }
+  async platformUpdateModules(
+    actor: Actor,
+    organizationId: string,
+    modules: ModuleConfig,
+  ) {
+    if (actor.role !== "super_admin")
+      throw new AppError(403, "FORBIDDEN", "Esta vista requiere plataforma.");
+    return (
+      (await this.repository.platformUpdateModules(
+        actor,
+        organizationId,
+        moduleConfigSchema.parse(modules),
+      )) ?? notFound()
+    );
   }
   users(actor: Actor) {
     return this.repository.users(actor);

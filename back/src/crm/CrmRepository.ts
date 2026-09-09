@@ -2,6 +2,7 @@ import type { PrismaClient, Prisma } from "@prisma/client";
 import type { Actor } from "../identity/IdentityTypes.js";
 import { scope, activityScope, tenantId } from "./CrmTypes.js";
 import { AppError } from "../shared/errors.js";
+import type { ModuleConfig } from "./OrganizationSchema.js";
 const userSelect = {
   id: true,
   name: true,
@@ -14,6 +15,31 @@ export class CrmRepository {
   organization(actor: Actor) {
     return this.db.organization.findUniqueOrThrow({
       where: { id: tenantId(actor) },
+    });
+  }
+  platformUpdateModules(
+    actor: Actor,
+    organizationId: string,
+    modules: ModuleConfig,
+  ) {
+    return this.db.$transaction(async (tx) => {
+      const organization = await tx.organization.findUnique({
+        where: { id: organizationId },
+      });
+      if (!organization) return null;
+      const updated = await tx.organization.update({
+        where: { id: organizationId },
+        data: { moduleConfig: modules },
+      });
+      await tx.auditEvent.create({
+        data: {
+          organizationId,
+          actorId: actor.id,
+          action: "organization.modules.updated",
+          resourceId: organizationId,
+        },
+      });
+      return updated.moduleConfig;
     });
   }
   users(actor: Actor) {

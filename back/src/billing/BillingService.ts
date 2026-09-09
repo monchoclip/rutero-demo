@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import type { PaymentTransactionStatus } from "@prisma/client";
 import type { Actor } from "../identity/IdentityTypes.js";
 import { AppError } from "../shared/errors.js";
+import { normalizeModuleConfig } from "../crm/OrganizationSchema.js";
 import { BillingRepository } from "./BillingRepository.js";
 import {
   billingConfigSchema,
@@ -216,7 +217,11 @@ export class BillingService {
   async platformOrganizations(actor: Actor) {
     if (actor.role !== "super_admin")
       throw new AppError(403, "FORBIDDEN", "Esta vista requiere plataforma.");
-    return this.repository.organizations();
+    const organizations = await this.repository.organizations();
+    return organizations.map((organization) => ({
+      ...organization,
+      moduleConfig: normalizeModuleConfig(organization.moduleConfig),
+    }));
   }
   history(actor: Actor) {
     return this.repository.list(this.authorize(actor));

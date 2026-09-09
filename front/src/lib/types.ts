@@ -19,7 +19,18 @@ export type Organization = {
   membershipStatus: "trial" | "active" | "past_due" | "cancelled";
   membershipStartedAt: string | null;
   membershipEndsAt: string | null;
+  moduleConfig: ModuleConfig;
 };
+export type ModuleKey =
+  | "overview"
+  | "sequence"
+  | "clients"
+  | "agenda"
+  | "team"
+  | "chats"
+  | "billing"
+  | "mail";
+export type ModuleConfig = Record<ModuleKey, boolean>;
 export type Client = {
   id: string;
   name: string;
@@ -167,8 +178,12 @@ export const outcomeLabels: Record<SimulationOutcome, string> = {
 export type WhatsAppNumber = {
   id: string;
   phoneNumberId: string;
+  businessAccountId: string;
   displayPhoneNumber: string;
   label: string;
+  connectionStatus: "pending" | "verified" | "error";
+  lastVerifiedAt: string | null;
+  lastConnectionError: string | null;
   advisor: User | null;
 };
 export type PlatformWhatsAppNumber = WhatsAppNumber & {
@@ -184,6 +199,7 @@ export type PlatformOrganization = {
   membershipEndsAt: string | null;
   trialEndsAt: string;
   _count: { users: number; clients: number };
+  moduleConfig: ModuleConfig;
 };
 export type WhatsAppConversation = {
   id: string;

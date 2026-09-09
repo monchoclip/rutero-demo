@@ -17,11 +17,16 @@ export function requireChatWriter(actor: Actor) {
     );
 }
 export type SendResult = { waMessageId: string };
+export type VerifyResult = { displayPhoneNumber?: string };
 export type MediaDownload = {
   mimeType: string;
   bytes: Uint8Array;
 };
 export type WhatsAppTransport = {
+  verifyNumber?(input: {
+    phoneNumberId: string;
+    accessToken: string;
+  }): Promise<VerifyResult>;
   sendText(input: {
     phoneNumberId: string;
     accessToken: string;

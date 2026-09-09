@@ -182,9 +182,23 @@
     "entry": "src/lambda.entry.ts"
   },
   {
+    "method": "POST",
+    "path": "/platform/whatsapp-numbers/:id/verify",
+    "operation": "platformVerifyNumber",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
     "method": "GET",
     "path": "/platform/organizations",
     "operation": "platformOrganizations",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "PATCH",
+    "path": "/platform/organizations/:id/modules",
+    "operation": "platformUpdateModules",
     "authenticated": true,
     "entry": "src/lambda.entry.ts"
   },

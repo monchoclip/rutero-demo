@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { FileText, Send, Settings2, UserPlus } from "lucide-react";
+import { FileText, RefreshCw, Send, Settings2, UserPlus } from "lucide-react";
 import { api, post, patch, ApiError } from "../lib/api";
 import type {
   User,
@@ -61,6 +61,12 @@ export function Chat({
   }, [commercial]);
   useEffect(() => {
     void load();
+  }, [load]);
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") void load();
+    }, 10_000);
+    return () => window.clearInterval(timer);
   }, [load]);
 
   async function openConversation(conversation: WhatsAppConversation) {
@@ -186,6 +192,23 @@ export function Chat({
         </section>
       )}
       <section className="panel chat-panel">
+        <div className="chat-toolbar">
+          <div>
+            <strong>Conversaciones</strong>
+            <small>
+              {conversations.length
+                ? `${conversations.length} hilos activos`
+                : "Bandeja lista para recibir mensajes"}
+            </small>
+          </div>
+          <button
+            className="text-button"
+            onClick={() => void load()}
+            title="Actualizar conversaciones"
+          >
+            <RefreshCw size={15} /> Actualizar
+          </button>
+        </div>
         <div className="chat-layout">
           <div className="chat-list">
             {conversations.length ? (

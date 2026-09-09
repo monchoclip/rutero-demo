@@ -7,6 +7,7 @@ import {
   assignmentSchema,
   sendMessageSchema,
   templateMessageSchema,
+  verifyNumberSchema,
 } from "../WhatsAppSchema.js";
 import { verifyHandshake } from "../meta.js";
 export function whatsAppHandlers(
@@ -23,6 +24,8 @@ export function whatsAppHandlers(
       return result;
     },
     platformListNumbers: async (r) => whatsapp.platformNumbers(r.actor!),
+    platformVerifyNumber: async (r) =>
+      whatsapp.verifyNumber(r.actor!, verifyNumberSchema.parse(r.params).id),
     whatsappNumbers: async (r) => whatsapp.numbers(r.actor!),
     whatsappAssign: async (r) =>
       whatsapp.assignAdvisor(

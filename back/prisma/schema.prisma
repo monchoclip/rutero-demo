@@ -32,6 +32,7 @@ model Organization {
   trialEndsAt DateTime
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  moduleConfig Json @default("{}")
   users User[]
   clients Client[]
   invitations Invitation[]
@@ -235,14 +236,23 @@ enum WhatsAppMessageStatus {
   failed
   received
 }
+enum WhatsAppConnectionStatus {
+  pending
+  verified
+  error
+}
 model WhatsAppNumber {
   id String @id @default(uuid())
   organizationId String
   organization Organization @relation(fields: [organizationId], references: [id])
   phoneNumberId String @unique
+  businessAccountId String
   displayPhoneNumber String
   label String
   accessTokenCipher String
+  connectionStatus WhatsAppConnectionStatus @default(pending)
+  lastVerifiedAt DateTime?
+  lastConnectionError String?
   advisorId String?
   advisor User? @relation("WhatsAppNumberAdvisor", fields: [organizationId, advisorId], references: [organizationId, id])
   createdAt DateTime @default(now())
