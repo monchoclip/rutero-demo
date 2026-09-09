@@ -175,8 +175,8 @@ export function RoadmapSection() {
             Prueba planes, número de usuarios, soporte y pasarela. Edita valores
             y simula resultados sin mover dinero.
           </p>
-          <a href="/ingresar/?demo=coordinator">
-            Probar la configuración <ArrowUpRight size={17} />
+          <a href="/ingresar/?demo=admin">
+            Revisar como administrativo <ArrowUpRight size={17} />
           </a>
         </article>
         <article>

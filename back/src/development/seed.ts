@@ -32,6 +32,12 @@ export const demoUsers = [
     email: "diego@ruts68.test",
     role: "advisor" as const,
   },
+  {
+    id: "68000000-0000-4000-8000-000000000014",
+    name: "Sofía Administrativa",
+    email: "administrativo@ruts68.test",
+    role: "administrative_coordinator" as const,
+  },
 ];
 const customers = [
   [

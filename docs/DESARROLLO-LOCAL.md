@@ -29,13 +29,15 @@ No se crean usuarios ni datos de ejemplo automáticamente en la base de desarrol
 
 ## Empresa de demostración
 
-Los enlaces de demostración de la portada llevan a `/ingresar/?demo=advisor`, `?demo=coordinator` o `?demo=platform` y precargan una cuenta sembrada. Para crearla:
+Los enlaces de demostración de la portada llevan a `/ingresar/?demo=advisor`, `?demo=coordinator`, `?demo=admin` o `?demo=platform` y precargan una cuenta sembrada. Para crearla:
 
 ```powershell
 npm run demo:seed
 ```
 
-Siembra la empresa de demostración con dos asesores, un coordinador comercial, un superadministrador de plataforma, seis clientes ficticios, actividades y la configuración de tarifas de ensayo. Es idempotente: repetirlo no duplica registros. El script rechaza cualquier base que no sea `ruts68` o `ruts68_test` en localhost, y la contraseña de esas cuentas es conocida y se muestra en pantalla: son cuentas de práctica, no de un entorno publicado.
+Siembra la empresa de demostración con dos asesores, un coordinador comercial, un coordinador administrativo, un superadministrador de plataforma, seis clientes ficticios, actividades y la configuración de tarifas de ensayo. Es idempotente: repetirlo no duplica registros. El script rechaza cualquier base que no sea `ruts68` o `ruts68_test` en localhost, y la contraseña de esas cuentas es conocida y se muestra en pantalla: son cuentas de práctica, no de un entorno publicado.
+
+Cuenta administrativa de práctica: `administrativo@ruts68.test`. Este perfil puede revisar cartera, equipo, actividades, conversaciones y cotizaciones de cobro simulado de la empresa demo, pero no puede crear clientes, invitar asesores, reasignar cartera ni guardar simulaciones de pago.
 
 La pestaña «Cobro simulado» solo aparece en esa empresa y para perfiles de coordinación. Calcula el desglose en el servidor y guarda ensayos con su resultado. No conecta con Wompi, no pide datos de tarjeta y no activa suscripciones.
 

@@ -12,7 +12,7 @@ export function Access() {
   const [invitation, setInvitation] = useState<string | null>(null);
   const [register, setRegister] = useState(false);
   const [demoRole, setDemoRole] = useState<
-    "advisor" | "coordinator" | "platform" | null
+    "advisor" | "coordinator" | "admin" | "platform" | null
   >(null);
   const logout = useCallback(() => {
     window.location.assign("/ingresar/");
@@ -23,7 +23,12 @@ export function Access() {
     setInvitation(token);
     setRegister(query.get("register") === "1");
     const demo = query.get("demo");
-    if (demo === "advisor" || demo === "coordinator" || demo === "platform")
+    if (
+      demo === "advisor" ||
+      demo === "coordinator" ||
+      demo === "admin" ||
+      demo === "platform"
+    )
       setDemoRole(demo);
     if (token || demo || query.has("register")) {
       setLoading(false);

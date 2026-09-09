@@ -421,6 +421,7 @@ describe.sequential("billing simulation restricted to the demo company", () => {
   const demoAddress = `2001:db8:${suffix.slice(9, 13)}:${suffix.slice(14, 18)}::2`;
   let coordinator = "";
   let demoAdvisor = "";
+  let administrative = "";
   let platform = "";
   let version = 0;
   async function login(email: string) {
@@ -438,6 +439,7 @@ describe.sequential("billing simulation restricted to the demo company", () => {
     await seedDemo(db);
     coordinator = await login("coordinador@ruts68.test");
     demoAdvisor = await login("asesor@ruts68.test");
+    administrative = await login("administrativo@ruts68.test");
     platform = await login("plataforma@ruts68.test");
   }, 30000);
   it("seeds a platform user for the visual WhatsApp number console", async () => {
@@ -483,6 +485,20 @@ describe.sequential("billing simulation restricted to the demo company", () => {
         .statusCode,
     ).toBe(403);
     expect(
+      (await request("GET", "/billing/settings", undefined, administrative))
+        .statusCode,
+    ).toBe(200);
+    expect(
+      (
+        await request(
+          "POST",
+          "/billing/quote",
+          { planId: "growth", users: 5 },
+          administrative,
+        )
+      ).statusCode,
+    ).toBe(200);
+    expect(
       (
         await request(
           "POST",
@@ -495,6 +511,65 @@ describe.sequential("billing simulation restricted to the demo company", () => {
             idempotencyKey: crypto.randomUUID(),
           },
           demoAdvisor,
+        )
+      ).statusCode,
+    ).toBe(403);
+    expect(
+      (
+        await request(
+          "POST",
+          "/billing/simulations",
+          {
+            planId: "growth",
+            users: 5,
+            expectedVersion: 1,
+            outcome: "approved",
+            idempotencyKey: crypto.randomUUID(),
+          },
+          administrative,
+        )
+      ).statusCode,
+    ).toBe(403);
+  });
+  it("seeds an administrative coordinator with read-only workspace access", async () => {
+    const users = await request("GET", "/users", undefined, administrative);
+    expect(users.statusCode).toBe(200);
+    expect(
+      users
+        .json()
+        .data.some(
+          (user: { email: string; role: string }) =>
+            user.email === "administrativo@ruts68.test" &&
+            user.role === "administrative_coordinator",
+        ),
+    ).toBe(true);
+    const clients = await request(
+      "GET",
+      "/clients?limit=100",
+      undefined,
+      administrative,
+    );
+    expect(clients.statusCode).toBe(200);
+    expect(clients.json().data.length).toBeGreaterThanOrEqual(6);
+    expect(
+      (await request("GET", "/activities", undefined, administrative))
+        .statusCode,
+    ).toBe(200);
+    expect(
+      (
+        await request(
+          "POST",
+          "/clients",
+          {
+            name: "Cliente administrativo bloqueado",
+            contactName: "Prueba permisos",
+            email: "bloqueado-admin@example.test",
+            phone: "0000000999",
+            city: "Bogotá",
+            notes: "Debe fallar porque el perfil administrativo solo consulta.",
+            advisorId: clients.json().data[0].advisor.id,
+          },
+          administrative,
         )
       ).statusCode,
     ).toBe(403);
