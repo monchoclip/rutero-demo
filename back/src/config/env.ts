@@ -12,5 +12,8 @@ export function getConfig() {
     mailTransport: process.env.MAIL_TRANSPORT ?? "local",
     metaWebhookVerifyToken: process.env.META_WEBHOOK_VERIFY_TOKEN,
     metaAppSecret: process.env.META_APP_SECRET,
+    wompiPublicKey: process.env.WOMPI_PUBLIC_KEY,
+    wompiIntegritySecret: process.env.WOMPI_INTEGRITY_SECRET,
+    wompiEventsSecret: process.env.WOMPI_EVENTS_SECRET,
   };
 }

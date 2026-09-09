@@ -27,6 +27,7 @@ import { createHmac } from "node:crypto";
 import {
   calculateQuote,
   defaultBillingConfig,
+  wompiIntegritySignature,
 } from "../src/billing/BillingTypes.js";
 import {
   billingConfigSchema,
@@ -218,6 +219,13 @@ describe("visit evidence preparation", () => {
     expect(visitVerificationStatus({ type: "call", status: "scheduled" })).toBe(
       null,
     );
+  });
+});
+describe("Wompi checkout integrity", () => {
+  it("generates the SHA256 signature from reference, amount, currency and secret", () => {
+    expect(
+      wompiIntegritySignature("RUTS68-ABC", 2490000, "COP", "test_secret"),
+    ).toBe("5838551209fe8a6962370e2f6e15f442bc85a53160dd2ba9772318c4d0add0bf");
   });
 });
 describe("WhatsApp webhook verification and parsing", () => {

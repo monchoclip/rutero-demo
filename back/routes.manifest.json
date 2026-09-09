@@ -141,6 +141,20 @@
   },
   {
     "method": "POST",
+    "path": "/billing/checkout",
+    "operation": "billingCheckout",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "GET",
+    "path": "/billing/payments/:reference",
+    "operation": "billingPayment",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "POST",
     "path": "/billing/simulations",
     "operation": "billingSimulate",
     "authenticated": true,
@@ -164,6 +178,13 @@
     "method": "GET",
     "path": "/platform/whatsapp-numbers",
     "operation": "platformListNumbers",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "GET",
+    "path": "/platform/organizations",
+    "operation": "platformOrganizations",
     "authenticated": true,
     "entry": "src/lambda.entry.ts"
   },
@@ -220,6 +241,13 @@
     "method": "POST",
     "path": "/webhooks/whatsapp",
     "operation": "whatsappWebhookEvents",
+    "authenticated": false,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "POST",
+    "path": "/webhooks/wompi",
+    "operation": "wompiWebhookEvents",
     "authenticated": false,
     "entry": "src/lambda.entry.ts"
   }

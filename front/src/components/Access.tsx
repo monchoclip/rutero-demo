@@ -11,6 +11,9 @@ export function Access() {
   const [error, setError] = useState("");
   const [invitation, setInvitation] = useState<string | null>(null);
   const [register, setRegister] = useState(false);
+  const [checkoutPlan, setCheckoutPlan] = useState<
+    "essential" | "growth" | "enterprise" | null
+  >(null);
   const [demoRole, setDemoRole] = useState<
     "advisor" | "coordinator" | "admin" | "platform" | null
   >(null);
@@ -22,6 +25,13 @@ export function Access() {
     const token = query.get("invitation");
     setInvitation(token);
     setRegister(query.get("register") === "1");
+    const requestedPlan = query.get("checkout");
+    if (
+      requestedPlan === "essential" ||
+      requestedPlan === "growth" ||
+      requestedPlan === "enterprise"
+    )
+      setCheckoutPlan(requestedPlan);
     const demo = query.get("demo");
     if (
       demo === "advisor" ||
@@ -62,14 +72,25 @@ export function Access() {
   return user?.role === "super_admin" ? (
     <PlatformConsole user={user} onLogout={logout} />
   ) : user ? (
-    <Workspace user={user} onLogout={logout} />
+    <Workspace
+      user={user}
+      onLogout={logout}
+      autoOpenPayment={Boolean(
+        checkoutPlan && user.role === "commercial_coordinator",
+      )}
+      initialCheckoutPlan={checkoutPlan}
+    />
   ) : (
     <Auth
       key={`${register}-${demoRole}`}
       invitation={invitation}
       initialRegister={register}
       demoRole={demoRole}
-      onLogin={() => window.location.assign("/app/")}
+      onLogin={() =>
+        window.location.assign(
+          checkoutPlan ? `/app/?checkout=${checkoutPlan}` : "/app/",
+        )
+      }
     />
   );
 }

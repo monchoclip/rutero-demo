@@ -98,7 +98,7 @@ export function PlansSection() {
               Incluye {p.included} usuarios · Adicional: {money(p.extra)}/mes
             </small>
             <a
-              href="/ingresar/?demo=coordinator"
+              href={`/ingresar/?checkout=${p.name === "Esencial" ? "essential" : p.name === "Crecimiento" ? "growth" : "enterprise"}`}
               className={`home-button ${i === 1 ? "light" : "outline"}`}
             >
               Explorar este plan <ArrowUpRight size={17} />
@@ -117,10 +117,10 @@ export function PlansSection() {
       <div className="payment-note">
         <CreditCard size={25} />
         <p>
-          <strong>Un pago que puedas entender.</strong> En la demo de
-          coordinación puedes parametrizar soporte, pasarela e impuestos de
-          prueba y ver el total desglosado. Estos importes del home no incluyen
-          esos conceptos. Wompi real está pendiente de integración.
+          <strong>Un pago que puedas entender.</strong> Al elegir un plan se
+          solicita ingreso o registro y luego se abre el modal asociado a tu
+          empresa. El total se calcula en el servidor y Wompi usa su checkout
+          oficial cuando hay llaves configuradas.
         </p>
       </div>
     </section>

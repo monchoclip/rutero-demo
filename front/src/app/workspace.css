@@ -1474,6 +1474,41 @@ a.contact-row:hover {
   flex: none;
   color: var(--amber);
 }
+.membership-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px 18px;
+  margin-bottom: 20px;
+  border: 1px solid #99f6e4;
+  border-radius: 8px;
+  background: var(--brand-soft);
+}
+.membership-banner .eyebrow,
+.membership-banner strong {
+  display: block;
+}
+.membership-banner .eyebrow {
+  color: var(--brand);
+  font-size: 0.625rem;
+}
+.membership-banner strong {
+  margin-top: 6px;
+  color: var(--brand-dark);
+}
+.membership-banner small {
+  text-align: right;
+}
+@media (max-width: 760px) {
+  .membership-banner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .membership-banner small {
+    text-align: left;
+  }
+}
 .plan-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -1744,6 +1779,32 @@ a.contact-row:hover {
   border-radius: 8px;
   background: var(--brand-soft);
   color: var(--brand);
+}
+.organization-list {
+  display: grid;
+  gap: 10px;
+}
+.organization-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+.organization-row strong,
+.organization-row small {
+  display: block;
+}
+.organization-row small {
+  margin-top: 4px;
+}
+@media (max-width: 760px) {
+  .organization-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
 }
 .chat-bubble video,
 .chat-bubble audio {

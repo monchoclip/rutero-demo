@@ -144,11 +144,15 @@ async function hasWhatsAppNumbers() {
 export function Workspace({
   user,
   onLogout,
+  autoOpenPayment = false,
+  initialCheckoutPlan = null,
 }: {
   user: User;
   onLogout: () => void;
+  autoOpenPayment?: boolean;
+  initialCheckoutPlan?: "essential" | "growth" | "enterprise" | null;
 }) {
-  const [tab, setTab] = useState<Tab>("overview");
+  const [tab, setTab] = useState<Tab>(autoOpenPayment ? "billing" : "overview");
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [clients, setClients] = useState<Client[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -770,7 +774,15 @@ export function Workspace({
                   }
                 />
               )}
-              {tab === "billing" && <Billing commercial={commercial} />}
+              {tab === "billing" && (
+                <Billing
+                  commercial={commercial}
+                  user={user}
+                  organization={organization}
+                  autoOpenPayment={autoOpenPayment}
+                  initialCheckoutPlan={initialCheckoutPlan}
+                />
+              )}
               {tab === "mail" && (
                 <section className="panel">
                   <div className="section-heading">

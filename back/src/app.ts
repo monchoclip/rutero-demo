@@ -29,6 +29,9 @@ export async function createApp(
     localMail: boolean;
     metaWebhookVerifyToken?: string;
     metaAppSecret?: string;
+    wompiPublicKey?: string;
+    wompiIntegritySecret?: string;
+    wompiEventsSecret?: string;
     whatsappTransport?: WhatsAppTransport;
   },
 ) {
@@ -74,6 +77,12 @@ export async function createApp(
   const billing = new BillingService(
     new BillingRepository(db),
     !options.production && options.localMail,
+    {
+      origin: options.origin,
+      wompiPublicKey: options.wompiPublicKey,
+      wompiIntegritySecret: options.wompiIntegritySecret,
+      wompiEventsSecret: options.wompiEventsSecret,
+    },
   );
   const whatsapp = new WhatsAppService(
     new WhatsAppRepository(db),

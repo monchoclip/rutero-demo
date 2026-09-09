@@ -15,6 +15,10 @@ export type Organization = {
   sector: string;
   trialEndsAt: string;
   timeZone: string;
+  membershipPlan: string | null;
+  membershipStatus: "trial" | "active" | "past_due" | "cancelled";
+  membershipStartedAt: string | null;
+  membershipEndsAt: string | null;
 };
 export type Client = {
   id: string;
@@ -126,6 +130,35 @@ export type PaymentSimulation = {
   snapshot: { quote: BillingQuote };
   createdAt: string;
 };
+export type BillingCheckout = {
+  mode: "simulation" | "wompi";
+  reference: string;
+  quote: BillingQuote;
+  customerData: {
+    email: string;
+    fullName: string;
+    phoneNumber?: string;
+    legalId?: string;
+    legalIdType?: string;
+  };
+  publicKey?: string;
+  signatureIntegrity?: string;
+  redirectUrl?: string;
+};
+export type PaymentTransaction = {
+  id: string;
+  reference: string;
+  transactionId: string | null;
+  status: "pending" | "approved" | "declined" | "error" | "voided";
+  amountInCents: number;
+  currency: string;
+  planId: string;
+  users: number;
+  customerName: string;
+  customerEmail: string;
+  createdAt: string;
+  updatedAt: string;
+};
 export const outcomeLabels: Record<SimulationOutcome, string> = {
   approved: "Aprobado",
   declined: "Rechazado",
@@ -140,6 +173,17 @@ export type WhatsAppNumber = {
 };
 export type PlatformWhatsAppNumber = WhatsAppNumber & {
   organization: { id: string; name: string };
+};
+export type PlatformOrganization = {
+  id: string;
+  name: string;
+  sector: string;
+  membershipPlan: string | null;
+  membershipStatus: string;
+  membershipStartedAt: string | null;
+  membershipEndsAt: string | null;
+  trialEndsAt: string;
+  _count: { users: number; clients: number };
 };
 export type WhatsAppConversation = {
   id: string;

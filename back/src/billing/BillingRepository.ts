@@ -1,6 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 import type { BillingConfig, SimulationInput } from "./BillingSchema.js";
 import type { calculateQuote } from "./BillingTypes.js";
+import type { PaymentTransactionStatus } from "@prisma/client";
 export class BillingRepository {
   constructor(private db: PrismaClient) {}
   settings(organizationId: string) {
@@ -77,6 +78,65 @@ export class BillingRepository {
         },
       });
       return payment;
+    });
+  }
+  createTransaction(input: {
+    organizationId: string;
+    reference: string;
+    amountInCents: number;
+    currency: string;
+    planId: string;
+    users: number;
+    customerName: string;
+    customerEmail: string;
+  }) {
+    return this.db.paymentTransaction.create({ data: input });
+  }
+  transaction(reference: string) {
+    return this.db.paymentTransaction.findUnique({ where: { reference } });
+  }
+  updateTransaction(
+    reference: string,
+    status: PaymentTransactionStatus,
+    transactionId: string | null,
+    raw: unknown,
+  ) {
+    return this.db.$transaction(async (tx) => {
+      const payment = await tx.paymentTransaction.update({
+        where: { reference },
+        data: { status, transactionId, raw: raw as object },
+      });
+      if (status === "approved") {
+        const now = new Date();
+        const ends = new Date(now);
+        ends.setMonth(ends.getMonth() + 1);
+        await tx.organization.update({
+          where: { id: payment.organizationId },
+          data: {
+            membershipPlan: payment.planId,
+            membershipStatus: "active",
+            membershipStartedAt: now,
+            membershipEndsAt: ends,
+          },
+        });
+      }
+      return payment;
+    });
+  }
+  organizations() {
+    return this.db.organization.findMany({
+      select: {
+        id: true,
+        name: true,
+        sector: true,
+        membershipPlan: true,
+        membershipStatus: true,
+        membershipStartedAt: true,
+        membershipEndsAt: true,
+        trialEndsAt: true,
+        _count: { select: { users: true, clients: true } },
+      },
+      orderBy: { name: "asc" },
     });
   }
 }

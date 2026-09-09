@@ -40,6 +40,11 @@ model Organization {
   emails EmailJob[]
   billingSettings BillingSettings?
   paymentSimulations PaymentSimulation[]
+  paymentTransactions PaymentTransaction[]
+  membershipPlan String?
+  membershipStatus String @default("trial")
+  membershipStartedAt DateTime?
+  membershipEndsAt DateTime?
   whatsAppNumbers WhatsAppNumber[]
   whatsAppConversations WhatsAppConversation[]
   whatsAppMessages WhatsAppMessage[]
@@ -185,6 +190,31 @@ model PaymentSimulation {
   updatedAt DateTime @updatedAt
   @@unique([organizationId, idempotencyKey])
   @@index([organizationId, createdAt])
+}
+enum PaymentTransactionStatus {
+  pending
+  approved
+  declined
+  error
+  voided
+}
+model PaymentTransaction {
+  id String @id @default(uuid())
+  organizationId String
+  organization Organization @relation(fields: [organizationId], references: [id])
+  reference String @unique
+  transactionId String? @unique
+  status PaymentTransactionStatus @default(pending)
+  amountInCents Int
+  currency String
+  planId String
+  users Int
+  customerName String
+  customerEmail String
+  raw Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([organizationId, status, createdAt])
 }
 enum WhatsAppDirection {
   inbound

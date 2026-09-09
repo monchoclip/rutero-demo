@@ -1,5 +1,6 @@
 import type { BillingConfig, QuoteInput } from "./BillingSchema.js";
 import { AppError } from "../shared/errors.js";
+import { createHash, randomUUID } from "node:crypto";
 export const DEMO_ORGANIZATION_ID = "68000000-0000-4000-8000-000000000001";
 export const defaultBillingConfig: BillingConfig = {
   mode: "simulation",
@@ -34,6 +35,19 @@ export const defaultBillingConfig: BillingConfig = {
     },
   ],
 };
+export function paymentReference() {
+  return `RUTS68-${randomUUID().replaceAll("-", "").slice(0, 24).toUpperCase()}`;
+}
+export function wompiIntegritySignature(
+  reference: string,
+  amountInCents: number,
+  currency: string,
+  secret: string,
+) {
+  return createHash("sha256")
+    .update(`${reference}${amountInCents}${currency}${secret}`)
+    .digest("hex");
+}
 const percentage = (amount: number, basisPoints: number) =>
   Number((BigInt(amount) * BigInt(basisPoints) + 9999n) / 10000n);
 export function calculateQuote(config: BillingConfig, input: QuoteInput) {

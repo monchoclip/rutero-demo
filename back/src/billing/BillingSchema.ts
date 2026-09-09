@@ -45,7 +45,23 @@ export const simulationSchema = quoteSchema.extend({
   expectedVersion: z.number().int().positive(),
   outcome: z.enum(["approved", "declined", "pending"]),
   idempotencyKey: z.uuid(),
+  reference: z.string().trim().min(8).max(80).optional(),
 });
+export const checkoutSchema = quoteSchema
+  .extend({
+    customerName: z.string().trim().min(2).max(160),
+    customerEmail: z.email(),
+    customerPhone: z.string().trim().min(7).max(30).optional(),
+    customerLegalId: z.string().trim().min(4).max(40).optional(),
+    customerLegalIdType: z
+      .enum(["CC", "CE", "NIT", "PP", "TI", "DNI", "RG", "OTHER"])
+      .optional(),
+  })
+  .strict();
 export type BillingConfig = z.infer<typeof billingConfigSchema>;
 export type QuoteInput = z.infer<typeof quoteSchema>;
 export type SimulationInput = z.infer<typeof simulationSchema>;
+export type CheckoutInput = z.infer<typeof checkoutSchema>;
+export const idempotencyReferenceSchema = z
+  .object({ reference: z.string().trim().min(8).max(80) })
+  .strict();

@@ -2,7 +2,11 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { LogOut, Plus, RefreshCw, Route, Smartphone } from "lucide-react";
 import { api, post } from "../lib/api";
-import type { PlatformWhatsAppNumber, User } from "../lib/types";
+import type {
+  PlatformOrganization,
+  PlatformWhatsAppNumber,
+  User,
+} from "../lib/types";
 
 const demoOrganizationId = "68000000-0000-4000-8000-000000000001";
 
@@ -14,6 +18,9 @@ export function PlatformConsole({
   onLogout: () => void;
 }) {
   const [numbers, setNumbers] = useState<PlatformWhatsAppNumber[]>([]);
+  const [organizations, setOrganizations] = useState<PlatformOrganization[]>(
+    [],
+  );
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true);
@@ -21,9 +28,12 @@ export function PlatformConsole({
   const load = useCallback(async () => {
     setError("");
     try {
-      setNumbers(
-        await api<PlatformWhatsAppNumber[]>("/platform/whatsapp-numbers"),
-      );
+      const [registeredNumbers, registeredOrganizations] = await Promise.all([
+        api<PlatformWhatsAppNumber[]>("/platform/whatsapp-numbers"),
+        api<PlatformOrganization[]>("/platform/organizations"),
+      ]);
+      setNumbers(registeredNumbers);
+      setOrganizations(registeredOrganizations);
     } catch (failure) {
       setError((failure as Error).message);
     } finally {
@@ -182,6 +192,41 @@ export function PlatformConsole({
             </div>
           ) : (
             <p className="hint">Todavía no hay números registrados.</p>
+          )}
+        </section>
+        <section className="panel">
+          <div className="section-heading">
+            <div>
+              <h2>Empresas y membresías</h2>
+              <p>Estado de prueba, plan activo y tamaño de cada cuenta.</p>
+            </div>
+            <button className="text-button" onClick={load}>
+              <RefreshCw size={15} /> Actualizar
+            </button>
+          </div>
+          {organizations.length ? (
+            <div className="organization-list">
+              {organizations.map((organization) => (
+                <article className="organization-row" key={organization.id}>
+                  <div>
+                    <strong>{organization.name}</strong>
+                    <small>
+                      {organization.sector} · {organization._count.users}{" "}
+                      usuarios · {organization._count.clients} clientes
+                    </small>
+                  </div>
+                  <span
+                    className={`badge ${organization.membershipStatus === "active" ? "completed" : ""}`}
+                  >
+                    {organization.membershipPlan
+                      ? `${organization.membershipPlan} · ${organization.membershipStatus}`
+                      : `Prueba · ${organization.membershipStatus}`}
+                  </span>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="hint">Todavía no hay empresas registradas.</p>
           )}
         </section>
       </section>

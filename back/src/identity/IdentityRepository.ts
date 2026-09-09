@@ -1,6 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 import type { z } from "zod";
 import type { registerSchema } from "./IdentitySchema.js";
+import { defaultBillingConfig } from "../billing/BillingTypes.js";
 export class IdentityRepository {
   constructor(private db: PrismaClient) {}
   findByEmail(email: string) {
@@ -16,6 +17,7 @@ export class IdentityRepository {
         name: input.companyName,
         sector: input.sector,
         trialEndsAt,
+        billingSettings: { create: { configuration: defaultBillingConfig } },
         users: {
           create: {
             name: input.name,

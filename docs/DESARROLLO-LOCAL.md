@@ -39,7 +39,7 @@ Siembra la empresa de demostración con dos asesores, un coordinador comercial, 
 
 Cuenta administrativa de práctica: `administrativo@ruts68.test`. Este perfil puede revisar cartera, equipo, actividades, conversaciones y cotizaciones de cobro simulado de la empresa demo, pero no puede crear clientes, invitar asesores, reasignar cartera ni guardar simulaciones de pago.
 
-La pestaña «Cobro simulado» solo aparece en esa empresa y para perfiles de coordinación. Calcula el desglose en el servidor y guarda ensayos con su resultado. No conecta con Wompi, no pide datos de tarjeta y no activa suscripciones.
+La pestaña «Cobro simulado» aparece para perfiles de coordinación. El botón «Continuar al pago» abre un modal que toma el nombre y correo de la sesión, permite completar datos del pagador y asocia el intento a la empresa. Sin llaves Wompi registra un pago aprobado de prueba y activa la membresía local; con `WOMPI_PUBLIC_KEY` y `WOMPI_INTEGRITY_SECRET` definidos devuelve la referencia, firma SHA256 y datos para abrir el Web Checkout oficial. El estado final debe llegar por el webhook `/webhooks/wompi`, validado con el secreto separado `WOMPI_EVENTS_SECRET`; la redirección solo informa al usuario.
 
 El sembrado también da de alta un número de WhatsApp de la empresa de demostración, asignado a un asesor, con dos conversaciones de ejemplo (una vinculada a un cliente, otra sin vincular). La pestaña «WhatsApp» solo aparece si la cuenta tiene al menos un número visible para su rol. El token de ese número es ficticio: un envío real desde la demo llega a fallar honestamente contra la API de Meta, mostrado como mensaje "fallido" en la burbuja, en vez de simular un éxito falso.
 

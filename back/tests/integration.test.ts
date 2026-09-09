@@ -7,7 +7,7 @@ import { NotificationRepository } from "../src/notifications/NotificationReposit
 import { seedDemo, DEMO_PASSWORD } from "../src/development/seed.js";
 import { DEMO_ORGANIZATION_ID } from "../src/billing/BillingTypes.js";
 import { hashPassword } from "../src/shared/security.js";
-import { createHmac } from "node:crypto";
+import { createHash, createHmac } from "node:crypto";
 import type { WhatsAppTransport } from "../src/whatsapp/WhatsAppTypes.js";
 const url = process.env.TEST_DATABASE_URL;
 if (!url || new URL(url).pathname !== "/ruts68_test")
@@ -85,7 +85,12 @@ async function invite(coordinator: typeof owner, name: string) {
   return { cookie: session(accepted), id: accepted.json().data.id as string };
 }
 beforeAll(async () => {
-  app = await createApp(db, { origin, production: false, localMail: true });
+  app = await createApp(db, {
+    origin,
+    production: false,
+    localMail: true,
+    wompiEventsSecret: "wompi-events-test-secret",
+  });
   owner = await register("alpha");
   other = await register("beta");
   advisor = await invite(owner, "Ana");
@@ -113,6 +118,41 @@ describe.sequential("real PostgreSQL CRM flow", () => {
     expect(
       (await request("GET", "/auth/me", undefined, owner.cookie)).json().data,
     ).not.toHaveProperty("passwordHash");
+  });
+  it("lets a newly registered company associate a local payment with its session", async () => {
+    const checkout = await request(
+      "POST",
+      "/billing/checkout",
+      {
+        planId: "essential",
+        users: 2,
+        customerName: "Coordinador alpha",
+        customerEmail: `alpha-${suffix}@example.test`,
+      },
+      owner.cookie,
+    );
+    expect(checkout.statusCode).toBe(201);
+    const data = checkout.json().data;
+    expect(data.mode).toBe("simulation");
+    const simulation = await request(
+      "POST",
+      "/billing/simulations",
+      {
+        planId: "essential",
+        users: 2,
+        expectedVersion: data.quote.version,
+        outcome: "approved",
+        reference: data.reference,
+        idempotencyKey: crypto.randomUUID(),
+      },
+      owner.cookie,
+    );
+    expect(simulation.statusCode).toBe(201);
+    const updated = await db.organization.findUniqueOrThrow({
+      where: { id: owner.organizationId },
+    });
+    expect(updated.membershipPlan).toBe("essential");
+    expect(updated.membershipStatus).toBe("active");
   });
   it("rejects unauthenticated requests, bad origins and role escalation", async () => {
     expect((await request("GET", "/clients")).statusCode).toBe(401);
@@ -611,6 +651,142 @@ describe.sequential("billing simulation restricted to the demo company", () => {
         )
       ).statusCode,
     ).toBe(400);
+  });
+  it("opens a company checkout, records its receipt and activates the membership", async () => {
+    const checkout = await request(
+      "POST",
+      "/billing/checkout",
+      {
+        planId: "growth",
+        users: 6,
+        customerName: "Coordinador Demo",
+        customerEmail: "coordinador@ruts68.test",
+        customerPhone: "3001234567",
+      },
+      coordinator,
+    );
+    expect(checkout.statusCode).toBe(201);
+    const data = checkout.json().data;
+    expect(data.mode).toBe("simulation");
+    expect(data.reference).toMatch(/^RUTS68-/);
+    expect(data.customerData.email).toBe("coordinador@ruts68.test");
+    expect(
+      (
+        await request(
+          "GET",
+          `/billing/payments/${data.reference}`,
+          undefined,
+          coordinator,
+        )
+      ).json().data.status,
+    ).toBe("pending");
+    const simulated = await request(
+      "POST",
+      "/billing/simulations",
+      {
+        planId: "growth",
+        users: 6,
+        expectedVersion: data.quote.version,
+        outcome: "approved",
+        reference: data.reference,
+        idempotencyKey: crypto.randomUUID(),
+      },
+      coordinator,
+    );
+    expect(simulated.statusCode).toBe(201);
+    const receipt = await request(
+      "GET",
+      `/billing/payments/${data.reference}`,
+      undefined,
+      administrative,
+    );
+    expect(receipt.statusCode).toBe(200);
+    expect(receipt.json().data.status).toBe("approved");
+    const organization = await request(
+      "GET",
+      "/organization",
+      undefined,
+      coordinator,
+    );
+    expect(organization.json().data.membershipPlan).toBe("growth");
+    expect(organization.json().data.membershipStatus).toBe("active");
+    expect(
+      (
+        await request(
+          "GET",
+          `/billing/payments/${data.reference}`,
+          undefined,
+          owner.cookie,
+        )
+      ).statusCode,
+    ).toBe(404);
+  });
+  it("exposes membership state to the platform without exposing customer data", async () => {
+    const response = await request(
+      "GET",
+      "/platform/organizations",
+      undefined,
+      platform,
+    );
+    expect(response.statusCode).toBe(200);
+    const demo = response
+      .json()
+      .data.find((item: { id: string }) => item.id === DEMO_ORGANIZATION_ID);
+    expect(demo.membershipPlan).toBe("growth");
+    expect(demo.membershipStatus).toBe("active");
+    expect(demo._count.clients).toBeGreaterThan(0);
+    expect(demo.customerEmail).toBeUndefined();
+    expect(
+      (await request("GET", "/platform/organizations", undefined, coordinator))
+        .statusCode,
+    ).toBe(403);
+  });
+  it("accepts a signed Wompi transaction event and updates the receipt", async () => {
+    const checkout = await request(
+      "POST",
+      "/billing/checkout",
+      {
+        planId: "essential",
+        users: 2,
+        customerName: "Coordinador Demo",
+        customerEmail: "coordinador@ruts68.test",
+      },
+      coordinator,
+    );
+    const data = checkout.json().data;
+    const timestamp = 1_758_000_000;
+    const transaction = {
+      id: `wompi-${suffix.slice(0, 8)}`,
+      status: "APPROVED",
+      amount_in_cents: data.quote.totalMinor,
+      reference: data.reference,
+    };
+    const properties = [
+      "transaction.id",
+      "transaction.status",
+      "transaction.amount_in_cents",
+    ];
+    const values = `${transaction.id}${transaction.status}${transaction.amount_in_cents}`;
+    const checksum = createHash("sha256")
+      .update(`${values}${timestamp}wompi-events-test-secret`)
+      .digest("hex");
+    const event = {
+      event: "transaction.updated",
+      data: { transaction },
+      environment: "test",
+      signature: { properties, checksum },
+      timestamp,
+    };
+    const response = await request("POST", "/webhooks/wompi", event);
+    expect(response.statusCode).toBe(200);
+    const receipt = await request(
+      "GET",
+      `/billing/payments/${data.reference}`,
+      undefined,
+      administrative,
+    );
+    expect(receipt.json().data.status).toBe("approved");
+    expect(receipt.json().data.transactionId).toBe(transaction.id);
   });
   it("stores one simulation per idempotency key and rejects a reused key with other data", async () => {
     const payload = {

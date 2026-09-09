@@ -6,7 +6,7 @@ import {
   useState,
   type FormEvent,
 } from "react";
-import { Check, RefreshCw, ShieldAlert } from "lucide-react";
+import { Check, RefreshCw, ShieldAlert, X } from "lucide-react";
 import { api, post, patch, ApiError } from "../lib/api";
 import {
   outcomeLabels,
@@ -16,12 +16,17 @@ import {
   type BillingSettings,
   type PaymentSimulation,
   type SimulationOutcome,
+  type BillingCheckout,
+  type PaymentTransaction,
+  type User,
+  type Organization,
 } from "../lib/types";
 import {
   PlanChoice,
   QuoteBreakdown,
   SimulationHistory,
   rate,
+  money,
 } from "./BillingViews";
 
 const outcomes: SimulationOutcome[] = ["approved", "declined", "pending"];
@@ -33,17 +38,32 @@ const tariffFields = [
   ["taxBps", "Impuesto (puntos básicos)"],
 ] as const;
 
-export function Billing({ commercial }: { commercial: boolean }) {
+export function Billing({
+  commercial,
+  user,
+  organization,
+  autoOpenPayment = false,
+  initialCheckoutPlan = null,
+}: {
+  commercial: boolean;
+  user: User;
+  organization: Organization | null;
+  autoOpenPayment?: boolean;
+  initialCheckoutPlan?: BillingPlan["id"] | null;
+}) {
   const [settings, setSettings] = useState<BillingSettings | null>(null);
   const [history, setHistory] = useState<PaymentSimulation[]>([]);
   const [quote, setQuote] = useState<BillingQuote | null>(null);
-  const [planId, setPlanId] = useState<BillingPlan["id"]>("growth");
+  const [planId, setPlanId] = useState<BillingPlan["id"]>(
+    initialCheckoutPlan ?? "growth",
+  );
   const [users, setUsers] = useState(5);
   const [outcome, setOutcome] = useState<SimulationOutcome>("approved");
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
+  const [paymentOpen, setPaymentOpen] = useState(false);
   const idempotencyKey = useRef(crypto.randomUUID());
 
   const load = useCallback(async () => {
@@ -76,6 +96,9 @@ export function Billing({ commercial }: { commercial: boolean }) {
     }, 250);
     return () => clearTimeout(timer);
   }, [settings, planId, users]);
+  useEffect(() => {
+    if (autoOpenPayment && quote) setPaymentOpen(true);
+  }, [autoOpenPayment, quote]);
 
   async function simulate() {
     if (!quote) return;
@@ -158,6 +181,23 @@ export function Billing({ commercial }: { commercial: boolean }) {
           de definir el contrato con Wompi.
         </span>
       </div>
+      {organization && (
+        <section className="membership-banner" aria-live="polite">
+          <div>
+            <span className="eyebrow">ESTADO DE TU EMPRESA</span>
+            <strong>
+              {organization.membershipStatus === "active"
+                ? `Membresía activa · ${organization.membershipPlan ?? "Plan"}`
+                : `Periodo de prueba · vence ${new Date(organization.trialEndsAt).toLocaleDateString("es-CO")}`}
+            </strong>
+          </div>
+          <small>
+            {organization.membershipEndsAt
+              ? `Próxima revisión ${new Date(organization.membershipEndsAt).toLocaleDateString("es-CO")}`
+              : "El pago aprobado actualizará este estado automáticamente."}
+          </small>
+        </section>
+      )}
       {error && (
         <div className="error" role="alert">
           {error}
@@ -231,12 +271,71 @@ export function Billing({ commercial }: { commercial: boolean }) {
           <button
             className="primary"
             disabled={!quote || busy}
-            onClick={simulate}
+            onClick={() => setPaymentOpen(true)}
           >
-            {busy ? "Guardando…" : "Guardar ensayo del cobro"}
+            {busy ? "Preparando…" : "Continuar al pago"}
           </button>
         )}
       </section>
+      {paymentOpen && quote && (
+        <PaymentModal
+          quote={quote}
+          user={user}
+          organization={organization}
+          busy={busy}
+          onClose={() => setPaymentOpen(false)}
+          onPay={async (customer) => {
+            setBusy(true);
+            setError("");
+            setNotice("");
+            try {
+              const checkout = await post<BillingCheckout>(
+                "/billing/checkout",
+                {
+                  planId,
+                  users,
+                  ...customer,
+                },
+              );
+              if (checkout.mode === "simulation") {
+                await post<PaymentSimulation>("/billing/simulations", {
+                  planId,
+                  users,
+                  outcome: "approved",
+                  expectedVersion: checkout.quote.version,
+                  reference: checkout.reference,
+                  idempotencyKey: crypto.randomUUID(),
+                });
+                setNotice(
+                  "Pago de prueba aprobado. La membresía de tu empresa quedó activa en el entorno local.",
+                );
+                setPaymentOpen(false);
+                await load();
+              } else {
+                await openWompi(checkout, async () => {
+                  const receipt = await waitForReceipt(checkout.reference);
+                  if (receipt) {
+                    setNotice(
+                      receipt.status === "approved"
+                        ? "Wompi confirmó el pago y la membresía quedó activa."
+                        : `Wompi reportó el estado ${receipt.status}.`,
+                    );
+                    setPaymentOpen(false);
+                    await load();
+                  } else
+                    setNotice(
+                      "Pago enviado. Esperamos la confirmación del webhook de Wompi.",
+                    );
+                });
+              }
+            } catch (failure) {
+              setError(describe(failure));
+            } finally {
+              setBusy(false);
+            }
+          }}
+        />
+      )}
       <section className="panel">
         <div className="section-heading">
           <div>
@@ -292,6 +391,181 @@ export function Billing({ commercial }: { commercial: boolean }) {
       </section>
     </>
   );
+}
+
+type CustomerData = {
+  customerName: string;
+  customerEmail: string;
+  customerPhone?: string;
+  customerLegalId?: string;
+  customerLegalIdType?: string;
+};
+
+function PaymentModal({
+  quote,
+  user,
+  organization,
+  busy,
+  onClose,
+  onPay,
+}: {
+  quote: BillingQuote;
+  user: User;
+  organization: Organization | null;
+  busy: boolean;
+  onClose: () => void;
+  onPay: (customer: CustomerData) => Promise<void>;
+}) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => dialog.current?.showModal(), []);
+  return (
+    <dialog className="dialog payment-dialog" ref={dialog} onCancel={onClose}>
+      <div className="dialog-heading">
+        <div>
+          <span className="eyebrow">PAGO DE MEMBRESÍA</span>
+          <h2>Confirma los datos del pagador</h2>
+        </div>
+        <button className="icon-button" onClick={onClose} aria-label="Cerrar">
+          <X size={20} />
+        </button>
+      </div>
+      <p className="hint chosen-client">
+        {organization?.name ?? "Tu empresa"} · {quote.planName} ·{" "}
+        {money(quote.totalMinor, quote.currency)}
+      </p>
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          const data = Object.fromEntries(new FormData(event.currentTarget));
+          void onPay({
+            customerName: String(data.customerName),
+            customerEmail: String(data.customerEmail),
+            ...(data.customerPhone
+              ? { customerPhone: String(data.customerPhone) }
+              : {}),
+            ...(data.customerLegalId
+              ? { customerLegalId: String(data.customerLegalId) }
+              : {}),
+            ...(data.customerLegalIdType
+              ? { customerLegalIdType: String(data.customerLegalIdType) }
+              : {}),
+          });
+        }}
+      >
+        <label>
+          Nombre del pagador
+          <input
+            name="customerName"
+            defaultValue={user.name}
+            required
+            minLength={2}
+            maxLength={160}
+          />
+        </label>
+        <label>
+          Correo del pagador
+          <input
+            name="customerEmail"
+            type="email"
+            defaultValue={user.email}
+            required
+          />
+        </label>
+        <div className="form-grid">
+          <label>
+            Teléfono (opcional)
+            <input name="customerPhone" type="tel" placeholder="3001234567" />
+          </label>
+          <label>
+            Documento (opcional)
+            <input name="customerLegalId" />
+          </label>
+        </div>
+        <label>
+          Tipo de documento
+          <select name="customerLegalIdType" defaultValue="CC">
+            <option value="CC">Cédula de ciudadanía</option>
+            <option value="NIT">NIT</option>
+            <option value="CE">Cédula de extranjería</option>
+            <option value="OTHER">Otro</option>
+          </select>
+        </label>
+        <p className="hint">
+          La empresa y el plan se asocian a tu sesión. En local se registra un
+          pago de prueba; con llaves de Wompi se abre su checkout oficial.
+        </p>
+        <div className="dialog-actions">
+          <button
+            className="secondary"
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+          >
+            Cancelar
+          </button>
+          <button className="primary" disabled={busy}>
+            {busy ? "Procesando…" : "Pagar membresía"}
+          </button>
+        </div>
+      </form>
+    </dialog>
+  );
+}
+
+async function openWompi(
+  checkout: BillingCheckout,
+  onFinished: () => Promise<void>,
+) {
+  if (!checkout.publicKey || !checkout.signatureIntegrity)
+    throw new Error("Wompi no está configurado para este entorno.");
+  if (!window.WidgetCheckout) {
+    await new Promise<void>((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.wompi.co/widget.js";
+      script.onload = () => resolve();
+      script.onerror = () =>
+        reject(new Error("No pudimos cargar el checkout de Wompi."));
+      document.head.appendChild(script);
+    });
+  }
+  const WidgetCheckout = window.WidgetCheckout;
+  if (!WidgetCheckout)
+    throw new Error("El checkout de Wompi no está disponible.");
+  const widget = new WidgetCheckout({
+    currency: checkout.quote.currency,
+    amountInCents: checkout.quote.totalMinor,
+    reference: checkout.reference,
+    publicKey: checkout.publicKey,
+    signature: { integrity: checkout.signatureIntegrity },
+    redirectUrl: checkout.redirectUrl,
+    customerData: checkout.customerData,
+  });
+  widget.open(() => {
+    void onFinished();
+  });
+}
+
+async function waitForReceipt(reference: string) {
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    if (attempt) await new Promise((resolve) => setTimeout(resolve, 2_000));
+    try {
+      const receipt = await api<PaymentTransaction>(
+        `/billing/payments/${reference}`,
+      );
+      if (receipt.status !== "pending") return receipt;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+declare global {
+  interface Window {
+    WidgetCheckout?: new (config: Record<string, unknown>) => {
+      open: (callback: (result: unknown) => void) => void;
+    };
+  }
 }
 
 function describe(failure: unknown) {
