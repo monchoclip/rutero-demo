@@ -13,6 +13,7 @@ import {
 import {
   Route,
   LayoutDashboard,
+  ListChecks,
   Users,
   CalendarDays,
   ContactRound,
@@ -44,8 +45,10 @@ import {
 import { FormDialog, type FormKind } from "./Forms";
 import { Billing } from "./Billing";
 import { Chat } from "./Chat";
+import { SequenceBoard } from "./SequenceBoard";
 type Tab =
   | "overview"
+  | "sequence"
   | "clients"
   | "agenda"
   | "team"
@@ -54,6 +57,7 @@ type Tab =
   | "mail";
 const tabs = [
   { id: "overview", label: "Resumen", icon: LayoutDashboard },
+  { id: "sequence", label: "Secuencia", icon: ListChecks },
   { id: "clients", label: "Clientes", icon: ContactRound },
   { id: "agenda", label: "Agenda", icon: CalendarDays },
   { id: "team", label: "Mi equipo", icon: Users },
@@ -65,6 +69,10 @@ const headings: Record<Tab, { title: string; text: string }> = {
   overview: {
     title: "Tu equipo en movimiento",
     text: "Una vista de tu cartera y de lo que viene después.",
+  },
+  sequence: {
+    title: "Trabajo ordenado por prioridad",
+    text: "Bloqueados, hoy, esta semana y clientes sin siguiente paso.",
   },
   clients: {
     title: "Cada relación cuenta",
@@ -523,10 +531,24 @@ export function Workspace({
                     </div>
                     <ClientTable
                       clients={clients.slice(0, 5)}
+                      activities={activities}
                       onOpen={openClient}
                     />
                   </section>
                 </>
+              )}
+              {tab === "sequence" && (
+                <SequenceBoard
+                  activities={activities}
+                  clients={clients}
+                  users={users}
+                  writer={writer}
+                  onComplete={(activity) =>
+                    setForm({ kind: "complete", activity })
+                  }
+                  onSchedule={(client) => setForm({ kind: "activity", client })}
+                  onOpenClient={openClient}
+                />
               )}
               {tab === "clients" && (
                 <section className="panel">
@@ -544,7 +566,11 @@ export function Workspace({
                       />
                     </label>
                   </div>
-                  <ClientTable clients={filteredClients} onOpen={openClient} />
+                  <ClientTable
+                    clients={filteredClients}
+                    activities={activities}
+                    onOpen={openClient}
+                  />
                   {clients.length === 100 && (
                     <p className="hint">
                       Se muestran los primeros 100 clientes.

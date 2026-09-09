@@ -7,6 +7,7 @@ import {
   CalendarDays,
 } from "lucide-react";
 import { activityLabels, type Client, type Activity } from "../lib/types";
+import { nextActionByClient } from "../lib/metrics";
 const dateTime = (date: string) =>
   new Date(date).toLocaleString("es-CO", {
     day: "numeric",
@@ -52,11 +53,14 @@ export function Empty({ title, text }: { title: string; text: string }) {
 }
 export function ClientTable({
   clients,
+  activities = [],
   onOpen,
 }: {
   clients: Client[];
+  activities?: Activity[];
   onOpen: (client: Client) => void;
 }) {
+  const nextActions = nextActionByClient(clients, activities);
   return clients.length ? (
     <div className="table-scroll">
       <table>
@@ -65,6 +69,7 @@ export function ClientTable({
             <th>Cliente</th>
             <th>Ciudad</th>
             <th>Asesor responsable</th>
+            <th>Siguiente paso</th>
             <th>Contacto</th>
             <th>
               <span className="sr-only">Acciones</span>
@@ -85,6 +90,13 @@ export function ClientTable({
               </td>
               <td>{c.city}</td>
               <td>{c.advisor.name}</td>
+              <td>
+                <span
+                  className={`next-action-pill ${nextActions.get(c.id)?.tone ?? "none"}`}
+                >
+                  {nextActions.get(c.id)?.label ?? "Sin próxima acción"}
+                </span>
+              </td>
               <td>{c.phone}</td>
               <td>
                 <button className="text-button" onClick={() => onOpen(c)}>

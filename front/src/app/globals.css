@@ -1,14 +1,18 @@
 :root {
-  --forest: #153d31;
-  --forest-dark: #0d2922;
-  --green: #d9ed80;
-  --paper: #f4f6f3;
-  --ink: #1b2d27;
-  --muted: #68756f;
-  --line: #e0e6e0;
+  --forest: #0f766e;
+  --forest-dark: #10231e;
+  --green: #bfe35c;
+  --paper: #f7f8fa;
+  --surface-muted: #f1f3f5;
+  --ink: #17202a;
+  --muted: #5b6673;
+  --line: #d9dee3;
   --white: #fff;
-  --amber: #ae5a0b;
-  --red: #b23030;
+  --amber: #b45309;
+  --red: #b42318;
+  --blue: #2563eb;
+  --success: #15803d;
+  --slate: #64748b;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --duration-fast: 140ms;
   --duration: 220ms;
@@ -75,7 +79,7 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 3px solid #94b436;
+  outline: 3px solid #2563eb;
   outline-offset: 3px;
 }
 button {
@@ -216,7 +220,7 @@ label small {
   font-size: 0.875rem;
 }
 .primary {
-  background: var(--forest);
+  background: var(--blue);
   color: white;
 }
 .secondary {

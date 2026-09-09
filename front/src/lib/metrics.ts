@@ -177,3 +177,46 @@ export function weeklyTrend(
       : null;
   return { current, previous, delta };
 }
+
+export type ClientNextAction = {
+  label: string;
+  tone: "danger" | "today" | "next" | "none";
+  dueAt: string | null;
+};
+
+export function nextActionByClient(
+  clients: Client[],
+  activities: Activity[],
+): Map<string, ClientNextAction> {
+  const now = Date.now();
+  const endOfToday = new Date().setHours(23, 59, 59, 999);
+  const pending = activities.filter(
+    (activity) => activity.status === "scheduled",
+  );
+  const nextByClient = new Map<string, Activity>();
+  for (const activity of pending) {
+    const current = nextByClient.get(activity.clientId);
+    if (!current || new Date(activity.dueAt) < new Date(current.dueAt))
+      nextByClient.set(activity.clientId, activity);
+  }
+  return new Map<string, ClientNextAction>(
+    clients.map((client) => {
+      const activity = nextByClient.get(client.id);
+      if (!activity)
+        return [
+          client.id,
+          { label: "Sin próxima acción", tone: "none", dueAt: null },
+        ];
+      const due = new Date(activity.dueAt).getTime();
+      const tone = due < now ? "danger" : due <= endOfToday ? "today" : "next";
+      return [
+        client.id,
+        {
+          label: `${tone === "danger" ? "Vencido" : tone === "today" ? "Hoy" : "Próximo"} · ${activity.type === "call" ? "Llamada" : activity.type === "visit" ? "Visita" : "Seguimiento"}`,
+          tone,
+          dueAt: activity.dueAt,
+        },
+      ];
+    }),
+  );
+}
