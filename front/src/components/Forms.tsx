@@ -250,6 +250,11 @@ export function FormDialog({
               Horario de este dispositivo. Recordatorio preparado 15 minutos
               antes.
             </p>
+            <p className="hint">
+              Si eliges visita, quedará como gestión planificada. La captura
+              real de ubicación, fotografía y tiempo real sigue pendiente para
+              F4.
+            </p>
           </>
         )}
         {kind === "complete" && (

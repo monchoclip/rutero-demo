@@ -32,6 +32,10 @@ import {
   billingConfigSchema,
   simulationSchema,
 } from "../src/billing/BillingSchema.js";
+import {
+  visitEvidenceCapabilities,
+  visitVerificationStatus,
+} from "../src/crm/VisitTypes.js";
 describe("calendar-month trial", () => {
   it.each([
     ["2026-01-31T14:10:00.000Z", "2026-02-28T14:10:00.000Z"],
@@ -196,6 +200,24 @@ describe("billing simulation math", () => {
     expect(
       simulationSchema.safeParse({ ...valid, expectedVersion: 0 }).success,
     ).toBe(false);
+  });
+});
+describe("visit evidence preparation", () => {
+  it("keeps F4 visit evidence explicit without implying active tracking", () => {
+    expect(visitEvidenceCapabilities).toEqual({
+      location: "not_configured",
+      photo: "not_configured",
+      realtime: "not_configured",
+    });
+    expect(
+      visitVerificationStatus({ type: "visit", status: "scheduled" }),
+    ).toBe("planned");
+    expect(
+      visitVerificationStatus({ type: "visit", status: "completed" }),
+    ).toBe("closed_without_evidence");
+    expect(visitVerificationStatus({ type: "call", status: "scheduled" })).toBe(
+      null,
+    );
   });
 });
 describe("WhatsApp webhook verification and parsing", () => {

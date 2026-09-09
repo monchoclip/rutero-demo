@@ -65,7 +65,7 @@
 }
 .home-brand span span,
 .brand-number {
-  color: #7f9a52;
+  color: var(--accent);
 }
 .home-nav {
   display: flex;
@@ -106,9 +106,9 @@
   color: #fff;
 }
 .home-button.outline {
-  border-color: #c3d0c6;
+  border-color: var(--border);
   color: var(--forest);
-  background: #fff;
+  background: var(--surface);
 }
 .home-button.light {
   background: var(--green);
@@ -407,16 +407,16 @@
   font-weight: 600;
 }
 .preview-time.color-0 {
-  background: #eaf1e0;
-  color: #55703a;
+  background: var(--success-soft);
+  color: var(--success);
 }
 .preview-time.color-1 {
-  background: #e6eef1;
-  color: #3d6272;
+  background: var(--info-soft);
+  color: var(--info);
 }
 .preview-time.color-2 {
-  background: #f2ece2;
-  color: #7a6039;
+  background: var(--warning-soft);
+  color: var(--warning);
 }
 .preview-progress {
   display: flex;
@@ -426,9 +426,9 @@
   margin-top: 16px;
   padding: 11px 14px;
   border-radius: 9px;
-  background: #f4f7f0;
+  background: var(--brand-soft);
   font-size: 0.75rem;
-  color: #55703a;
+  color: var(--brand);
 }
 .preview-progress span {
   display: inline-flex;
@@ -439,7 +439,7 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #8aa55e;
+  background: var(--brand);
 }
 .preview-note {
   position: absolute;
@@ -468,8 +468,8 @@
   height: 34px;
   flex: none;
   border-radius: 9px;
-  background: #eef3e6;
-  color: #55703a;
+  background: var(--brand-soft);
+  color: var(--brand);
 }
 .preview-note strong {
   display: block;
@@ -1045,16 +1045,16 @@
   letter-spacing: 0.08em;
 }
 .release-label.available {
-  background: #e4f1dd;
-  color: #446438;
+  background: var(--success-soft);
+  color: var(--success);
 }
 .release-label.testing {
-  background: #fbf1de;
-  color: #8a6216;
+  background: var(--warning-soft);
+  color: var(--warning);
 }
 .release-label.upcoming {
-  background: #eceff2;
-  color: #566270;
+  background: var(--neutral-soft);
+  color: var(--neutral);
 }
 .news-number {
   margin: 20px 0 10px;

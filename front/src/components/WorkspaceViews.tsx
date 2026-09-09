@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { activityLabels, type Client, type Activity } from "../lib/types";
 import { nextActionByClient } from "../lib/metrics";
+import { visitEvidenceStatus } from "../lib/visitEvidence";
 const dateTime = (date: string) =>
   new Date(date).toLocaleString("es-CO", {
     day: "numeric",
@@ -126,30 +127,38 @@ export function ActivityList({
 }) {
   return items.length ? (
     <div>
-      {items.map((a) => (
-        <article className="activity-row" key={a.id}>
-          <ActivityIcon type={a.type} />
-          <div className="activity-info">
-            <strong>{a.client.name}</strong>
-            <small>
-              {activityLabels[a.type]} · {a.advisor.name}
-            </small>
-            <p>{a.notes}</p>
-          </div>
-          <div className="activity-time">
-            <strong>{dateTime(a.dueAt)}</strong>
-            {a.status === "completed" ? (
-              <span className="badge completed">Realizado</span>
-            ) : writer ? (
-              <button className="text-button" onClick={() => onComplete(a)}>
-                Registrar resultado <ArrowRight size={14} />
-              </button>
-            ) : (
-              <span className="badge">Programado</span>
-            )}
-          </div>
-        </article>
-      ))}
+      {items.map((a) => {
+        const visitEvidence = visitEvidenceStatus(a);
+        return (
+          <article className="activity-row" key={a.id}>
+            <ActivityIcon type={a.type} />
+            <div className="activity-info">
+              <strong>{a.client.name}</strong>
+              <small>
+                {activityLabels[a.type]} · {a.advisor.name}
+              </small>
+              <p>{a.notes}</p>
+              {visitEvidence && (
+                <small>
+                  {visitEvidence.label}: {visitEvidence.detail}
+                </small>
+              )}
+            </div>
+            <div className="activity-time">
+              <strong>{dateTime(a.dueAt)}</strong>
+              {a.status === "completed" ? (
+                <span className="badge completed">Realizado</span>
+              ) : writer ? (
+                <button className="text-button" onClick={() => onComplete(a)}>
+                  Registrar resultado <ArrowRight size={14} />
+                </button>
+              ) : (
+                <span className="badge">Programado</span>
+              )}
+            </div>
+          </article>
+        );
+      })}
     </div>
   ) : (
     <Empty

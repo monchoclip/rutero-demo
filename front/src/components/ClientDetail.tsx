@@ -8,6 +8,7 @@ import {
   type Activity,
   type Client,
 } from "../lib/types";
+import { visitEvidenceStatus } from "../lib/visitEvidence";
 
 const initials = (name: string) =>
   name
@@ -53,6 +54,7 @@ export function ClientDetail({
 }) {
   const stats = clientStats(history);
   const next = nextContact(history);
+  const nextVisitEvidence = next ? visitEvidenceStatus(next) : null;
   const timeline = history.filter((a) => a.id !== next?.id);
   return (
     <section className="panel client-detail">
@@ -138,6 +140,11 @@ export function ClientDetail({
                 )}
               </div>
               <p>{next.notes}</p>
+              {nextVisitEvidence && (
+                <small className="timeline-outcome">
+                  {nextVisitEvidence.label}: {nextVisitEvidence.detail}
+                </small>
+              )}
             </div>
           )}
           <h3>Historial de contacto</h3>
@@ -145,32 +152,40 @@ export function ClientDetail({
             <div className="skeleton" />
           ) : timeline.length ? (
             <div className="timeline">
-              {timeline.map((a) => (
-                <div className="timeline-entry" key={a.id}>
-                  <ActivityIcon type={a.type} />
-                  <div className="timeline-body">
-                    <div className="timeline-top">
-                      <strong>{activityLabels[a.type]}</strong>
-                      <span className={`badge ${a.status}`}>
-                        {activityStatusLabels[a.status]}
-                      </span>
-                    </div>
-                    <small>
-                      {dateTime(a.dueAt)} · {a.advisor.name}
-                      {a.status === "completed" && a.durationSeconds
-                        ? ` · ${Math.round(a.durationSeconds / 60)} min`
-                        : ""}
-                    </small>
-                    <p>{a.notes}</p>
-                    {a.outcome && (
-                      <small className="timeline-outcome">
-                        Resultado:{" "}
-                        {activityOutcomeLabels[a.outcome] ?? a.outcome}
+              {timeline.map((a) => {
+                const visitEvidence = visitEvidenceStatus(a);
+                return (
+                  <div className="timeline-entry" key={a.id}>
+                    <ActivityIcon type={a.type} />
+                    <div className="timeline-body">
+                      <div className="timeline-top">
+                        <strong>{activityLabels[a.type]}</strong>
+                        <span className={`badge ${a.status}`}>
+                          {activityStatusLabels[a.status]}
+                        </span>
+                      </div>
+                      <small>
+                        {dateTime(a.dueAt)} · {a.advisor.name}
+                        {a.status === "completed" && a.durationSeconds
+                          ? ` · ${Math.round(a.durationSeconds / 60)} min`
+                          : ""}
                       </small>
-                    )}
+                      <p>{a.notes}</p>
+                      {a.outcome && (
+                        <small className="timeline-outcome">
+                          Resultado:{" "}
+                          {activityOutcomeLabels[a.outcome] ?? a.outcome}
+                        </small>
+                      )}
+                      {visitEvidence && (
+                        <small className="timeline-outcome">
+                          {visitEvidence.label}: {visitEvidence.detail}
+                        </small>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <Empty

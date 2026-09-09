@@ -160,6 +160,7 @@ export function Workspace({
   const [whatsapp, setWhatsapp] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
   const [notice, setNotice] = useState("");
   const [search, setSearch] = useState("");
   const [form, setForm] = useState<{
@@ -187,6 +188,7 @@ export function Workspace({
       setUsers(team);
       setClients(customers);
       setActivities(tasks);
+      setLastSyncedAt(new Date());
       if (commercial) setInvitations(await api<Invitation[]>("/invitations"));
       if (coordinator) setBilling(await available("/billing/settings"));
       setWhatsapp(await hasWhatsAppNumbers());
@@ -208,6 +210,17 @@ export function Workspace({
   }, [commercial, coordinator, onLogout]);
   useEffect(() => {
     void load();
+  }, [load]);
+  useEffect(() => {
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") void load();
+    };
+    const interval = window.setInterval(refreshWhenVisible, 30_000);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
   }, [load]);
   async function saved() {
     const customers = await load();
@@ -294,7 +307,7 @@ export function Workspace({
           {tabs
             .filter(
               (t) =>
-                (t.id !== "team" || commercial) &&
+                (t.id !== "team" || coordinator) &&
                 (t.id !== "chats" || whatsapp) &&
                 (t.id !== "billing" || billing) &&
                 (t.id !== "mail" || localMail),
@@ -363,6 +376,11 @@ export function Workspace({
           </span>
           <div className="topbar-right">
             <span className="environment-dot" /> Desarrollo local{" "}
+            <span className="sync-status">
+              {lastSyncedAt
+                ? `· Actualizado ${lastSyncedAt.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}`
+                : "· Sincronizando…"}
+            </span>{" "}
             <span className="avatar small-avatar">{initials(user.name)}</span>
           </div>
         </header>
@@ -653,6 +671,16 @@ export function Workspace({
               )}
               {tab === "team" && (
                 <>
+                  {!commercial && (
+                    <div className="notice-strip" role="status">
+                      <Users size={17} />
+                      <span>
+                        Vista administrativa de solo lectura. Puedes revisar el
+                        equipo y su operación; las invitaciones y cambios
+                        comerciales los gestiona el coordinador comercial.
+                      </span>
+                    </div>
+                  )}
                   {advisors.length > 0 && (
                     <section className="panel">
                       <div className="section-heading">
@@ -684,47 +712,51 @@ export function Workspace({
                       </div>
                     </section>
                   )}
-                  <section className="panel">
-                    <div className="section-heading">
-                      <h2>
-                        Coordinación{" "}
-                        <span className="badge">{coordinators.length}</span>
-                      </h2>
-                    </div>
-                    <div className="team-grid">
-                      {coordinators.map((u) => (
-                        <article className="team-card" key={u.id}>
-                          <span className="avatar">{initials(u.name)}</span>
-                          <h3>{u.name}</h3>
-                          <span className="badge">{roleLabels[u.role]}</span>
-                          <p>{u.email}</p>
-                        </article>
-                      ))}
-                    </div>
-                  </section>
-                  <section className="panel">
-                    <div className="section-heading">
-                      <h2>Invitaciones pendientes</h2>
-                    </div>
-                    {invitations.length ? (
-                      invitations.map((i) => (
-                        <div className="invitation-row" key={i.id}>
-                          <span>
-                            <strong>{i.name}</strong>
-                            <small>{i.email}</small>
-                          </span>
-                          <span className="badge">
-                            Vence {dateTime(i.expiresAt)}
-                          </span>
-                        </div>
-                      ))
-                    ) : (
-                      <Empty
-                        title="Sin invitaciones pendientes"
-                        text="Aquí aparecerán las personas que aún no han aceptado."
-                      />
-                    )}
-                  </section>
+                  {commercial && (
+                    <section className="panel">
+                      <div className="section-heading">
+                        <h2>
+                          Coordinación{" "}
+                          <span className="badge">{coordinators.length}</span>
+                        </h2>
+                      </div>
+                      <div className="team-grid">
+                        {coordinators.map((u) => (
+                          <article className="team-card" key={u.id}>
+                            <span className="avatar">{initials(u.name)}</span>
+                            <h3>{u.name}</h3>
+                            <span className="badge">{roleLabels[u.role]}</span>
+                            <p>{u.email}</p>
+                          </article>
+                        ))}
+                      </div>
+                    </section>
+                  )}
+                  {commercial && (
+                    <section className="panel">
+                      <div className="section-heading">
+                        <h2>Invitaciones pendientes</h2>
+                      </div>
+                      {invitations.length ? (
+                        invitations.map((i) => (
+                          <div className="invitation-row" key={i.id}>
+                            <span>
+                              <strong>{i.name}</strong>
+                              <small>{i.email}</small>
+                            </span>
+                            <span className="badge">
+                              Vence {dateTime(i.expiresAt)}
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <Empty
+                          title="Sin invitaciones pendientes"
+                          text="Aquí aparecerán las personas que aún no han aceptado."
+                        />
+                      )}
+                    </section>
+                  )}
                 </>
               )}
               {tab === "chats" && (

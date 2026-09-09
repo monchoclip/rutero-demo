@@ -15,6 +15,7 @@ import {
   type User,
 } from "../lib/types";
 import { ActivityIcon, Empty } from "./WorkspaceViews";
+import { visitEvidenceStatus } from "../lib/visitEvidence";
 
 type SequenceColumn = {
   key: "blocked" | "today" | "next" | "empty";
@@ -169,6 +170,8 @@ function SequenceCard({
 }) {
   const priority = priorityFor(column);
   const client = item.kind === "client" ? item.client : item.client;
+  const visitEvidence =
+    item.kind === "activity" ? visitEvidenceStatus(item.activity) : null;
   return (
     <div className="sequence-card">
       <div className="sequence-card-top">
@@ -215,6 +218,11 @@ function SequenceCard({
           </span>
         )}
       </div>
+      {visitEvidence && (
+        <small>
+          {visitEvidence.label}: {visitEvidence.detail}
+        </small>
+      )}
       <div className="sequence-actions">
         {client && (
           <button className="text-button" onClick={() => onOpenClient(client)}>
