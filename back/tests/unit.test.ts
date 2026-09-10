@@ -46,10 +46,20 @@ import {
   visitPhotoStorageConfigFromEnv,
   type VisitPhotoStorage,
 } from "../src/storage/VisitPhotoStorage.js";
+import { productSchema, campaignSchema } from "../src/catalog/CatalogSchema.js";
 
 const jpegDataUrl = "data:image/jpeg;base64,/9j/2Q==";
 const jpegSha256 =
   "32461d5bd1773012acef0ba15636752949bd7c2ce50f9172159d9f56cf0dd9af";
+
+describe("catalog date validation", () => {
+  it("rejects product validity ranges that end before they start", () => {
+    expect(productSchema.safeParse({ code: "A", name: "Producto", priceMinor: 100, validFrom: "2026-01-02T00:00:00Z", validTo: "2026-01-01T00:00:00Z" }).success).toBe(false);
+  });
+  it("rejects campaign ranges that end before they start", () => {
+    expect(campaignSchema.safeParse({ name: "Campaña", startsAt: "2026-01-02T00:00:00Z", endsAt: "2026-01-01T00:00:00Z", productIds: [] }).success).toBe(false);
+  });
+});
 
 function fakeReply() {
   const chunks: string[] = [];
