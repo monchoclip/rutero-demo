@@ -301,17 +301,19 @@ export function Workspace({
       });
     };
     const goOffline = () => setOnline(false);
+    const syncFromWorker = (event: MessageEvent) => {
+      if (event.data?.type === "ruts68:sync") sync();
+    };
     window.addEventListener("online", sync);
     window.addEventListener("offline", goOffline);
     window.addEventListener("ruts68:queue-changed", refreshQueue);
-    navigator.serviceWorker?.addEventListener("message", (event) => {
-      if (event.data?.type === "ruts68:sync") sync();
-    });
+    navigator.serviceWorker?.addEventListener("message", syncFromWorker);
     refreshQueue();
     return () => {
       window.removeEventListener("online", sync);
       window.removeEventListener("offline", goOffline);
       window.removeEventListener("ruts68:queue-changed", refreshQueue);
+      navigator.serviceWorker?.removeEventListener("message", syncFromWorker);
     };
   }, [load]);
   useEffect(() => {
