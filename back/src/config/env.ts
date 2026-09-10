@@ -15,5 +15,6 @@ export function getConfig() {
     wompiPublicKey: process.env.WOMPI_PUBLIC_KEY,
     wompiIntegritySecret: process.env.WOMPI_INTEGRITY_SECRET,
     wompiEventsSecret: process.env.WOMPI_EVENTS_SECRET,
+    visitPhotoStorageMode: process.env.VISIT_PHOTO_STORAGE_MODE ?? "local",
   };
 }

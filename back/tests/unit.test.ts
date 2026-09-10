@@ -40,7 +40,10 @@ import {
   visitVerificationStatus,
 } from "../src/crm/VisitTypes.js";
 import { EventHub } from "../src/realtime/EventHub.js";
-import { storeVisitPhoto } from "../src/storage/VisitPhotoStorage.js";
+import {
+  storeVisitPhoto,
+  type VisitPhotoStorage,
+} from "../src/storage/VisitPhotoStorage.js";
 
 function fakeReply() {
   const chunks: string[] = [];
@@ -116,8 +119,8 @@ describe("realtime event hub", () => {
   });
 });
 describe("visit photo storage metadata", () => {
-  it("builds a storage key, hash and size from an image data URL", () => {
-    const photo = storeVisitPhoto({
+  it("builds a storage key, hash and size from an image data URL", async () => {
+    const photo = await storeVisitPhoto({
       organizationId: "org-1",
       activityId: "act-1",
       dataUrl: "data:image/jpeg;base64,aGVsbG8=",
@@ -128,6 +131,51 @@ describe("visit photo storage metadata", () => {
     expect(photo.contentType).toBe("image/jpeg");
     expect(photo.sizeBytes).toBe(5);
     expect(photo.dataUrl).toContain("data:image/jpeg;base64");
+  });
+  it("supports an external storage adapter without keeping the binary in row data", async () => {
+    const calls: string[] = [];
+    const storage: VisitPhotoStorage = {
+      async store(input) {
+        calls.push(input.dataUrl);
+        return {
+          storageKey: "organizations/org-1/visits/act-1/photo.jpg",
+          sha256: "abc",
+          contentType: "image/jpeg",
+          sizeBytes: 5,
+        };
+      },
+      async authorizeDownload(input) {
+        return {
+          mode: "redirect",
+          url: `https://storage.example.test/${input.storageKey}?signature=test`,
+          expiresInSeconds: 300,
+        };
+      },
+      async delete(storageKey) {
+        calls.push(`delete:${storageKey}`);
+      },
+    };
+    const photo = await storeVisitPhoto({
+      organizationId: "org-1",
+      activityId: "act-1",
+      dataUrl: "data:image/jpeg;base64,aGVsbG8=",
+      storage,
+    });
+    const download = await storage.authorizeDownload({
+      storageKey: photo.storageKey,
+      contentType: photo.contentType,
+      sizeBytes: photo.sizeBytes,
+    });
+    await storage.delete(photo.storageKey);
+    expect(photo.dataUrl).toBeUndefined();
+    expect(download).toMatchObject({
+      mode: "redirect",
+      expiresInSeconds: 300,
+    });
+    expect(calls).toEqual([
+      "data:image/jpeg;base64,aGVsbG8=",
+      "delete:organizations/org-1/visits/act-1/photo.jpg",
+    ]);
   });
 });
 describe("calendar-month trial", () => {

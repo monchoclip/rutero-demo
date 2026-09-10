@@ -72,6 +72,13 @@ export function crmHandlers({
         idSchema.parse(r.params).id,
         completeSchema.parse(r.body),
       ),
+    visitPhoto: async (r, reply) => {
+      const photo = await crm.visitPhoto(r.actor!, idSchema.parse(r.params).id);
+      if (photo.mode === "redirect") return reply.redirect(photo.url);
+      return photo;
+    },
+    deleteVisitPhoto: async (r) =>
+      crm.deleteVisitPhoto(r.actor!, idSchema.parse(r.params).id),
     startVisit: async (r) =>
       crm.startVisit(
         r.actor!,

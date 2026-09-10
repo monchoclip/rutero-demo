@@ -12,7 +12,7 @@
 
 ## Despliegue objetivo, todavía sin provisionar
 
-Frontend estático en S3/CloudFront o alojamiento estático de AWS; API Gateway HTTP + Lambda; PostgreSQL administrado; SES; ejecución programada del worker y alarmas. Antes de provisionar: elegir región, presupuesto, base RDS/Aurora, conexiones/timeout, límites de concurrencia, red privada/salida, backups, retención y alertas.
+Frontend estático en S3/CloudFront o alojamiento estático de AWS; API Gateway HTTP + Lambda; PostgreSQL administrado; SES; almacenamiento privado S3 compatible para fotografías de visita; ejecución programada del worker y alarmas. Antes de provisionar: elegir región, presupuesto, base RDS/Aurora, conexiones/timeout, límites de concurrencia, red privada/salida, backups, retención y alertas.
 
 Lambda cobra por solicitudes/duración y otros servicios se cobran por separado ([AWS](https://aws.amazon.com/lambda/pricing/)). Por eso **no existe todavía una cifra mensual validada**. Aurora requiere analizar capacidad, motor, pausa y costos completos ([documentación](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless-v2.how-it-works.html)). No declarar que serverless equivale a gratuito o siempre más barato.
 
@@ -26,3 +26,4 @@ No se incluyen inicialmente Redis, WebSocket permanente, NAT Gateway, RDS Proxy 
 - Recuperación de contraseña, verificación de correo del fundador, MFA, administración completa de usuarios y limpieza automática de sesiones/rate limits quedan pendientes antes de una apertura pública.
 - Entrega de correo es at-least-once ante caída entre aceptación de SES y guardado del resultado. El bloqueo evita doble trabajo normal; no garantiza entrega exactamente una vez.
 - La bandeja de desarrollo puede mostrar enlaces de invitación a los coordinadores de esa empresa; no existe en producción.
+Las fotografías de visita se reciben desde la web como `data:` para conservar compatibilidad con la cola offline. El backend valida tipo JPEG/PNG/WebP y límite de bytes, calcula SHA-256/tamaño/tipo MIME, construye una llave por empresa y visita, y delega el binario a `VisitPhotoStorage`. En desarrollo `VISIT_PHOTO_STORAGE_MODE=local` conserva el `data:` en PostgreSQL. En `s3`, el objeto se escribe en un bucket privado compatible con S3, la fila conserva solo metadata y las lecturas autorizadas redirigen a una URL presignada de vida corta. El borrado exige el mismo alcance autorizado de CRM y elimina objeto + metadata. `VISIT_PHOTO_RETENTION_DAYS` documenta la retención esperada para política de ciclo de vida del bucket; la regla externa debe configurarse junto al despliegue.

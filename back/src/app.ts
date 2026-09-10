@@ -22,6 +22,11 @@ import { whatsAppHandlers } from "./whatsapp/handlers/index.js";
 import { metaTransport } from "./whatsapp/MetaTransport.js";
 import type { WhatsAppTransport } from "./whatsapp/WhatsAppTypes.js";
 import { EventHub } from "./realtime/EventHub.js";
+import {
+  createVisitPhotoStorage,
+  visitPhotoStorageConfigFromEnv,
+  type VisitPhotoStorage,
+} from "./storage/VisitPhotoStorage.js";
 export async function createApp(
   db: PrismaClient,
   options: {
@@ -34,6 +39,7 @@ export async function createApp(
     wompiIntegritySecret?: string;
     wompiEventsSecret?: string;
     whatsappTransport?: WhatsAppTransport;
+    visitPhotoStorage?: VisitPhotoStorage;
   },
 ) {
   const app = Fastify({
@@ -41,7 +47,7 @@ export async function createApp(
       redact: ["req.headers.cookie", "req.headers.authorization"],
       level: process.env.LOG_LEVEL ?? "warn",
     },
-    bodyLimit: 65536,
+    bodyLimit: 3 * 1024 * 1024,
     trustProxy: false,
   });
   // JSON bodies are parsed as usual, but the raw string is kept on the
@@ -64,16 +70,24 @@ export async function createApp(
   await app.register(cors, {
     origin: options.origin,
     credentials: true,
-    methods: ["GET", "POST", "PATCH", "OPTIONS"],
+    methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "X-Ruts68-Request"],
   });
   await app.register(helmet);
   app.decorateRequest("actor", null);
   const identity = new IdentityService(new IdentityRepository(db));
   const realtime = new EventHub();
+  const visitPhotoStorage =
+    options.visitPhotoStorage ??
+    createVisitPhotoStorage(visitPhotoStorageConfigFromEnv());
   const services = {
     identity,
-    crm: new CrmService(new CrmRepository(db), options.origin, realtime),
+    crm: new CrmService(
+      new CrmRepository(db),
+      options.origin,
+      realtime,
+      visitPhotoStorage,
+    ),
     realtime,
     ...options,
   };

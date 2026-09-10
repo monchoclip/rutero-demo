@@ -9,6 +9,7 @@ import { DEMO_ORGANIZATION_ID } from "../src/billing/BillingTypes.js";
 import { hashPassword } from "../src/shared/security.js";
 import { createHash, createHmac } from "node:crypto";
 import type { WhatsAppTransport } from "../src/whatsapp/WhatsAppTypes.js";
+import type { VisitPhotoStorage } from "../src/storage/VisitPhotoStorage.js";
 const url = process.env.TEST_DATABASE_URL;
 if (!url || new URL(url).pathname !== "/ruts68_test")
   throw new Error("Use npm run test:integration from the project root");
@@ -27,7 +28,7 @@ const suffix = crypto.randomUUID();
 const password = "Testing-only-password-123!";
 const remoteAddress = `2001:db8:${suffix.slice(0, 4)}:${suffix.slice(4, 8)}::1`;
 async function request(
-  method: "GET" | "POST" | "PATCH",
+  method: "GET" | "POST" | "PATCH" | "DELETE",
   path: string,
   body?: unknown,
   cookie = "",
@@ -558,6 +559,174 @@ describe.sequential("real PostgreSQL CRM flow", () => {
     expect(visit.visitPhotoContentType).toBe("image/jpeg");
     expect(visit.visitPhotoSizeBytes).toBe(5);
     expect(visit.visitDistanceMeters).toBeLessThan(20);
+    const photo = await request(
+      "GET",
+      `/activities/${visitId}/visit-photo`,
+      undefined,
+      advisor.cookie,
+    );
+    expect(photo.statusCode).toBe(200);
+    expect(photo.json().data).toMatchObject({
+      mode: "data",
+      contentType: "image/jpeg",
+      sizeBytes: 5,
+    });
+    expect(
+      (
+        await request(
+          "GET",
+          `/activities/${visitId}/visit-photo`,
+          undefined,
+          secondAdvisor.cookie,
+        )
+      ).statusCode,
+    ).toBe(404);
+    const deleted = await request(
+      "DELETE",
+      `/activities/${visitId}/visit-photo`,
+      undefined,
+      advisor.cookie,
+    );
+    expect(deleted.statusCode).toBe(200);
+    expect(deleted.json().data.visitPhotoStorageKey).toBeNull();
+    expect(
+      (
+        await request(
+          "GET",
+          `/activities/${visitId}/visit-photo`,
+          undefined,
+          advisor.cookie,
+        )
+      ).statusCode,
+    ).toBe(404);
+  });
+  it("stores visit photos through an external adapter and returns only an authorized download URL", async () => {
+    const storedKeys: string[] = [];
+    const deletedKeys: string[] = [];
+    const storage: VisitPhotoStorage = {
+      async store(input) {
+        const storageKey = `organizations/${input.organizationId}/visits/${input.activityId}/mock-photo.jpg`;
+        storedKeys.push(storageKey);
+        return {
+          storageKey,
+          sha256:
+            "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+          contentType: "image/jpeg",
+          sizeBytes: 5,
+        };
+      },
+      async authorizeDownload(input) {
+        return {
+          mode: "redirect",
+          url: `https://storage.example.test/${input.storageKey}?signature=unit`,
+          expiresInSeconds: 300,
+        };
+      },
+      async delete(storageKey) {
+        deletedKeys.push(storageKey);
+      },
+    };
+    const externalApp = await createApp(db, {
+      origin,
+      production: false,
+      localMail: true,
+      visitPhotoStorage: storage,
+    });
+    const ext = (
+      method: "GET" | "POST" | "PATCH" | "DELETE",
+      path: string,
+      body?: unknown,
+      cookie = "",
+    ) =>
+      externalApp.inject({
+        method,
+        url: path,
+        remoteAddress,
+        headers: { origin, "x-ruts68-request": "1", cookie },
+        ...(body === undefined
+          ? {}
+          : { payload: body as Record<string, unknown> }),
+      });
+    try {
+      const client = await ext(
+        "POST",
+        "/clients",
+        {
+          name: "Cliente con foto externa",
+          contactName: "Laura Externa",
+          phone: `300${suffix.slice(0, 9)}`,
+          city: "Bogotá",
+          notes: "Cliente aislado para foto externa.",
+          advisorId: secondAdvisor.id,
+        },
+        owner.cookie,
+      );
+      expect(client.statusCode).toBe(201);
+      const externalClientId = client.json().data.id as string;
+      const scheduled = await ext(
+        "POST",
+        "/activities",
+        {
+          clientId: externalClientId,
+          type: "visit",
+          dueAt: new Date(Date.now() + 3600000).toISOString(),
+          notes: "Visita con almacenamiento externo",
+          idempotencyKey: crypto.randomUUID(),
+        },
+        secondAdvisor.cookie,
+      );
+      expect(scheduled.statusCode).toBe(201);
+      const visitId = scheduled.json().data.id as string;
+      const capturedAt = new Date().toISOString();
+      const closed = await ext(
+        "POST",
+        `/activities/${visitId}/complete`,
+        {
+          outcome: "contacted",
+          notes: "Foto almacenada fuera de PostgreSQL",
+          durationSeconds: 900,
+          visitEvidence: {
+            start: {
+              latitude: 4.71098,
+              longitude: -74.07209,
+              accuracy: 12,
+              capturedAt,
+            },
+            end: {
+              latitude: 4.711,
+              longitude: -74.072,
+              accuracy: 14,
+              capturedAt,
+            },
+            photoDataUrl: "data:image/jpeg;base64,aGVsbG8=",
+          },
+        },
+        secondAdvisor.cookie,
+      );
+      expect(closed.statusCode).toBe(200);
+      expect(closed.json().data.visitPhotoDataUrl).toBeNull();
+      expect(closed.json().data.visitPhotoStorageKey).toBe(storedKeys[0]);
+      const download = await ext(
+        "GET",
+        `/activities/${visitId}/visit-photo`,
+        undefined,
+        secondAdvisor.cookie,
+      );
+      expect(download.statusCode).toBe(302);
+      expect(download.headers.location).toContain(
+        "https://storage.example.test/",
+      );
+      const deleted = await ext(
+        "DELETE",
+        `/activities/${visitId}/visit-photo`,
+        undefined,
+        secondAdvisor.cookie,
+      );
+      expect(deleted.statusCode).toBe(200);
+      expect(deletedKeys).toEqual([storedKeys[0]]);
+    } finally {
+      await externalApp.close();
+    }
   });
   it("reassigns pending tasks and reminder recipients, preserves history, revokes old advisor access", async () => {
     expect(

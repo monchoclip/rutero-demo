@@ -89,7 +89,7 @@ Incluye adaptador S3 compatible, URLs presignadas, hash/tamaño/content-type, l�
 
 Aceptación: la base guarda metadata y llave, nunca el binario en producción; descargas autorizadas funcionan; errores de carga se pueden reintentar; pruebas de seguridad de tipo y tamaño pasan.
 
-Evidencia local: `Activity` ahora guarda llave de almacenamiento, SHA-256, tipo MIME y tamaño de la foto de visita. El backend calcula metadata desde el `data:` recibido, mantiene previsualización local por defecto y permite `VISIT_PHOTO_STORAGE_MODE=external` para no persistir el binario en la fila cuando el almacenamiento externo esté listo. Falta conectar bucket S3 real, URLs presignadas y reglas de retención con credenciales AWS.
+Evidencia local: `Activity` guarda llave de almacenamiento, SHA-256, tipo MIME y tamaño de la foto de visita. El backend calcula metadata desde el `data:` recibido, mantiene previsualización local por defecto, añade adaptador privado S3 compatible con URLs presignadas, descarga autorizada, límite de bytes, retención configurada y eliminación autorizada de objeto + metadata. Las pruebas cubren el contrato local y externo con mock sin credenciales reales. Falta provisionar bucket/IAM/ciclo de vida y validar con credenciales de staging antes de datos reales.
 
 ### P5 · Catálogo, ofertas y campañas
 

@@ -16,20 +16,22 @@
     "reminders": "tsx src/notifications/run.ts"
   },
   "dependencies": {
-    "@prisma/client": "6.19.3",
-    "fastify": "5.12.3",
+    "@aws-sdk/client-s3": "^3.1129.0",
+    "@aws-sdk/client-sesv2": "^3.600.0",
+    "@aws-sdk/s3-request-presigner": "^3.1129.0",
+    "@fastify/aws-lambda": "^6.0.0",
     "@fastify/cookie": "^11.0.2",
     "@fastify/cors": "^11.1.0",
     "@fastify/helmet": "^13.0.2",
-    "@fastify/aws-lambda": "^6.0.0",
-    "@aws-sdk/client-sesv2": "^3.600.0",
+    "@prisma/client": "6.19.3",
+    "fastify": "5.12.3",
     "zod": "^4.1.0"
   },
   "devDependencies": {
-    "prisma": "6.19.3",
-    "typescript": "^5.9.3",
     "@types/node": "^24.0.0",
+    "prisma": "6.19.3",
     "tsx": "^4.20.0",
+    "typescript": "^5.9.3",
     "vitest": "^3.2.4"
   }
 }

@@ -18,12 +18,13 @@ import {
 } from "./OrganizationSchema.js";
 import { distanceMeters } from "./VisitTypes.js";
 import type { EventHub } from "../realtime/EventHub.js";
-import { storeVisitPhoto } from "../storage/VisitPhotoStorage.js";
+import type { VisitPhotoStorage } from "../storage/VisitPhotoStorage.js";
 export class CrmService {
   constructor(
     private repository: CrmRepository,
     private origin: string,
     private realtimeHub: EventHub,
+    private visitPhotoStorage: VisitPhotoStorage,
   ) {}
   realtime(actor: Actor, reply: FastifyReply) {
     return this.realtimeHub.subscribe(actor, reply);
@@ -196,8 +197,8 @@ export class CrmService {
         "La evidencia de visita solo aplica a actividades de tipo visita.",
       );
     const visitData = visitEvidence
-      ? (() => {
-          const photo = storeVisitPhoto({
+      ? await (async () => {
+          const photo = await this.visitPhotoStorage.store({
             organizationId: actor.organizationId!,
             activityId: id,
             dataUrl: visitEvidence.photoDataUrl,
@@ -252,6 +253,38 @@ export class CrmService {
         resourceId: `follow-up:${id}`,
       });
     return completed;
+  }
+  async visitPhoto(actor: Actor, id: string) {
+    const activity = await this.repository.activity(actor, id);
+    if (!activity) notFound();
+    if (
+      !activity.visitPhotoStorageKey ||
+      !activity.visitPhotoContentType ||
+      typeof activity.visitPhotoSizeBytes !== "number"
+    )
+      notFound();
+    return this.visitPhotoStorage.authorizeDownload({
+      storageKey: activity.visitPhotoStorageKey,
+      dataUrl: activity.visitPhotoDataUrl,
+      contentType: activity.visitPhotoContentType,
+      sizeBytes: activity.visitPhotoSizeBytes,
+    });
+  }
+  async deleteVisitPhoto(actor: Actor, id: string) {
+    requireWriter(actor);
+    const activity = await this.repository.activity(actor, id);
+    if (!activity) notFound();
+    if (!activity.visitPhotoStorageKey) return activity;
+    await this.visitPhotoStorage.delete(activity.visitPhotoStorageKey);
+    const cleared =
+      (await this.repository.clearVisitPhoto(actor, id)) ??
+      this.repository.activity(actor, id);
+    this.realtimeHub.publish({
+      organizationId: actor.organizationId!,
+      type: "visit.completed",
+      resourceId: id,
+    });
+    return cleared;
   }
   async startVisit(
     actor: Actor,

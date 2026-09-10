@@ -389,6 +389,23 @@ export class CrmRepository {
       return tx.activity.findUnique({ where: { id } });
     });
   }
+  clearVisitPhoto(actor: Actor, id: string) {
+    return this.db.$transaction(async (tx) => {
+      const result = await tx.activity.updateMany({
+        where: { id, ...activityScope(actor) },
+        data: {
+          visitPhotoDataUrl: null,
+          visitPhotoStorageKey: null,
+          visitPhotoSha256: null,
+          visitPhotoContentType: null,
+          visitPhotoSizeBytes: null,
+        },
+      });
+      if (!result.count) return null;
+      await this.audit(tx, actor, "visit.photo.deleted", id);
+      return tx.activity.findUnique({ where: { id } });
+    });
+  }
   private async createFollowUp(
     tx: Prisma.TransactionClient,
     actor: Actor,

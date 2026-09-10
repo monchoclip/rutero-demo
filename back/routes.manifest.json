@@ -127,6 +127,20 @@
   },
   {
     "method": "GET",
+    "path": "/activities/:id/visit-photo",
+    "operation": "visitPhoto",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "DELETE",
+    "path": "/activities/:id/visit-photo",
+    "operation": "deleteVisitPhoto",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "GET",
     "path": "/development/mailbox",
     "operation": "mailbox",
     "authenticated": true,

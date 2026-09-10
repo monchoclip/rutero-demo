@@ -17,6 +17,8 @@ export const routes = [
   ["POST", "/activities", "createActivity", true],
   ["POST", "/activities/:id/start-visit", "startVisit", true],
   ["POST", "/activities/:id/complete", "completeActivity", true],
+  ["GET", "/activities/:id/visit-photo", "visitPhoto", true],
+  ["DELETE", "/activities/:id/visit-photo", "deleteVisitPhoto", true],
   ["GET", "/development/mailbox", "mailbox", true],
   ["GET", "/billing/settings", "billingSettings", true],
   ["PATCH", "/billing/settings", "updateBillingSettings", true],
