@@ -32,6 +32,7 @@ import { subscribeRealtime } from "../lib/realtime";
 
 const outcomes: SimulationOutcome[] = ["approved", "declined", "pending"];
 const tariffFields = [
+  ["trialMonths", "Meses de prueba para nuevas empresas"],
   ["supportBps", "Soporte (puntos básicos)"],
   ["supportFixedMinor", "Soporte fijo (unidades menores)"],
   ["gatewayBps", "Pasarela (puntos básicos)"],
@@ -504,8 +505,14 @@ export function Billing({
                   <input
                     name={field}
                     type="number"
-                    min={0}
-                    max={field.endsWith("Bps") ? 10000 : 100000000}
+                    min={field === "trialMonths" ? 1 : 0}
+                    max={
+                      field === "trialMonths"
+                        ? 12
+                        : field.endsWith("Bps")
+                          ? 10000
+                          : 100000000
+                    }
                     defaultValue={configuration[field]}
                   />
                 </label>
