@@ -639,6 +639,9 @@ tr:last-child td {
   font-size: 0.8125rem;
   max-width: 230px;
 }
+.load-more {
+  margin: 18px auto 0;
+}
 .hint {
   font-size: 0.8125rem;
   line-height: 1.6;

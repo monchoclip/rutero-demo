@@ -10,6 +10,13 @@ const userSelect = {
   role: true,
   active: true,
 } as const;
+export type PageQuery = {
+  cursor?: string;
+  search: string;
+  limit: number;
+  advisorId?: string;
+  status?: "scheduled" | "completed" | "cancelled" | "all";
+};
 export class CrmRepository {
   constructor(private db: PrismaClient) {}
   organization(actor: Actor) {
@@ -68,14 +75,25 @@ export class CrmRepository {
       include: { advisor: { select: userSelect } },
     });
   }
-  clients(
-    actor: Actor,
-    query: { cursor?: string; search: string; limit: number },
-  ) {
+  clients(actor: Actor, query: PageQuery) {
+    const search = query.search.trim();
     return this.db.client.findMany({
       where: {
         ...scope(actor),
-        name: { contains: query.search, mode: "insensitive" },
+        ...(query.advisorId && query.advisorId !== "all"
+          ? { advisorId: query.advisorId }
+          : {}),
+        ...(search
+          ? {
+              OR: [
+                { name: { contains: search, mode: "insensitive" } },
+                { contactName: { contains: search, mode: "insensitive" } },
+                { city: { contains: search, mode: "insensitive" } },
+                { phone: { contains: search, mode: "insensitive" } },
+                { email: { contains: search, mode: "insensitive" } },
+              ],
+            }
+          : {}),
         ...(query.cursor ? { id: { gt: query.cursor } } : {}),
       },
       include: { advisor: { select: userSelect } },
@@ -185,15 +203,55 @@ export class CrmRepository {
       };
     });
   }
-  activities(actor: Actor) {
+  async activities(actor: Actor, query: PageQuery) {
+    const cursor = query.cursor
+      ? await this.db.activity.findFirst({
+          where: { id: query.cursor, ...activityScope(actor) },
+          select: { id: true, dueAt: true },
+        })
+      : null;
+    const search = query.search.trim();
     return this.db.activity.findMany({
-      where: activityScope(actor),
+      where: {
+        ...activityScope(actor),
+        ...(query.advisorId && query.advisorId !== "all"
+          ? { advisorId: query.advisorId }
+          : {}),
+        ...(query.status && query.status !== "all"
+          ? { status: query.status }
+          : {}),
+        ...(search
+          ? {
+              OR: [
+                { notes: { contains: search, mode: "insensitive" } },
+                { outcome: { contains: search, mode: "insensitive" } },
+                { client: { name: { contains: search, mode: "insensitive" } } },
+                {
+                  client: {
+                    contactName: { contains: search, mode: "insensitive" },
+                  },
+                },
+                {
+                  advisor: { name: { contains: search, mode: "insensitive" } },
+                },
+              ],
+            }
+          : {}),
+        ...(cursor
+          ? {
+              OR: [
+                { dueAt: { gt: cursor.dueAt } },
+                { dueAt: cursor.dueAt, id: { gt: cursor.id } },
+              ],
+            }
+          : {}),
+      },
       include: {
         client: { select: { name: true } },
         advisor: { select: userSelect },
       },
-      orderBy: { dueAt: "asc" },
-      take: 200,
+      orderBy: [{ dueAt: "asc" }, { id: "asc" }],
+      take: query.limit + 1,
     });
   }
   activity(actor: Actor, id: string) {

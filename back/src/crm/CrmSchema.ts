@@ -61,7 +61,9 @@ export const visitStartSchema = z
   .strict();
 export const idSchema = z.object({ id: z.uuid() });
 export const listSchema = z.object({
-  cursor: z.uuid().optional(),
+  cursor: z.string().trim().min(1).max(240).optional(),
   search: z.string().max(100).default(""),
   limit: z.coerce.number().int().min(1).max(100).default(50),
+  advisorId: z.union([z.uuid(), z.literal("all")]).optional(),
+  status: z.enum(["scheduled", "completed", "cancelled", "all"]).optional(),
 });

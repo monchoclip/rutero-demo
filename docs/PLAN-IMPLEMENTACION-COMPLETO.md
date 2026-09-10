@@ -7,6 +7,8 @@ Regla: cada plan se implementa en una rama/commit verificable, después se ejecu
 
 ### P1 · Base operativa y paginación
 
+Estado: implementado localmente, pendiente de validación independiente 5.5.
+
 Objetivo: soportar carteras y agendas grandes sin cargar límites fijos en el navegador.
 
 Incluye paginación por cursor en clientes y actividades, búsqueda server-side, filtros por rol, índices PostgreSQL, estados de carga incremental y pruebas de aislamiento multiempresa.

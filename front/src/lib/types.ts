@@ -250,3 +250,12 @@ export type WhatsAppTemplateRequest = {
   languageCode: string;
   variables: string[];
 };
+export type Pagination = {
+  cursor: string | null;
+  hasMore: boolean;
+  limit: number;
+};
+export type PaginatedResponse<T> = {
+  data: T[];
+  pagination: Pagination;
+};

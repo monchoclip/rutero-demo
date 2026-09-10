@@ -49,7 +49,8 @@ export function crmHandlers({
         assignmentSchema.parse(r.body).advisorId,
       ),
     history: async (r) => crm.history(r.actor!, idSchema.parse(r.params).id),
-    activities: async (r) => crm.activities(r.actor!),
+    activities: async (r) =>
+      crm.activities(r.actor!, listSchema.parse(r.query)),
     createActivity: async (r, reply) => {
       const result = await crm.createActivity(
         r.actor!,

@@ -18,7 +18,36 @@ export class OfflineQueuedError extends ApiError {
     this.name = "OfflineQueuedError";
   }
 }
+export type ApiPage<T> = {
+  data: T[];
+  pagination: { cursor: string | null; hasMore: boolean; limit: number };
+};
+type ApiEnvelope<T> = {
+  data: T;
+  pagination?: ApiPage<unknown>["pagination"];
+};
 export async function api<T>(
+  path: string,
+  options: RequestInit = {},
+): Promise<T> {
+  const body = await requestJson<ApiEnvelope<T>>(path, options);
+  return body.data;
+}
+export async function apiPage<T>(
+  path: string,
+  options: RequestInit = {},
+): Promise<ApiPage<T>> {
+  const body = await requestJson<ApiEnvelope<T[]>>(path, options);
+  return {
+    data: body.data,
+    pagination: body.pagination ?? {
+      cursor: null,
+      hasMore: false,
+      limit: body.data.length,
+    },
+  };
+}
+async function requestJson<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
@@ -52,13 +81,13 @@ export async function api<T>(
       "No pudimos conectar. Revisa tu conexión e intenta de nuevo.",
     );
   }
-  const body = await response.json();
+  const body = (await response.json()) as T & { message?: string };
   if (!response.ok)
     throw new ApiError(
       response.status,
       body.message ?? "No pudimos completar la solicitud.",
     );
-  return body.data as T;
+  return body;
 }
 export const post = <T>(path: string, body: unknown) =>
   api<T>(path, { method: "POST", body: JSON.stringify(body) });

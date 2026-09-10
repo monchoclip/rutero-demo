@@ -241,6 +241,64 @@ describe.sequential("real PostgreSQL CRM flow", () => {
       ).statusCode,
     ).toBe(404);
   });
+  it("paginates and searches clients without exposing another portfolio", async () => {
+    for (let index = 0; index < 12; index += 1) {
+      const created = await request(
+        "POST",
+        "/clients",
+        {
+          name: `Cliente paginado ${index.toString().padStart(2, "0")}`,
+          contactName: `Contacto ${index}`,
+          email: `paginado-${index}-${suffix}@example.test`,
+          phone: `301000${index.toString().padStart(4, "0")}`,
+          city: index % 2 ? "Medellín" : "Cali",
+          advisorId: advisor.id,
+          notes: "Fila creada para validar paginación server-side.",
+        },
+        owner.cookie,
+      );
+      expect(created.statusCode).toBe(201);
+    }
+    const first = await request(
+      "GET",
+      "/clients?limit=5&search=paginado",
+      undefined,
+      owner.cookie,
+    );
+    expect(first.statusCode).toBe(200);
+    expect(first.json().data).toHaveLength(5);
+    expect(first.json().pagination.hasMore).toBe(true);
+    const second = await request(
+      "GET",
+      `/clients?limit=5&search=paginado&cursor=${first.json().pagination.cursor}`,
+      undefined,
+      owner.cookie,
+    );
+    expect(second.statusCode).toBe(200);
+    expect(
+      second.json().data.map((row: { id: string }) => row.id),
+    ).not.toContain(first.json().data[0].id);
+    expect(
+      (
+        await request(
+          "GET",
+          `/clients?limit=50&advisorId=${secondAdvisor.id}`,
+          undefined,
+          advisor.cookie,
+        )
+      ).statusCode,
+    ).toBe(403);
+    expect(
+      (
+        await request(
+          "GET",
+          `/clients?limit=50&advisorId=${advisor.id}`,
+          undefined,
+          other.cookie,
+        )
+      ).statusCode,
+    ).toBe(422);
+  });
   it("schedules a call and a durable reminder without duplicate activities on retry", async () => {
     const data = {
       clientId,
@@ -492,6 +550,52 @@ describe.sequential("real PostgreSQL CRM flow", () => {
     expect(pending.email?.recipient).toBe(
       `Luis-${suffix}@example.test`.toLowerCase(),
     );
+  });
+  it("paginates activities by due date with search and status filters", async () => {
+    for (let index = 0; index < 8; index += 1) {
+      const created = await request(
+        "POST",
+        "/activities",
+        {
+          clientId,
+          type: index % 2 ? "follow_up" : "call",
+          dueAt: new Date(Date.now() + (index + 3) * 3600000).toISOString(),
+          notes: `Agenda paginada ${index}`,
+          idempotencyKey: crypto.randomUUID(),
+        },
+        secondAdvisor.cookie,
+      );
+      expect(created.statusCode).toBe(201);
+    }
+    const first = await request(
+      "GET",
+      "/activities?limit=3&search=Agenda%20paginada&status=scheduled",
+      undefined,
+      owner.cookie,
+    );
+    expect(first.statusCode).toBe(200);
+    expect(first.json().data).toHaveLength(3);
+    expect(first.json().pagination.hasMore).toBe(true);
+    const second = await request(
+      "GET",
+      `/activities?limit=3&search=Agenda%20paginada&status=scheduled&cursor=${first.json().pagination.cursor}`,
+      undefined,
+      owner.cookie,
+    );
+    expect(second.statusCode).toBe(200);
+    expect(
+      second.json().data.map((row: { id: string }) => row.id),
+    ).not.toContain(first.json().data[0].id);
+    expect(
+      (
+        await request(
+          "GET",
+          `/activities?limit=10&advisorId=${advisor.id}`,
+          undefined,
+          secondAdvisor.cookie,
+        )
+      ).statusCode,
+    ).toBe(403);
   });
   it("delivers a due reminder once in normal operation and skips cancelled jobs", async () => {
     const sent: string[] = [];

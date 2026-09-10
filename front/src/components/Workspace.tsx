@@ -32,7 +32,7 @@ import {
   MessageCircle,
   Target,
 } from "lucide-react";
-import { api, post, ApiError } from "../lib/api";
+import { api, apiPage, post, ApiError } from "../lib/api";
 import {
   queuedMutationSummary,
   replayOfflineQueue,
@@ -207,6 +207,12 @@ export function Workspace({
   const [pendingSync, setPendingSync] = useState(0);
   const [syncConflicts, setSyncConflicts] = useState(0);
   const [search, setSearch] = useState("");
+  const [clientCursor, setClientCursor] = useState<string | null>(null);
+  const [clientHasMore, setClientHasMore] = useState(false);
+  const [clientPaging, setClientPaging] = useState(false);
+  const [activityCursor, setActivityCursor] = useState<string | null>(null);
+  const [activityHasMore, setActivityHasMore] = useState(false);
+  const [activityPaging, setActivityPaging] = useState(false);
   const [form, setForm] = useState<{
     kind: FormKind;
     activity?: Activity;
@@ -230,16 +236,22 @@ export function Workspace({
       readSnapshot<Activity[]>(cacheKey("activities")),
     ]).catch(() => [null, null, null, null] as const);
     try {
-      const [org, team, customers, tasks] = await Promise.all([
+      const [org, team, customerPage, taskPage] = await Promise.all([
         api<Organization>("/organization"),
         api<User[]>("/users"),
-        api<Client[]>("/clients?limit=100"),
-        api<Activity[]>("/activities"),
+        apiPage<Client>("/clients?limit=50"),
+        apiPage<Activity>("/activities?limit=50"),
       ]);
+      const customers = customerPage.data;
+      const tasks = taskPage.data;
       setOrganization(org);
       setUsers(team);
       setClients(customers);
       setActivities(tasks);
+      setClientCursor(customerPage.pagination.cursor);
+      setClientHasMore(customerPage.pagination.hasMore);
+      setActivityCursor(taskPage.pagination.cursor);
+      setActivityHasMore(taskPage.pagination.hasMore);
       setLastSyncedAt(new Date());
       await Promise.all([
         writeSnapshot(cacheKey("organization"), org),
@@ -411,11 +423,55 @@ export function Workspace({
   const overdue = scheduled.filter(
     (a) => new Date(a.dueAt).getTime() < Date.now(),
   );
-  const filteredClients = clients.filter((c) =>
-    `${c.name} ${c.contactName} ${c.city}`
-      .toLowerCase()
-      .includes(search.toLowerCase()),
-  );
+  async function searchClients(value: string) {
+    setSearch(value);
+    setClientPaging(true);
+    try {
+      const page = await apiPage<Client>(
+        `/clients?limit=50&search=${encodeURIComponent(value)}`,
+      );
+      setClients(page.data);
+      setClientCursor(page.pagination.cursor);
+      setClientHasMore(page.pagination.hasMore);
+    } catch (error) {
+      setError((error as Error).message);
+    } finally {
+      setClientPaging(false);
+    }
+  }
+  async function loadMoreClients() {
+    if (!clientCursor) return;
+    setClientPaging(true);
+    try {
+      const page = await apiPage<Client>(
+        `/clients?limit=50&cursor=${encodeURIComponent(clientCursor)}&search=${encodeURIComponent(search)}`,
+      );
+      setClients((current) => [...current, ...page.data]);
+      setClientCursor(page.pagination.cursor);
+      setClientHasMore(page.pagination.hasMore);
+    } catch (error) {
+      setError((error as Error).message);
+    } finally {
+      setClientPaging(false);
+    }
+  }
+  async function loadMoreActivities(status?: Activity["status"]) {
+    if (!activityCursor) return;
+    setActivityPaging(true);
+    try {
+      const statusParam = status ? `&status=${status}` : "";
+      const page = await apiPage<Activity>(
+        `/activities?limit=50&cursor=${encodeURIComponent(activityCursor)}${statusParam}`,
+      );
+      setActivities((current) => [...current, ...page.data]);
+      setActivityCursor(page.pagination.cursor);
+      setActivityHasMore(page.pagination.hasMore);
+    } catch (error) {
+      setError((error as Error).message);
+    } finally {
+      setActivityPaging(false);
+    }
+  }
   const remainingDays = organization
     ? Math.max(
         0,
@@ -824,22 +880,26 @@ export function Workspace({
                     <label className="search">
                       <Search size={17} />
                       <input
-                        aria-label="Buscar clientes cargados"
+                        aria-label="Buscar clientes"
                         placeholder="Buscar nombre o ciudad…"
                         value={search}
-                        onChange={(e) => setSearch(e.target.value)}
+                        onChange={(e) => void searchClients(e.target.value)}
                       />
                     </label>
                   </div>
                   <ClientTable
-                    clients={filteredClients}
+                    clients={clients}
                     activities={activities}
                     onOpen={openClient}
                   />
-                  {clients.length === 100 && (
-                    <p className="hint">
-                      Se muestran los primeros 100 clientes.
-                    </p>
+                  {clientHasMore && (
+                    <button
+                      className="secondary load-more"
+                      onClick={() => void loadMoreClients()}
+                      disabled={clientPaging}
+                    >
+                      {clientPaging ? "Cargando…" : "Cargar más clientes"}
+                    </button>
                   )}
                 </section>
               )}
@@ -913,6 +973,15 @@ export function Workspace({
                       writer={false}
                       onComplete={() => {}}
                     />
+                    {activityHasMore && (
+                      <button
+                        className="secondary load-more"
+                        onClick={() => void loadMoreActivities()}
+                        disabled={activityPaging}
+                      >
+                        {activityPaging ? "Cargando…" : "Cargar más gestiones"}
+                      </button>
+                    )}
                   </section>
                 </>
               )}

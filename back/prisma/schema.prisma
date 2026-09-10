@@ -110,6 +110,8 @@ model Client {
   whatsAppConversations WhatsAppConversation[]
   @@unique([organizationId,id])
   @@index([organizationId,advisorId,createdAt])
+  @@index([organizationId,advisorId,id])
+  @@index([organizationId,id])
 }
 model Activity {
   id String @id @default(uuid())
@@ -143,6 +145,8 @@ model Activity {
   email EmailJob?
   @@unique([organizationId,idempotencyKey])
   @@index([organizationId,advisorId,dueAt])
+  @@index([organizationId,advisorId,status,dueAt,id])
+  @@index([organizationId,status,dueAt,id])
 }
 model EmailJob {
   id String @id @default(uuid())

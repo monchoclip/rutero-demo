@@ -46,17 +46,9 @@ export class CrmService {
     return this.repository.users(actor);
   }
   async clients(actor: Actor, query: z.infer<typeof listSchema>) {
+    await this.ensureVisibleAdvisor(actor, query.advisorId);
     const rows = await this.repository.clients(actor, query);
-    const hasMore = rows.length > query.limit;
-    const data = rows.slice(0, query.limit);
-    return {
-      data,
-      pagination: {
-        cursor: hasMore ? data.at(-1)?.id : null,
-        hasMore,
-        limit: query.limit,
-      },
-    };
+    return this.page(rows, query.limit);
   }
   async createClient(actor: Actor, data: z.infer<typeof clientSchema>) {
     requireWriter(actor);
@@ -103,8 +95,10 @@ export class CrmService {
       `Hola ${data.name}. Crea tu contraseña para ingresar como asesor: ${url}\nEsta invitación vence en 48 horas.`,
     );
   }
-  activities(actor: Actor) {
-    return this.repository.activities(actor);
+  async activities(actor: Actor, query: z.infer<typeof listSchema>) {
+    await this.ensureVisibleAdvisor(actor, query.advisorId);
+    const rows = await this.repository.activities(actor, query);
+    return this.page(rows, query.limit);
   }
   async createActivity(actor: Actor, input: z.infer<typeof activitySchema>) {
     requireWriter(actor);
@@ -253,5 +247,35 @@ export class CrmService {
   }
   mailbox(actor: Actor) {
     return this.repository.mailbox(actor);
+  }
+  private page<T extends { id: string }>(rows: T[], limit: number) {
+    const hasMore = rows.length > limit;
+    const data = rows.slice(0, limit);
+    return {
+      data,
+      pagination: {
+        cursor: hasMore ? data.at(-1)?.id : null,
+        hasMore,
+        limit,
+      },
+    };
+  }
+  private async ensureVisibleAdvisor(actor: Actor, advisorId?: string) {
+    if (!advisorId || advisorId === "all") return;
+    if (actor.role === "advisor" && advisorId !== actor.id)
+      throw new AppError(
+        403,
+        "FORBIDDEN",
+        "Solo puedes filtrar tu propia cartera.",
+      );
+    if (
+      actor.role !== "advisor" &&
+      !(await this.repository.advisor(actor, advisorId))
+    )
+      throw new AppError(
+        422,
+        "INVALID_ADVISOR",
+        "Elige un asesor activo de tu empresa.",
+      );
   }
 }
