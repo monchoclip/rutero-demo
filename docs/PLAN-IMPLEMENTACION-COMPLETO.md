@@ -141,7 +141,7 @@ Evidencia local: tokens semánticos de color y foco visible global, modales nati
 
 ### P9 · Preparación AWS, seguridad y operación
 
-Estado: preparado localmente, pendiente de staging y validación independiente 5.5 (límite de agentes).
+Estado: preparado localmente y aprobado por el validador 5.5 sin hallazgos P0/P1; pendiente de staging real.
 
 Objetivo: publicar con el costo mínimo razonable y observabilidad básica.
 
@@ -149,7 +149,7 @@ Incluye front estático, API Lambda/Fargate según carga, PostgreSQL administrad
 
 Aceptación: checklist de despliegue reproducible, presupuesto mensual estimado, HTTPS, CORS estricto, migraciones controladas, backups probados y sin sembrado demo en producción.
 
-Evidencia local: `infra/aws/template.yaml` crea buckets privados cifrados, ciclo de vida de fotos, CloudFront con OAC y HTTPS; `infra/aws/README.md` documenta ACM, DNS, IAM mínimo, migraciones, límites SSE y rollback. No se desplegó ni se inventan costos: faltan región, cuenta, base administrada, secretos, alarmas y prueba de restauración en staging.
+Evidencia local: `infra/aws/template.yaml` crea buckets privados cifrados, ciclo de vida de fotos, CloudFront con OAC y HTTPS; `infra/aws/README.md` documenta ACM, DNS, IAM mínimo, migraciones, límites SSE y rollback. El agente independiente `catalog_campaigns` respondió APROBADO sin hallazgos P0/P1 sobre estos artefactos. No se desplegó ni se inventan costos: faltan región, cuenta, base administrada, secretos, alarmas y prueba de restauración en staging.
 
 ## Protocolo automático por fase
 
