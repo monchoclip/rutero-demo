@@ -33,7 +33,11 @@ import {
   Target,
 } from "lucide-react";
 import { api, post, ApiError } from "../lib/api";
-import { queuedMutationCount, replayOfflineQueue } from "../lib/offlineQueue";
+import {
+  queuedMutationSummary,
+  replayOfflineQueue,
+  retryOfflineConflicts,
+} from "../lib/offlineQueue";
 import { readSnapshot, writeSnapshot } from "../lib/offlineCache";
 import {
   activityLabels,
@@ -201,6 +205,7 @@ export function Workspace({
   const [notice, setNotice] = useState("");
   const [online, setOnline] = useState(true);
   const [pendingSync, setPendingSync] = useState(0);
+  const [syncConflicts, setSyncConflicts] = useState(0);
   const [search, setSearch] = useState("");
   const [form, setForm] = useState<{
     kind: FormKind;
@@ -281,17 +286,36 @@ export function Workspace({
   useEffect(() => {
     void load();
   }, [load]);
+  async function retryConflicts() {
+    await retryOfflineConflicts();
+    if (navigator.onLine) {
+      const result = await replayOfflineQueue();
+      setPendingSync(result.remaining);
+      setSyncConflicts(result.conflicts);
+      if (result.synced)
+        setNotice(
+          `${result.synced} actividad${result.synced === 1 ? "" : "es"} sincronizada${result.synced === 1 ? "" : "s"}.`,
+        );
+    }
+  }
   useEffect(() => {
     setOnline(navigator.onLine);
     const refreshQueue = () => {
-      void queuedMutationCount()
-        .then(setPendingSync)
-        .catch(() => setPendingSync(0));
+      void queuedMutationSummary()
+        .then(({ total, conflicts }) => {
+          setPendingSync(total);
+          setSyncConflicts(conflicts);
+        })
+        .catch(() => {
+          setPendingSync(0);
+          setSyncConflicts(0);
+        });
     };
     const sync = () => {
       setOnline(true);
-      void replayOfflineQueue().then(({ synced, remaining }) => {
+      void replayOfflineQueue().then(({ synced, remaining, conflicts }) => {
         setPendingSync(remaining);
+        setSyncConflicts(conflicts);
         if (synced) {
           setNotice(
             `${synced} actividad${synced === 1 ? "" : "es"} sincronizada${synced === 1 ? "" : "s"}.`,
@@ -522,11 +546,25 @@ export function Workspace({
             {online ? "En línea" : "Sin conexión"}{" "}
             {pendingSync > 0 && (
               <span
-                className="sync-queue"
-                title="Actividades pendientes de sincronización"
+                className={syncConflicts ? "sync-queue conflict" : "sync-queue"}
+                title={
+                  syncConflicts
+                    ? "Hay actividades que requieren revisión"
+                    : "Actividades pendientes de sincronización"
+                }
               >
-                {pendingSync} pendiente{pendingSync === 1 ? "" : "s"}
+                {syncConflicts
+                  ? `${syncConflicts} requiere${syncConflicts === 1 ? "" : "n"} revisión`
+                  : `${pendingSync} pendiente${pendingSync === 1 ? "" : "s"}`}
               </span>
+            )}{" "}
+            {syncConflicts > 0 && (
+              <button
+                className="sync-retry"
+                onClick={() => void retryConflicts()}
+              >
+                Reintentar
+              </button>
             )}{" "}
             <span className="environment-separator">·</span> Desarrollo local{" "}
             <span className="sync-status">

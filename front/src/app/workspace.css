@@ -225,6 +225,21 @@
   font-weight: 700;
   white-space: nowrap;
 }
+.sync-queue.conflict {
+  color: var(--danger);
+}
+.sync-retry {
+  padding: 2px 7px;
+  border: 1px solid var(--danger);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--danger);
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+.sync-retry:hover {
+  background: var(--danger-soft);
+}
 .sync-status {
   color: var(--text-subtle);
   font-size: 0.6875rem;

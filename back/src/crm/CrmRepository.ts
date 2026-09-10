@@ -219,6 +219,7 @@ export class CrmRepository {
           ...activityScope(actor),
           status: "scheduled",
           type: "visit",
+          visitStartedAt: null,
         },
         data: {
           visitStartedAt: data.startedAt,

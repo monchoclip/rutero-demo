@@ -4,6 +4,9 @@ export type OfflineMutation = {
   path: string;
   body: unknown;
   createdAt: string;
+  status?: "pending" | "conflict";
+  attempts?: number;
+  lastError?: string;
 };
 
 const DB_NAME = "ruts68-offline";
@@ -89,6 +92,28 @@ export async function queuedMutationCount() {
   return count;
 }
 
+export async function queuedMutationSummary() {
+  const rows = await queuedMutations();
+  return {
+    pending: rows.filter((row) => row.status !== "conflict").length,
+    conflicts: rows.filter((row) => row.status === "conflict").length,
+    total: rows.length,
+  };
+}
+
+export async function retryOfflineConflicts() {
+  const rows = await queuedMutations();
+  await Promise.all(
+    rows
+      .filter((row) => row.status === "conflict")
+      .map((row) =>
+        updateMutation(row.id, { status: "pending", lastError: undefined }),
+      ),
+  );
+  if (rows.some((row) => row.status === "conflict"))
+    window.dispatchEvent(new Event("ruts68:queue-changed"));
+}
+
 async function queuedMutations() {
   const db = await openQueue();
   const rows = await new Promise<OfflineMutation[]>((resolve, reject) => {
@@ -116,12 +141,74 @@ async function removeMutation(id: string) {
   db.close();
 }
 
+async function updateMutation(id: string, data: Partial<OfflineMutation>) {
+  const db = await openQueue();
+  await new Promise<void>((resolve, reject) => {
+    const store = db
+      .transaction(STORE_NAME, "readwrite")
+      .objectStore(STORE_NAME);
+    const read = store.get(id);
+    read.onsuccess = () => {
+      if (!read.result) return resolve();
+      const request = store.put({ ...read.result, ...data });
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    };
+    read.onerror = () => reject(read.error);
+  });
+  db.close();
+}
+
+async function currentActivities() {
+  const response = await fetch(`${API_URL}/activities`, {
+    credentials: "include",
+    headers: { "Content-Type": "application/json", "X-Ruts68-Request": "1" },
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!response.ok) return [];
+  const body = (await response.json()) as {
+    data?: Array<Record<string, unknown>>;
+  };
+  return body.data ?? [];
+}
+
+async function alreadyApplied(mutation: OfflineMutation) {
+  const activities = await currentActivities();
+  if (mutation.path === "/activities") {
+    const key = (mutation.body as { idempotencyKey?: string } | null)
+      ?.idempotencyKey;
+    return Boolean(
+      key && activities.some((activity) => activity.idempotencyKey === key),
+    );
+  }
+  const match = mutation.path.match(
+    /^\/activities\/([^/]+)\/(complete|start-visit)$/,
+  );
+  if (!match) return false;
+  const activity = activities.find((row) => row.id === match[1]);
+  if (!activity) return false;
+  return match[2] === "complete"
+    ? activity.status === "completed"
+    : Boolean(activity.visitStartedAt);
+}
+
 export async function replayOfflineQueue() {
-  if (typeof navigator === "undefined" || !navigator.onLine)
-    return { synced: 0, remaining: await queuedMutationCount() };
+  if (typeof navigator === "undefined" || !navigator.onLine) {
+    const summary = await queuedMutationSummary();
+    return {
+      synced: 0,
+      remaining: summary.total,
+      conflicts: summary.conflicts,
+    };
+  }
   const rows = await queuedMutations();
   let synced = 0;
+  let conflicts = 0;
   for (const mutation of rows) {
+    if (mutation.status === "conflict") {
+      conflicts += 1;
+      continue;
+    }
     try {
       const response = await fetch(`${API_URL}${mutation.path}`, {
         method: mutation.method,
@@ -134,7 +221,17 @@ export async function replayOfflineQueue() {
         signal: AbortSignal.timeout(15000),
       });
       if (!response.ok && response.status < 500) {
-        await removeMutation(mutation.id);
+        if (await alreadyApplied(mutation).catch(() => false)) {
+          await removeMutation(mutation.id);
+          synced += 1;
+        } else {
+          await updateMutation(mutation.id, {
+            status: "conflict",
+            attempts: (mutation.attempts ?? 0) + 1,
+            lastError: `El servidor respondió ${response.status}.`,
+          });
+          conflicts += 1;
+        }
         continue;
       }
       if (!response.ok) break;
@@ -144,7 +241,8 @@ export async function replayOfflineQueue() {
       break;
     }
   }
-  const remaining = await queuedMutationCount();
-  if (synced) window.dispatchEvent(new Event("ruts68:queue-changed"));
-  return { synced, remaining };
+  const summary = await queuedMutationSummary();
+  if (synced || conflicts)
+    window.dispatchEvent(new Event("ruts68:queue-changed"));
+  return { synced, remaining: summary.total, conflicts: summary.conflicts };
 }

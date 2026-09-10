@@ -383,6 +383,19 @@ describe.sequential("real PostgreSQL CRM flow", () => {
     );
     expect(started.statusCode).toBe(200);
     expect(started.json().data.visitStartLatitude).toBe(4.71098);
+    const duplicateStart = await request(
+      "POST",
+      `/activities/${visitId}/start-visit`,
+      {
+        latitude: 4.8,
+        longitude: -74.2,
+        accuracy: 80,
+        capturedAt: new Date().toISOString(),
+      },
+      advisor.cookie,
+    );
+    expect(duplicateStart.statusCode).toBe(200);
+    expect(duplicateStart.json().data.visitStartLatitude).toBe(4.71098);
     const closed = await request(
       "POST",
       `/activities/${visitId}/complete`,

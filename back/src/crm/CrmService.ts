@@ -236,6 +236,7 @@ export class CrmService {
         "INVALID_STATE_TRANSITION",
         "Esta visita ya no se puede iniciar.",
       );
+    if (activity.visitStartedAt) return activity;
     return (
       (await this.repository.startVisit(actor, id, {
         startedAt: new Date(input.capturedAt),
