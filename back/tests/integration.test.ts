@@ -1905,4 +1905,34 @@ describe.sequential("WhatsApp chat: numbers, webhook and conversations", () => {
         .status,
     ).toBe("delivered");
   });
+
+  it("isolates catalog and enrolls a client in an active campaign", async () => {
+    const created = await request(
+      "POST",
+      "/catalog/products",
+      { code: `SKU-${suffix.slice(0, 6)}`, name: "Plan nutricional", description: "Prueba", priceMinor: 125000, currency: "COP", active: true },
+      owner.cookie,
+    );
+    expect(created.statusCode).toBe(201);
+    const productId = created.json().data.id as string;
+    const campaign = await request(
+      "POST",
+      "/catalog/campaigns",
+      { name: "Campaña de reactivación", description: "Seguimiento", startsAt: new Date().toISOString(), endsAt: null, active: true, productIds: [productId] },
+      owner.cookie,
+    );
+    expect(campaign.statusCode).toBe(201);
+    const campaignId = campaign.json().data.id as string;
+    const enroll = await request(
+      "POST",
+      `/catalog/campaigns/${campaignId}/enroll`,
+      { clientId },
+      owner.cookie,
+    );
+    expect(enroll.statusCode).toBe(201);
+    expect(enroll.json().data.client.id).toBe(clientId);
+    expect(
+      (await request("GET", "/catalog/products", undefined, externalAdvisor.cookie)).json().data,
+    ).toEqual([]);
+  });
 });

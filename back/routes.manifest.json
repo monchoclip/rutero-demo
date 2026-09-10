@@ -99,6 +99,48 @@
   },
   {
     "method": "GET",
+    "path": "/catalog/products",
+    "operation": "products",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "POST",
+    "path": "/catalog/products",
+    "operation": "createProduct",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "PATCH",
+    "path": "/catalog/products/:id",
+    "operation": "updateProduct",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "GET",
+    "path": "/catalog/campaigns",
+    "operation": "campaigns",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "POST",
+    "path": "/catalog/campaigns",
+    "operation": "createCampaign",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "POST",
+    "path": "/catalog/campaigns/:id/enroll",
+    "operation": "enrollCampaign",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "GET",
     "path": "/realtime/events",
     "operation": "realtimeEvents",
     "authenticated": true,

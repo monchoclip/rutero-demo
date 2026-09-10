@@ -29,6 +29,7 @@ export type ModuleKey =
   | "team"
   | "chats"
   | "billing"
+  | "catalog"
   | "mail";
 export type ModuleConfig = Record<ModuleKey, boolean>;
 export type Client = {

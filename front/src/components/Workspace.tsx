@@ -59,6 +59,7 @@ import { FormDialog, type FormKind } from "./Forms";
 import { Billing } from "./Billing";
 import { Chat } from "./Chat";
 import { SequenceBoard } from "./SequenceBoard";
+import { Catalog } from "./Catalog";
 type Tab =
   | "overview"
   | "sequence"
@@ -67,6 +68,7 @@ type Tab =
   | "team"
   | "chats"
   | "billing"
+  | "catalog"
   | "mail";
 const tabs = [
   { id: "overview", label: "Resumen", icon: LayoutDashboard },
@@ -76,6 +78,7 @@ const tabs = [
   { id: "team", label: "Mi equipo", icon: Users },
   { id: "chats", label: "WhatsApp", icon: MessageCircle },
   { id: "billing", label: "Cobro simulado", icon: Receipt },
+  { id: "catalog", label: "Catálogo y campañas", icon: Target },
   { id: "mail", label: "Correo de prueba", icon: Mail },
 ] as const;
 const defaultModuleConfig: Record<ModuleKey, boolean> = {
@@ -86,6 +89,7 @@ const defaultModuleConfig: Record<ModuleKey, boolean> = {
   team: true,
   chats: true,
   billing: true,
+  catalog: true,
   mail: false,
 };
 const headings: Record<Tab, { title: string; text: string }> = {
@@ -116,6 +120,10 @@ const headings: Record<Tab, { title: string; text: string }> = {
   billing: {
     title: "Un ensayo antes del primer cobro",
     text: "Revisa plan, usuarios y recargos sin mover dinero real.",
+  },
+  catalog: {
+    title: "Catálogo y campañas",
+    text: "Productos con precio vigente y campañas para reactivar clientes.",
   },
   mail: {
     title: "Bandeja de desarrollo",
@@ -1167,6 +1175,9 @@ export function Workspace({
                   autoOpenPayment={autoOpenPayment}
                   initialCheckoutPlan={initialCheckoutPlan}
                 />
+              )}
+              {tab === "catalog" && (
+                <Catalog commercial={commercial} clients={clients} />
               )}
               {tab === "mail" && (
                 <section className="panel">

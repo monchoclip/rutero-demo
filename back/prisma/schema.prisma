@@ -49,6 +49,9 @@ model Organization {
   whatsAppNumbers WhatsAppNumber[]
   whatsAppConversations WhatsAppConversation[]
   whatsAppMessages WhatsAppMessage[]
+  products Product[]
+  campaigns Campaign[]
+  campaignEnrollments CampaignEnrollment[]
 }
 model User {
   id String @id @default(uuid())
@@ -66,6 +69,7 @@ model User {
   activities Activity[]
   assignedWhatsAppNumbers WhatsAppNumber[] @relation("WhatsAppNumberAdvisor")
   sentWhatsAppMessages WhatsAppMessage[] @relation("WhatsAppMessageSender")
+  campaignEnrollments CampaignEnrollment[]
   @@unique([organizationId,id])
 }
 model Session {
@@ -108,6 +112,7 @@ model Client {
   updatedAt DateTime @updatedAt
   activities Activity[]
   whatsAppConversations WhatsAppConversation[]
+  campaignEnrollments CampaignEnrollment[]
   @@unique([organizationId,id])
   @@index([organizationId,advisorId,createdAt])
   @@index([organizationId,advisorId,id])
@@ -151,6 +156,66 @@ model Activity {
   @@index([organizationId,advisorId,dueAt])
   @@index([organizationId,advisorId,status,dueAt,id])
   @@index([organizationId,status,dueAt,id])
+}
+
+model Product {
+  id String @id @default(uuid())
+  organizationId String
+  organization Organization @relation(fields:[organizationId], references:[id], onDelete:Cascade)
+  code String
+  name String
+  description String @default("")
+  priceMinor Int
+  currency String @default("COP")
+  validFrom DateTime @default(now())
+  validTo DateTime?
+  active Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  campaignItems CampaignProduct[]
+  @@unique([organizationId, code])
+  @@index([organizationId, active, validFrom])
+}
+
+model Campaign {
+  id String @id @default(uuid())
+  organizationId String
+  organization Organization @relation(fields:[organizationId], references:[id], onDelete:Cascade)
+  name String
+  description String @default("")
+  startsAt DateTime
+  endsAt DateTime?
+  active Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  products CampaignProduct[]
+  enrollments CampaignEnrollment[]
+  @@index([organizationId, active, startsAt])
+}
+
+model CampaignProduct {
+  campaignId String
+  productId String
+  campaign Campaign @relation(fields:[campaignId], references:[id], onDelete:Cascade)
+  product Product @relation(fields:[productId], references:[id], onDelete:Cascade)
+  priceMinor Int
+  @@id([campaignId, productId])
+}
+
+model CampaignEnrollment {
+  id String @id @default(uuid())
+  organizationId String
+  organization Organization @relation(fields:[organizationId], references:[id], onDelete:Cascade)
+  campaignId String
+  campaign Campaign @relation(fields:[campaignId], references:[id], onDelete:Cascade)
+  clientId String
+  client Client @relation(fields:[clientId], references:[id], onDelete:Cascade)
+  advisorId String
+  advisor User @relation(fields:[advisorId], references:[id])
+  status String @default("active")
+  enrolledAt DateTime @default(now())
+  @@unique([campaignId, clientId])
+  @@index([organizationId, clientId, status])
 }
 model EmailJob {
   id String @id @default(uuid())

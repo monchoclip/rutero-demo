@@ -10,7 +10,9 @@ export type RealtimeEventType =
   | "visit.started"
   | "visit.completed"
   | "chat.received"
-  | "membership.updated";
+  | "membership.updated"
+  | "catalog.updated"
+  | "campaign.enrolled";
 
 export type RealtimeEvent = {
   id: string;

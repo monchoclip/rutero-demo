@@ -22,6 +22,9 @@ import { whatsAppHandlers } from "./whatsapp/handlers/index.js";
 import { metaTransport } from "./whatsapp/MetaTransport.js";
 import type { WhatsAppTransport } from "./whatsapp/WhatsAppTypes.js";
 import { EventHub } from "./realtime/EventHub.js";
+import { CatalogRepository } from "./catalog/CatalogRepository.js";
+import { CatalogService } from "./catalog/CatalogService.js";
+import { catalogHandlers } from "./catalog/handlers.js";
 import {
   createVisitPhotoStorage,
   visitPhotoStorageConfigFromEnv,
@@ -77,6 +80,7 @@ export async function createApp(
   app.decorateRequest("actor", null);
   const identity = new IdentityService(new IdentityRepository(db));
   const realtime = new EventHub();
+  const catalog = new CatalogService(new CatalogRepository(db), realtime);
   const visitPhotoStorage =
     options.visitPhotoStorage ??
     createVisitPhotoStorage(visitPhotoStorageConfigFromEnv());
@@ -89,6 +93,7 @@ export async function createApp(
       visitPhotoStorage,
     ),
     realtime,
+    catalog,
     ...options,
   };
   const billing = new BillingService(
@@ -113,6 +118,7 @@ export async function createApp(
     ...crmHandlers(services),
     ...billingHandlers(billing),
     ...whatsAppHandlers(whatsapp, options.metaWebhookVerifyToken),
+    ...catalogHandlers(catalog),
   };
   app.get("/health", async () => ({ status: "ok" }));
   for (const [method, url, operation, protectedRoute, external] of routes) {

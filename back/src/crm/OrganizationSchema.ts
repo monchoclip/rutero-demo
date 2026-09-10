@@ -8,6 +8,7 @@ export const moduleKeys = [
   "team",
   "chats",
   "billing",
+  "catalog",
   "mail",
 ] as const;
 
@@ -34,6 +35,7 @@ export const defaultModuleConfig: ModuleConfig = {
   team: true,
   chats: true,
   billing: true,
+  catalog: true,
   mail: false,
 };
 
