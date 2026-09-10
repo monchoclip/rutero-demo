@@ -41,6 +41,7 @@ export class EventHub {
       return;
     }
     const id = randomUUID();
+    reply.hijack();
     reply.raw.writeHead(200, {
       "Content-Type": "text/event-stream; charset=utf-8",
       "Cache-Control": "no-cache, no-transform",

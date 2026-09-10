@@ -63,7 +63,7 @@ Aceptación: un cambio autorizado se refleja en otras sesiones en menos de cinco
 
 Evidencia esperada: endpoint SSE autenticado, publicador interno de eventos, cliente front con reconexión, pruebas de aislamiento multiempresa y una validación manual con dos sesiones de demostración.
 
-Evidencia local: se agregó `/realtime/events` con SSE autenticado por cookie y filtrado por empresa, `EventHub` con heartbeat y cierre de conexiones, publicaciones desde CRM, visitas, WhatsApp entrante y membresías, cliente front con reconexión/backoff y polling de respaldo. `npm run typecheck`, `npm test`, `npm run test:integration`, `npm run routes:check` y `npm run build` pasan localmente.
+Evidencia local: se agregó `/realtime/events` con SSE autenticado por cookie y filtrado por empresa, `EventHub` con `reply.hijack()`, heartbeat y cierre de conexiones, publicaciones desde CRM, visitas, WhatsApp entrante y membresías, cliente front con reconexión/backoff y polling de respaldo. `npm run typecheck`, `npm test`, `npm run test:integration`, `npm run routes:check` y `npm run build` pasan localmente.
 
 ### P3 · Ubicaciones y visita activa
 

@@ -65,6 +65,10 @@ function fakeReply() {
       chunks.push(JSON.stringify(payload));
       return this;
     },
+    hijack() {
+      chunks.push("hijacked");
+      return this;
+    },
     raw,
   };
 }
@@ -84,6 +88,7 @@ describe("realtime event hub", () => {
     const beta = fakeReply();
     hub.subscribe(actor("alpha"), alpha as never);
     hub.subscribe(actor("beta"), beta as never);
+    expect(alpha.chunks).toContain("hijacked");
     hub.publish({
       organizationId: "alpha",
       type: "activity.created",

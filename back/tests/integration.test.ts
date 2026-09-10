@@ -15,6 +15,7 @@ if (!url || new URL(url).pathname !== "/ruts68_test")
 const db = new PrismaClient({ datasources: { db: { url } } });
 const origin = "http://localhost:3068";
 let app: FastifyInstance;
+let appUrl: string;
 let owner: { cookie: string; id: string; organizationId: string };
 let other: typeof owner;
 let advisor: { cookie: string; id: string };
@@ -91,6 +92,7 @@ beforeAll(async () => {
     localMail: true,
     wompiEventsSecret: "wompi-events-test-secret",
   });
+  appUrl = await app.listen({ host: "127.0.0.1", port: 0 });
   owner = await register("alpha");
   other = await register("beta");
   advisor = await invite(owner, "Ana");
@@ -102,6 +104,26 @@ afterAll(async () => {
   await db.$disconnect();
 });
 describe.sequential("real PostgreSQL CRM flow", () => {
+  it("keeps the authenticated realtime SSE route open with a ready event", async () => {
+    const controller = new AbortController();
+    const response = await fetch(`${appUrl}/realtime/events`, {
+      headers: { cookie: owner.cookie },
+      signal: controller.signal,
+    });
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain(
+      "text/event-stream",
+    );
+    const reader = response.body?.getReader();
+    expect(reader).toBeTruthy();
+    const first = await reader!.read();
+    const chunk = new TextDecoder().decode(first.value);
+    expect(chunk).toContain("event: ready");
+    expect(chunk).toContain("realtime.ready");
+    await reader!.cancel();
+    controller.abort();
+  });
+
   it("creates a company with its coordinator and a persisted calendar-month trial", async () => {
     const result = await request(
       "GET",
