@@ -1264,6 +1264,10 @@ describe.sequential("billing simulation restricted to the demo company", () => {
     );
     expect(receipt.json().data.status).toBe("approved");
     expect(receipt.json().data.transactionId).toBe(transaction.id);
+    const before = await db.organization.findUniqueOrThrow({ where: { id: DEMO_ORGANIZATION_ID }, select: { membershipEndsAt: true } });
+    expect((await request("POST", "/webhooks/wompi", event)).statusCode).toBe(200);
+    const after = await db.organization.findUniqueOrThrow({ where: { id: DEMO_ORGANIZATION_ID }, select: { membershipEndsAt: true } });
+    expect(after.membershipEndsAt?.getTime()).toBe(before.membershipEndsAt?.getTime());
   });
   it("stores one simulation per idempotency key and rejects a reused key with other data", async () => {
     const payload = {

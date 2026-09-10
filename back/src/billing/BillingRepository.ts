@@ -102,11 +102,13 @@ export class BillingRepository {
     raw: unknown,
   ) {
     return this.db.$transaction(async (tx) => {
+      const current = await tx.paymentTransaction.findUnique({ where: { reference } });
+      if (!current) throw new Error("PAYMENT_NOT_FOUND");
       const payment = await tx.paymentTransaction.update({
         where: { reference },
         data: { status, transactionId, raw: raw as object },
       });
-      if (status === "approved") {
+      if (status === "approved" && current.status !== "approved") {
         const now = new Date();
         const ends = new Date(now);
         ends.setMonth(ends.getMonth() + 1);
