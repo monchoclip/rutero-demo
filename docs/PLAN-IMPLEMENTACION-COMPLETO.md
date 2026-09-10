@@ -41,7 +41,7 @@ Cada fase usa el mismo circuito para mantener costo bajo y control de calidad:
 
 Estado: oro local (`a9ef2da`, validado por `p1_validate_final`).
 
-Estado: implementado localmente, pendiente de validación independiente 5.5.
+Estado: oro local (5c9d792, eb51567; validado por p2_validate_final2).
 
 Objetivo: soportar carteras y agendas grandes sin cargar límites fijos en el navegador.
 
@@ -63,7 +63,7 @@ Aceptación: un cambio autorizado se refleja en otras sesiones en menos de cinco
 
 Evidencia esperada: endpoint SSE autenticado, publicador interno de eventos, cliente front con reconexión, pruebas de aislamiento multiempresa y una validación manual con dos sesiones de demostración.
 
-Evidencia local: se agregó `/realtime/events` con SSE autenticado por cookie y filtrado por empresa, `EventHub` con `reply.hijack()`, heartbeat y cierre de conexiones, publicaciones desde CRM, visitas, WhatsApp entrante y membresías, cliente front con reconexión/backoff y polling de respaldo. `npm run typecheck`, `npm test`, `npm run test:integration`, `npm run routes:check` y `npm run build` pasan localmente.
+Evidencia local: se agregó `/realtime/events` con SSE autenticado por cookie y filtrado por empresa, `EventHub` con `reply.hijack()`, heartbeat y cierre de conexiones, publicaciones desde CRM, visitas, WhatsApp entrante y membresías, cliente front con reconexión/backoff y polling de respaldo. `npm run typecheck`, `npm test`, `npm run test:integration`, `npm run routes:check` y `npm run build` pasan localmente. La validación independiente respondió APROBADO.
 
 ### P3 · Ubicaciones y visita activa
 
