@@ -368,6 +368,51 @@ describe.sequential("real PostgreSQL CRM flow", () => {
       ).statusCode,
     ).toBe(404);
   });
+  it("rejects completion when the activity advisor no longer matches the client portfolio", async () => {
+    const guarded = await db.activity.create({
+      data: {
+        organizationId: owner.organizationId,
+        clientId,
+        advisorId: secondAdvisor.id,
+        type: "call",
+        status: "scheduled",
+        dueAt: new Date(Date.now() + 3600000),
+        notes: "Fixture de cierre cruzado entre asesores.",
+        idempotencyKey: crypto.randomUUID(),
+      },
+    });
+    const blocked = await request(
+      "POST",
+      `/activities/${guarded.id}/complete`,
+      {
+        outcome: "contacted",
+        notes: "No debe cerrar una actividad de otra cartera.",
+        durationSeconds: 30,
+      },
+      secondAdvisor.cookie,
+    );
+    expect(blocked.statusCode).toBe(404);
+    expect(
+      (
+        await db.activity.findUniqueOrThrow({
+          where: { id: guarded.id },
+        })
+      ).status,
+    ).toBe("scheduled");
+    const coordinatorClose = await request(
+      "POST",
+      `/activities/${guarded.id}/complete`,
+      {
+        outcome: "contacted",
+        notes: "Coordinación conserva autorización de cierre.",
+        durationSeconds: 30,
+      },
+      owner.cookie,
+    );
+    expect(coordinatorClose.statusCode).toBe(200);
+    expect(coordinatorClose.json().data.status).toBe("completed");
+    await db.activity.delete({ where: { id: guarded.id } });
+  });
   it("completes a call and atomically schedules exactly one follow-up even on concurrent retries", async () => {
     const data = {
       outcome: "interested",

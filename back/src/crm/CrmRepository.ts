@@ -376,7 +376,7 @@ export class CrmRepository {
   ) {
     return this.db.$transaction(async (tx) => {
       const result = await tx.activity.updateMany({
-        where: { id, ...scope(actor), status: "scheduled" },
+        where: { id, ...activityScope(actor), status: "scheduled" },
         data: { ...data, status: "completed", completedAt: new Date() },
       });
       if (!result.count) return null;
