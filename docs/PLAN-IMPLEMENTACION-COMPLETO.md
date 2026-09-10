@@ -53,7 +53,7 @@ Validación: APROBADO. El botón de actividades conserva un cursor global; su et
 
 ### P2 · Tiempo real de bajo costo
 
-Estado: implementado localmente, pendiente de validación independiente 5.5.
+Estado: oro local (0bcfa20, 75cfb62, f361301, 29e80f9; validado por p3_validate_security_final).
 
 Objetivo: actualizar CRM, visitas, chat y cobros sin refrescos manuales.
 
@@ -77,7 +77,7 @@ Aceptación: coordinadores ven solo su empresa, asesores no ven ubicaciones ajen
 
 Evidencia esperada: vista de mapa para perfiles autorizados, panel persistente de visita activa, sincronización offline de inicio/cierre/foto, cálculo visual de distancia entre coordenadas y pruebas de permisos por rol.
 
-Evidencia local: el asesor ve un panel de visita activa cuando una visita tiene ubicación inicial y cierre pendiente; coordinación comercial/administrativa ve un mapa operativo con puntos capturados, lista auditable, estado activa/cerrada, precisión, hora, distancia y enlaces independientes a inicio y cierre en Google Maps. El lienzo ubica marcadores con escala determinista a partir del rango latitud/longitud visible y reutiliza actividades ya filtradas por servidor y refrescadas por SSE, por lo que no agrega costo de proveedor de mapas ni endpoints nuevos.
+Evidencia local: el asesor ve un panel de visita activa cuando una visita tiene ubicación inicial y cierre pendiente; coordinación comercial/administrativa ve un mapa operativo con puntos capturados, lista auditable, estado activa/cerrada, precisión, hora, distancia y enlaces independientes a inicio y cierre en Google Maps. El lienzo ubica marcadores con escala determinista a partir del rango latitud/longitud visible, el cierre aplica el alcance de actividad y bloquea accesos cruzados entre asesores, y reutiliza actividades ya filtradas por servidor y refrescadas por SSE, por lo que no agrega costo de proveedor de mapas ni endpoints nuevos. La validación independiente respondió APROBADO.
 
 ### P4 · Evidencia y multimedia en almacenamiento económico
 
