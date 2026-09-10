@@ -33,6 +33,7 @@ import {
   Target,
 } from "lucide-react";
 import { api, post, ApiError } from "../lib/api";
+import { queuedMutationCount, replayOfflineQueue } from "../lib/offlineQueue";
 import {
   activityLabels,
   roleLabels,
@@ -197,6 +198,8 @@ export function Workspace({
   const [loading, setLoading] = useState(true);
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
   const [notice, setNotice] = useState("");
+  const [online, setOnline] = useState(true);
+  const [pendingSync, setPendingSync] = useState(0);
   const [search, setSearch] = useState("");
   const [form, setForm] = useState<{
     kind: FormKind;
@@ -246,6 +249,35 @@ export function Workspace({
   }, [commercial, coordinator, onLogout]);
   useEffect(() => {
     void load();
+  }, [load]);
+  useEffect(() => {
+    setOnline(navigator.onLine);
+    const refreshQueue = () => {
+      void queuedMutationCount().then(setPendingSync).catch(() => setPendingSync(0));
+    };
+    const sync = () => {
+      setOnline(true);
+      void replayOfflineQueue().then(({ synced, remaining }) => {
+        setPendingSync(remaining);
+        if (synced) {
+          setNotice(`${synced} actividad${synced === 1 ? "" : "es"} sincronizada${synced === 1 ? "" : "s"}.`);
+          void load();
+        }
+      });
+    };
+    const goOffline = () => setOnline(false);
+    window.addEventListener("online", sync);
+    window.addEventListener("offline", goOffline);
+    window.addEventListener("ruts68:queue-changed", refreshQueue);
+    navigator.serviceWorker?.addEventListener("message", (event) => {
+      if (event.data?.type === "ruts68:sync") sync();
+    });
+    refreshQueue();
+    return () => {
+      window.removeEventListener("online", sync);
+      window.removeEventListener("offline", goOffline);
+      window.removeEventListener("ruts68:queue-changed", refreshQueue);
+    };
   }, [load]);
   useEffect(() => {
     const refreshWhenVisible = () => {
@@ -431,7 +463,13 @@ export function Workspace({
             <strong>{tabs.find((t) => t.id === tab)?.label}</strong>
           </span>
           <div className="topbar-right">
-            <span className="environment-dot" /> Desarrollo local{" "}
+            <span className={online ? "environment-dot" : "environment-dot offline"} /> {online ? "En línea" : "Sin conexión"}{" "}
+            {pendingSync > 0 && (
+              <span className="sync-queue" title="Actividades pendientes de sincronización">
+                {pendingSync} pendiente{pendingSync === 1 ? "" : "s"}
+              </span>
+            )}{" "}
+            <span className="environment-separator">·</span> Desarrollo local{" "}
             <span className="sync-status">
               {lastSyncedAt
                 ? `· Actualizado ${lastSyncedAt.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}`

@@ -1,3 +1,5 @@
+import { canQueueOfflineMutation, enqueueMutation } from "./offlineQueue";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4068";
 export class ApiError extends Error {
   constructor(
@@ -5,6 +7,12 @@ export class ApiError extends Error {
     message: string,
   ) {
     super(message);
+  }
+}
+export class OfflineQueuedError extends ApiError {
+  constructor() {
+    super(0, "Sin conexión: guardamos la actividad en este dispositivo y la sincronizaremos al volver a estar en línea.");
+    this.name = "OfflineQueuedError";
   }
 }
 export async function api<T>(
@@ -24,6 +32,14 @@ export async function api<T>(
       signal: AbortSignal.timeout(15000),
     });
   } catch {
+    const method = (options.method ?? "GET").toUpperCase();
+    if (
+      typeof window !== "undefined" &&
+      canQueueOfflineMutation(method, path)
+    ) {
+      await enqueueMutation(method as "POST" | "PATCH", path, options.body ? JSON.parse(String(options.body)) : null);
+      throw new OfflineQueuedError();
+    }
     throw new ApiError(
       0,
       "No pudimos conectar. Revisa tu conexión e intenta de nuevo.",

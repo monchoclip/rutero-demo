@@ -214,6 +214,17 @@
   border-radius: 50%;
   background: var(--success);
 }
+.environment-dot.offline {
+  background: var(--warning);
+}
+.environment-separator {
+  color: var(--line);
+}
+.sync-queue {
+  color: var(--warning);
+  font-weight: 700;
+  white-space: nowrap;
+}
 .sync-status {
   color: var(--text-subtle);
   font-size: 0.6875rem;

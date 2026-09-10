@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import { Camera, CheckCircle2, LocateFixed, MapPin, X } from "lucide-react";
-import { api, post } from "../lib/api";
+import { api, post, OfflineQueuedError } from "../lib/api";
 import {
   activityLabels,
   type User,
@@ -117,6 +117,11 @@ export function FormDialog({
       await onSaved();
       onClose();
     } catch (error) {
+      if (error instanceof OfflineQueuedError) {
+        await onSaved();
+        onClose();
+        return;
+      }
       setError((error as Error).message);
     } finally {
       setBusy(false);
