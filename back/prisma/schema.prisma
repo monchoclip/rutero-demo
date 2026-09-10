@@ -134,6 +134,7 @@ model Activity {
   dueAt DateTime
   completedAt DateTime?
   notes String
+  cancelReason String?
   outcome String?
   durationSeconds Int?
   visitStartedAt DateTime?

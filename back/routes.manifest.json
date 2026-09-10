@@ -189,6 +189,13 @@
     "entry": "src/lambda.entry.ts"
   },
   {
+    "method": "POST",
+    "path": "/activities/:id/cancel",
+    "operation": "cancelActivity",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
     "method": "GET",
     "path": "/activities/:id/visit-photo",
     "operation": "visitPhoto",

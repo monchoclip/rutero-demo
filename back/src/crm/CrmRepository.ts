@@ -389,6 +389,21 @@ export class CrmRepository {
       return tx.activity.findUnique({ where: { id } });
     });
   }
+  cancelActivity(actor: Actor, id: string, reason: string) {
+    return this.db.$transaction(async (tx) => {
+      const result = await tx.activity.updateMany({
+        where: { id, ...activityScope(actor), status: "scheduled" },
+        data: { status: "cancelled", cancelReason: reason || null },
+      });
+      if (!result.count) return null;
+      await tx.emailJob.updateMany({
+        where: { activityId: id, sentAt: null },
+        data: { cancelledAt: new Date() },
+      });
+      await this.audit(tx, actor, "activity.cancelled", id);
+      return tx.activity.findUnique({ where: { id } });
+    });
+  }
   clearVisitPhoto(actor: Actor, id: string) {
     return this.db.$transaction(async (tx) => {
       const result = await tx.activity.updateMany({

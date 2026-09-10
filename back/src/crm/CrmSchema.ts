@@ -59,6 +59,9 @@ export const visitStartSchema = z
     address: z.string().trim().max(240).optional(),
   })
   .strict();
+export const cancelSchema = z
+  .object({ reason: z.string().trim().max(500).default("") })
+  .strict();
 export const idSchema = z.object({ id: z.uuid() });
 export const listSchema = z.object({
   cursor: z.string().trim().min(1).max(240).optional(),

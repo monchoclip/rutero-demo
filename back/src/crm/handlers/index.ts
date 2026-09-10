@@ -5,6 +5,7 @@ import {
   idSchema,
   activitySchema,
   completeSchema,
+  cancelSchema,
   assignmentSchema,
   visitStartSchema,
 } from "../CrmSchema.js";
@@ -71,6 +72,12 @@ export function crmHandlers({
         r.actor!,
         idSchema.parse(r.params).id,
         completeSchema.parse(r.body),
+      ),
+    cancelActivity: async (r) =>
+      crm.cancel(
+        r.actor!,
+        idSchema.parse(r.params).id,
+        cancelSchema.parse(r.body).reason,
       ),
     visitPhoto: async (r, reply) => {
       const photo = await crm.visitPhoto(r.actor!, idSchema.parse(r.params).id);

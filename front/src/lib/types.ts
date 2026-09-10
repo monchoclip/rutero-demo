@@ -71,6 +71,7 @@ export type Activity = {
   visitDistanceMeters: number | null;
   createdAt: string;
   completedAt: string | null;
+  cancelReason: string | null;
   client: { name: string };
   advisor: User;
 };

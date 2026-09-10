@@ -9,6 +9,7 @@ export type RealtimeEventType =
   | "client.updated"
   | "activity.created"
   | "activity.completed"
+  | "activity.cancelled"
   | "visit.started"
   | "visit.completed"
   | "chat.received"

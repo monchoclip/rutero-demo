@@ -370,6 +370,25 @@ describe.sequential("real PostgreSQL CRM flow", () => {
       ).statusCode,
     ).toBe(404);
   });
+  it("cancels a scheduled activity and its pending reminder", async () => {
+    const created = await request("POST", "/activities", {
+      clientId,
+      type: "follow_up",
+      dueAt: new Date(Date.now() + 7200000).toISOString(),
+      notes: "Contacto que el cliente pidió cancelar",
+      idempotencyKey: crypto.randomUUID(),
+    }, advisor.cookie);
+    expect(created.statusCode).toBe(201);
+    const id = created.json().data.id;
+    const cancelled = await request("POST", `/activities/${id}/cancel`, { reason: "Cliente solicitó reagendar." }, advisor.cookie);
+    expect(cancelled.statusCode).toBe(200);
+    expect(cancelled.json().data.status).toBe("cancelled");
+    expect(cancelled.json().data.cancelReason).toBe("Cliente solicitó reagendar.");
+    expect((await db.emailJob.findUniqueOrThrow({ where: { activityId: id } })).cancelledAt).not.toBeNull();
+    expect((await request("POST", `/activities/${id}/cancel`, { reason: "Segundo intento" }, advisor.cookie)).json().data.status).toBe("cancelled");
+    await db.emailJob.delete({ where: { activityId: id } });
+    await db.activity.delete({ where: { id } });
+  });
   it("rejects completion when the activity advisor no longer matches the client portfolio", async () => {
     const guarded = await db.activity.create({
       data: {

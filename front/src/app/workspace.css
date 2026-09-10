@@ -571,6 +571,16 @@ tr:last-child td {
 .activity-time .text-button {
   font-size: 0.75rem;
 }
+.activity-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.danger-link {
+  color: var(--danger);
+}
 .badge {
   display: inline-flex;
   padding: 4px 8px;
@@ -579,6 +589,10 @@ tr:last-child td {
   color: var(--neutral);
   font-size: 0.6875rem;
   font-weight: 500;
+}
+.badge.cancelled {
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 .next-action-pill,
 .priority-pill {

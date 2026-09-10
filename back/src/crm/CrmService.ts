@@ -254,6 +254,26 @@ export class CrmService {
       });
     return completed;
   }
+  async cancel(actor: Actor, id: string, reason: string) {
+    requireWriter(actor);
+    const activity = await this.repository.activity(actor, id);
+    if (!activity) notFound();
+    if (activity.status === "cancelled") return activity;
+    if (activity.status !== "scheduled")
+      throw new AppError(
+        422,
+        "INVALID_STATE_TRANSITION",
+        "Solo puedes cancelar actividades programadas.",
+      );
+    const cancelled = await this.repository.cancelActivity(actor, id, reason);
+    if (!cancelled) return this.repository.activity(actor, id);
+    this.realtimeHub.publish({
+      organizationId: actor.organizationId!,
+      type: "activity.cancelled",
+      resourceId: id,
+    });
+    return cancelled;
+  }
   async visitPhoto(actor: Actor, id: string) {
     const activity = await this.repository.activity(actor, id);
     if (!activity) notFound();

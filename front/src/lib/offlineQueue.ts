@@ -42,7 +42,7 @@ export function canQueueOfflineMutation(method: string, path: string) {
     normalized === "POST" &&
     (path === "/activities" ||
       path === "/orders" ||
-      /^\/activities\/[^/]+\/(complete|start-visit)$/.test(path))
+      /^\/activities\/[^/]+\/(complete|start-visit|cancel)$/.test(path))
   );
 }
 
@@ -200,14 +200,16 @@ async function alreadyApplied(mutation: OfflineMutation) {
     );
   }
   const match = mutation.path.match(
-    /^\/activities\/([^/]+)\/(complete|start-visit)$/,
+    /^\/activities\/([^/]+)\/(complete|start-visit|cancel)$/,
   );
   if (!match) return false;
   const activity = activities.find((row) => row.id === match[1]);
   if (!activity) return false;
   return match[2] === "complete"
     ? activity.status === "completed"
-    : Boolean(activity.visitStartedAt);
+    : match[2] === "cancel"
+      ? activity.status === "cancelled"
+      : Boolean(activity.visitStartedAt);
 }
 
 export async function replayOfflineQueue() {

@@ -877,6 +877,7 @@ export function Workspace({
                         onComplete={(activity) =>
                           setForm({ kind: "complete", activity })
                         }
+                        onCancel={(activity) => setForm({ kind: "cancel", activity })}
                       />
                     </section>
                     <section className="next-step">
@@ -1042,6 +1043,7 @@ export function Workspace({
                                 onComplete={(activity) =>
                                   setForm({ kind: "complete", activity })
                                 }
+                                onCancel={(activity) => setForm({ kind: "cancel", activity })}
                               />
                             </div>
                           ))}

@@ -120,10 +120,12 @@ export function ActivityList({
   items,
   writer,
   onComplete,
+  onCancel,
 }: {
   items: Activity[];
   writer: boolean;
   onComplete: (activity: Activity) => void;
+  onCancel?: (activity: Activity) => void;
 }) {
   return items.length ? (
     <div>
@@ -148,10 +150,19 @@ export function ActivityList({
               <strong>{dateTime(a.dueAt)}</strong>
               {a.status === "completed" ? (
                 <span className="badge completed">Realizado</span>
+              ) : a.status === "cancelled" ? (
+                <span className="badge cancelled">Cancelado</span>
               ) : writer ? (
-                <button className="text-button" onClick={() => onComplete(a)}>
-                  Registrar resultado <ArrowRight size={14} />
-                </button>
+                <div className="activity-actions">
+                  <button className="text-button" onClick={() => onComplete(a)}>
+                    Registrar resultado <ArrowRight size={14} />
+                  </button>
+                  {onCancel && (
+                    <button className="text-button danger-link" onClick={() => onCancel(a)}>
+                      Cancelar
+                    </button>
+                  )}
+                </div>
               ) : (
                 <span className="badge">Programado</span>
               )}

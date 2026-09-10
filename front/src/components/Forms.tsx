@@ -14,7 +14,7 @@ import {
   type Client,
   type Activity,
 } from "../lib/types";
-export type FormKind = "client" | "invite" | "activity" | "complete" | "assign";
+export type FormKind = "client" | "invite" | "activity" | "complete" | "assign" | "cancel";
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label>
@@ -70,6 +70,7 @@ export function FormDialog({
     activity: "Programar un contacto",
     complete: "Registrar resultado",
     assign: "Reasignar cliente",
+    cancel: "Cancelar actividad",
   };
   const helperText = {
     client:
@@ -82,6 +83,8 @@ export function FormDialog({
       "Cierra la gestión con resultado, duración y próximo seguimiento opcional.",
     assign:
       "Reasigna el cliente conservando historial y moviendo tareas pendientes.",
+    cancel:
+      "Cancela el contacto programado y detiene su recordatorio de correo.",
   };
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -113,6 +116,10 @@ export function FormDialog({
           ...(input.followUpAt
             ? { followUpAt: new Date(String(input.followUpAt)).toISOString() }
             : {}),
+        });
+      if (kind === "cancel")
+        await post(`/activities/${activity?.id}/cancel`, {
+          reason: input.reason ?? "",
         });
       await onSaved();
       onClose();
@@ -386,6 +393,17 @@ export function FormDialog({
               pasarán al nuevo asesor y el historial se conservará.
             </p>
             <Field label="Nuevo asesor">{advisorSelect}</Field>
+          </>
+        )}
+        {kind === "cancel" && (
+          <>
+            <DialogSummary
+              title={activity?.client.name ?? "Actividad"}
+              text={activity ? `${activityLabels[activity.type]} · ${activity.notes}` : "Contacto programado"}
+            />
+            <Field label="Motivo (opcional)">
+              <textarea name="reason" maxLength={500} placeholder="Ej. Cliente solicitó reagendar." />
+            </Field>
           </>
         )}
         {error && (
