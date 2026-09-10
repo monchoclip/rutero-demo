@@ -22,7 +22,7 @@ No se incluyen inicialmente Redis, WebSocket permanente, NAT Gateway, RDS Proxy 
 
 - Frontend muestra hasta 100 clientes y 200 actividades; la lista de clientes tiene cursor en API. Ampliar búsqueda y paginación de UI e indicadores antes de carteras grandes.
 - Zona de presentación: dispositivo; datos en UTC. Configuración por empresa preparada en schema, aún no aplicada a toda la UI.
-- Prueba gratuita fija a un mes por código, persistida. Configuración de planes y prueba, cobro y suspensión pendientes.
+- La prueba inicial de un mes y los planes, cargos por usuario, soporte y pasarela están parametrizados en la configuración de facturación local. Cobro recurrente, suspensión automática y la conexión sandbox siguen pendientes de validar.
 - Recuperación de contraseña, verificación de correo del fundador, MFA, administración completa de usuarios y limpieza automática de sesiones/rate limits quedan pendientes antes de una apertura pública.
 - Entrega de correo es at-least-once ante caída entre aceptación de SES y guardado del resultado. El bloqueo evita doble trabajo normal; no garantiza entrega exactamente una vez.
 - La bandeja de desarrollo puede mostrar enlaces de invitación a los coordinadores de esa empresa; no existe en producción.

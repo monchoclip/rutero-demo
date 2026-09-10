@@ -5,7 +5,7 @@ Estado: alcance objetivo del producto. La primera base funcional se implementó 
 
 ## Proyecto existente
 
-El punto de partida fue el demo estático en `index.html`, con estilos, datos y JavaScript incorporados. Se conserva como referencia. La aplicación nueva incorpora frontend Next.js, backend Fastify, Prisma/PostgreSQL y autenticación real local; los pagos siguen pendientes. Se conserva la configuración de dominio existente y el contenido previo del README.
+El punto de partida fue el demo estático en `index.html`, con estilos, datos y JavaScript incorporados. Se conserva como referencia. La aplicación nueva incorpora frontend Next.js, backend Fastify, Prisma/PostgreSQL y autenticación real local; el checkout y webhook de Wompi tienen contrato local endurecido, pero aún requieren sandbox y credenciales reales. Se conserva la configuración de dominio existente y el contenido previo del README.
 
 Se pueden aprovechar los flujos de cartera, agenda, registro de llamadas, inicio y cierre de visitas, catálogo, pedidos, reasignación de clientes y consola de administración. Los indicadores GPS, sincronización, sockets, correos y cobros del demo no deben presentarse como servicios reales.
 
