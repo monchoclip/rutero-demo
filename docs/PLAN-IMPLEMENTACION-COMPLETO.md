@@ -119,13 +119,15 @@ Evidencia local: migración `202609100004_orders` con pedido y líneas de precio
 
 ### P7 · Integraciones reales de WhatsApp y Wompi
 
-Estado: pendiente, condicionado por credenciales sandbox reales.
+Estado: contrato local endurecido; pendiente de validación externa con credenciales sandbox.
 
 Objetivo: pasar de contratos simulados a sandbox verificable.
 
 Incluye checklist de credenciales por empresa, validación Meta sandbox, plantillas aprobadas, webhook real, checkout y webhook Wompi, conciliación, recibo, membresía y estados de error observables.
 
 Aceptación: secretos no llegan al cliente, firmas se validan, transacciones repetidas son idempotentes y el plan de la empresa cambia solo ante evento aprobado verificable.
+
+Evidencia local: el adaptador Meta Cloud API valida número, envía texto/plantillas y descarga multimedia; Wompi genera firma de integridad, valida webhook firmado y evita renovar la membresía al repetir el mismo evento aprobado. Los secretos permanecen en servidor y los errores se muestran en la consola. Falta probar contra Meta/Wompi sandbox, HTTPS público, plantillas aprobadas y conciliación/renovaciones reales.
 
 ### P8 · UX/UI de operación de campo
 
