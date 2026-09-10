@@ -386,6 +386,7 @@ describe.sequential("real PostgreSQL CRM flow", () => {
     expect(cancelled.json().data.cancelReason).toBe("Cliente solicitó reagendar.");
     expect((await db.emailJob.findUniqueOrThrow({ where: { activityId: id } })).cancelledAt).not.toBeNull();
     expect((await request("POST", `/activities/${id}/cancel`, { reason: "Segundo intento" }, advisor.cookie)).json().data.status).toBe("cancelled");
+    expect((await request("POST", `/activities/${id}/cancel`, { reason: "Acceso cruzado" }, externalAdvisor.cookie)).statusCode).toBe(404);
     await db.emailJob.delete({ where: { activityId: id } });
     await db.activity.delete({ where: { id } });
   });
