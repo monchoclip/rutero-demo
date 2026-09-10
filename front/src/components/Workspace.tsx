@@ -24,6 +24,8 @@ import {
   Search,
   Phone,
   MapPin,
+  MapPinned,
+  Navigation,
   ArrowRight,
   Check,
   Clock,
@@ -31,6 +33,7 @@ import {
   Receipt,
   MessageCircle,
   Target,
+  Radio,
 } from "lucide-react";
 import { api, apiPage, post, ApiError } from "../lib/api";
 import {
@@ -448,6 +451,15 @@ export function Workspace({
   }
   const scheduled = activities.filter((a) => a.status === "scheduled");
   const completed = activities.filter((a) => a.status === "completed");
+  const activeVisits = scheduled.filter(
+    (a) => a.type === "visit" && a.visitStartedAt,
+  );
+  const visitMapItems = activities.filter(
+    (a) =>
+      a.type === "visit" &&
+      a.visitStartLatitude !== null &&
+      a.visitStartLongitude !== null,
+  );
   const overdue = scheduled.filter(
     (a) => new Date(a.dueAt).getTime() < Date.now(),
   );
@@ -728,52 +740,63 @@ export function Workspace({
               {tab === "overview" && (
                 <>
                   {advisorMode && (
-                    <section className="advisor-command">
-                      <div>
-                        <span className="eyebrow">MODO ASESOR</span>
-                        <h2>
-                          {nextActivity
-                            ? `Primero: ${nextActivity.client.name}`
-                            : "Tu jornada está despejada"}
-                        </h2>
-                        <p>
-                          {nextActivity
-                            ? `${activityLabels[nextActivity.type]} · ${dateTime(nextActivity.dueAt)}`
-                            : "Crea el siguiente contacto o revisa clientes sin próxima gestión."}
-                        </p>
-                      </div>
-                      <div className="advisor-command-actions">
-                        {nextActivity && (
-                          <button
-                            className="primary"
-                            onClick={() =>
-                              setForm({
-                                kind: "complete",
-                                activity: nextActivity,
-                              })
-                            }
-                          >
-                            <Check size={17} />
-                            Registrar resultado
-                          </button>
-                        )}
-                        <button
-                          className="secondary"
-                          onClick={() =>
-                            clientsWithoutNext[0]
-                              ? setForm({
-                                  kind: "activity",
-                                  client: clientsWithoutNext[0],
+                    <>
+                      <section className="advisor-command">
+                        <div>
+                          <span className="eyebrow">MODO ASESOR</span>
+                          <h2>
+                            {nextActivity
+                              ? `Primero: ${nextActivity.client.name}`
+                              : "Tu jornada está despejada"}
+                          </h2>
+                          <p>
+                            {nextActivity
+                              ? `${activityLabels[nextActivity.type]} · ${dateTime(nextActivity.dueAt)}`
+                              : "Crea el siguiente contacto o revisa clientes sin próxima gestión."}
+                          </p>
+                        </div>
+                        <div className="advisor-command-actions">
+                          {nextActivity && (
+                            <button
+                              className="primary"
+                              onClick={() =>
+                                setForm({
+                                  kind: "complete",
+                                  activity: nextActivity,
                                 })
-                              : setForm({ kind: "activity" })
-                          }
-                          disabled={!clients.length}
-                        >
-                          <Target size={17} />
-                          Programar avance
-                        </button>
-                      </div>
-                    </section>
+                              }
+                            >
+                              <Check size={17} />
+                              Registrar resultado
+                            </button>
+                          )}
+                          <button
+                            className="secondary"
+                            onClick={() =>
+                              clientsWithoutNext[0]
+                                ? setForm({
+                                    kind: "activity",
+                                    client: clientsWithoutNext[0],
+                                  })
+                                : setForm({ kind: "activity" })
+                            }
+                            disabled={!clients.length}
+                          >
+                            <Target size={17} />
+                            Programar avance
+                          </button>
+                        </div>
+                      </section>
+                      <ActiveVisitPanel
+                        visits={activeVisits}
+                        onComplete={(activity) =>
+                          setForm({ kind: "complete", activity })
+                        }
+                      />
+                    </>
+                  )}
+                  {!advisorMode && coordinator && visitMapItems.length > 0 && (
+                    <VisitMapPanel visits={visitMapItems} />
                   )}
                   <div className="metrics">
                     <StatCard
@@ -958,6 +981,17 @@ export function Workspace({
               )}
               {tab === "agenda" && (
                 <>
+                  {activeVisits.length > 0 && (
+                    <ActiveVisitPanel
+                      visits={activeVisits}
+                      onComplete={(activity) =>
+                        setForm({ kind: "complete", activity })
+                      }
+                    />
+                  )}
+                  {!advisorMode && coordinator && visitMapItems.length > 0 && (
+                    <VisitMapPanel visits={visitMapItems} />
+                  )}
                   <section className="panel">
                     <div className="section-heading">
                       <h2>
@@ -1063,6 +1097,9 @@ export function Workspace({
                         ))}
                       </div>
                     </section>
+                  )}
+                  {visitMapItems.length > 0 && (
+                    <VisitMapPanel visits={visitMapItems} />
                   )}
                   {commercial && (
                     <section className="panel">
@@ -1206,4 +1243,148 @@ export function Workspace({
       )}
     </div>
   );
+}
+
+function ActiveVisitPanel({
+  visits,
+  onComplete,
+}: {
+  visits: Activity[];
+  onComplete: (activity: Activity) => void;
+}) {
+  if (!visits.length) return null;
+  return (
+    <section className="panel active-visit-panel">
+      <div className="section-heading">
+        <div>
+          <h2>
+            Visita activa <span className="badge">{visits.length}</span>
+          </h2>
+          <p>Ubicación inicial capturada y cierre pendiente.</p>
+        </div>
+        <span className="live-pill">
+          <Radio size={14} />
+          En campo
+        </span>
+      </div>
+      <div className="active-visit-list">
+        {visits.map((visit) => (
+          <article className="active-visit-card" key={visit.id}>
+            <div>
+              <strong>{visit.client.name}</strong>
+              <small>
+                {visit.advisor.name} · inicio{" "}
+                {visit.visitStartedAt ? dateTime(visit.visitStartedAt) : "--"}
+              </small>
+              <p>{visit.notes}</p>
+            </div>
+            <div className="active-visit-actions">
+              <MapLink activity={visit} point="start" />
+              <button className="primary" onClick={() => onComplete(visit)}>
+                <Check size={16} />
+                Cerrar visita
+              </button>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function VisitMapPanel({ visits }: { visits: Activity[] }) {
+  const visibleVisits = visits.slice(0, 8);
+  return (
+    <section className="panel visit-map-panel">
+      <div className="section-heading">
+        <div>
+          <h2>
+            Mapa de visitas <span className="badge">{visits.length}</span>
+          </h2>
+          <p>Inicio y cierre comparados por asesor y cliente.</p>
+        </div>
+        <MapPinned size={20} />
+      </div>
+      <div className="visit-map-grid">
+        <div className="visit-map-canvas" aria-label="Mapa operativo">
+          {visibleVisits.map((visit, index) => (
+            <span
+              className={`map-marker ${visit.status === "completed" ? "done" : "active"}`}
+              key={visit.id}
+              style={markerStyle(visit, index)}
+              title={`${visit.client.name} · ${visit.advisor.name}`}
+            />
+          ))}
+        </div>
+        <div className="visit-map-list">
+          {visibleVisits.map((visit) => (
+            <article className="visit-map-row" key={visit.id}>
+              <span
+                className={`map-status ${visit.status === "completed" ? "done" : "active"}`}
+              />
+              <div>
+                <strong>{visit.client.name}</strong>
+                <small>
+                  {visit.advisor.name} ·{" "}
+                  {visit.status === "completed" ? "cerrada" : "activa"}
+                </small>
+                <span>
+                  Inicio {coordinateLabel(visit.visitStartLatitude)}
+                  {visit.visitDistanceMeters !== null
+                    ? ` · distancia ${visit.visitDistanceMeters} m`
+                    : ""}
+                </span>
+              </div>
+              <MapLink activity={visit} point="start" compact />
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function MapLink({
+  activity,
+  point,
+  compact = false,
+}: {
+  activity: Activity;
+  point: "start" | "end";
+  compact?: boolean;
+}) {
+  const latitude =
+    point === "start" ? activity.visitStartLatitude : activity.visitEndLatitude;
+  const longitude =
+    point === "start"
+      ? activity.visitStartLongitude
+      : activity.visitEndLongitude;
+  if (latitude === null || longitude === null) {
+    return <span className="badge">Sin coordenada</span>;
+  }
+  return (
+    <a
+      className={compact ? "icon-button map-link" : "secondary map-link"}
+      href={`https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`}
+      target="_blank"
+      rel="noreferrer"
+      aria-label="Abrir ubicación en Google Maps"
+      title="Abrir ubicación"
+    >
+      <Navigation size={compact ? 16 : 15} />
+      {!compact && "Abrir ubicación"}
+    </a>
+  );
+}
+
+function coordinateLabel(value: number | null) {
+  return value === null ? "sin coordenada" : value.toFixed(5);
+}
+
+function markerStyle(activity: Activity, index: number): CSSProperties {
+  const latitude = activity.visitStartLatitude ?? 0;
+  const longitude = activity.visitStartLongitude ?? 0;
+  const x = 10 + Math.abs((longitude * 997 + index * 17) % 78);
+  const y = 12 + Math.abs((latitude * 991 + index * 23) % 72);
+  return { left: `${x}%`, top: `${y}%` };
 }

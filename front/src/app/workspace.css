@@ -1301,6 +1301,149 @@ a.contact-row:hover {
   background: #fff;
   color: var(--brand);
 }
+.active-visit-panel {
+  border-color: color-mix(in srgb, var(--warning) 30%, var(--line));
+}
+.live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: var(--warning-soft);
+  color: #7c4a03;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.active-visit-list {
+  display: grid;
+  gap: 12px;
+}
+.active-visit-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-muted);
+}
+.active-visit-card strong,
+.active-visit-card small {
+  display: block;
+}
+.active-visit-card small {
+  margin-top: 4px;
+  color: var(--muted);
+}
+.active-visit-card p {
+  margin: 8px 0 0;
+  color: var(--ink);
+  font-size: 0.8125rem;
+}
+.active-visit-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+}
+.visit-map-panel {
+  border-color: color-mix(in srgb, var(--brand) 18%, var(--line));
+}
+.visit-map-panel > .section-heading > svg {
+  color: var(--brand);
+}
+.visit-map-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.9fr) minmax(320px, 1.1fr);
+  gap: 18px;
+}
+.visit-map-canvas {
+  position: relative;
+  min-height: 310px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, rgb(15 118 110 / 9%) 1px, transparent 1px),
+    linear-gradient(0deg, rgb(15 118 110 / 9%) 1px, transparent 1px),
+    linear-gradient(135deg, #effaf5, #f8fbf6 48%, #eef6ff);
+  background-size:
+    44px 44px,
+    44px 44px,
+    auto;
+}
+.visit-map-canvas::before {
+  content: "";
+  position: absolute;
+  inset: 18px;
+  border: 1px dashed color-mix(in srgb, var(--brand) 28%, transparent);
+  border-radius: 8px;
+}
+.map-marker {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 6px rgb(15 118 110 / 12%);
+}
+.map-marker.active {
+  background: var(--warning);
+  box-shadow: 0 0 0 7px rgb(245 158 11 / 16%);
+}
+.map-marker.done {
+  background: var(--success);
+}
+.visit-map-list {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  max-height: 310px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.visit-map-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+.visit-map-row strong,
+.visit-map-row small,
+.visit-map-row span {
+  display: block;
+}
+.visit-map-row small {
+  margin-top: 3px;
+  color: var(--muted);
+}
+.visit-map-row span {
+  margin-top: 5px;
+  color: var(--text-subtle);
+  font-size: 0.75rem;
+}
+.map-status {
+  width: 10px;
+  height: 38px;
+  border-radius: 999px;
+  background: var(--success);
+}
+.map-status.active {
+  background: var(--warning);
+}
+.map-link {
+  gap: 7px;
+}
+.icon-button.map-link {
+  color: var(--brand);
+}
 @media (max-width: 760px) {
   .advisor-command {
     align-items: stretch;
@@ -1308,6 +1451,14 @@ a.contact-row:hover {
   }
   .advisor-command-actions > button {
     flex: 1;
+  }
+  .active-visit-card,
+  .active-visit-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .visit-map-grid {
+    grid-template-columns: 1fr;
   }
 }
 .dialog::backdrop {

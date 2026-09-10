@@ -67,15 +67,17 @@ Evidencia local: se agregó `/realtime/events` con SSE autenticado por cookie y 
 
 ### P3 · Ubicaciones y visita activa
 
-Estado: pendiente.
+Estado: implementado localmente, pendiente de validación independiente 5.5.
 
 Objetivo: dar al coordinador una vista clara de visitas y al asesor un estado persistente de visita activa.
 
-Incluye módulo de ubicaciones, mapa Leaflet/OpenStreetMap, lista alternativa accesible, última posición de inicio/cierre, precisión, hora, distancia, asesor y cliente; panel fijo de visita activa; sincronización de coordenadas como eventos ligados a `Activity`.
+Incluye módulo de ubicaciones, mapa operativo sin SDK externo, lista alternativa accesible, última posición de inicio/cierre, precisión, hora, distancia, asesor y cliente; panel fijo de visita activa; sincronización de coordenadas como eventos ligados a `Activity`.
 
 Aceptación: coordinadores ven solo su empresa, asesores no ven ubicaciones ajenas, el mapa funciona sin bloquear la tabla, y una visita conserva sus dos coordenadas al trabajar offline.
 
 Evidencia esperada: vista de mapa para perfiles autorizados, panel persistente de visita activa, sincronización offline de inicio/cierre/foto, cálculo visual de distancia entre coordenadas y pruebas de permisos por rol.
+
+Evidencia local: el asesor ve un panel de visita activa cuando una visita tiene ubicación inicial y cierre pendiente; coordinación comercial/administrativa ve un mapa operativo con puntos capturados, lista auditable, estado activa/cerrada, distancia y enlace a Google Maps. Reutiliza actividades ya filtradas por servidor y refrescadas por SSE, por lo que no agrega costo de proveedor de mapas ni endpoints nuevos.
 
 ### P4 · Evidencia y multimedia en almacenamiento económico
 
