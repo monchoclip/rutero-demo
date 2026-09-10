@@ -1333,46 +1333,6 @@ a.contact-row:hover {
   display: grid;
   gap: 10px;
   padding: 14px;
-  margin: 4px 0 14px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface-muted);
-}
-.visit-guide > div,
-.visit-evidence-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 0.8125rem;
-}
-.visit-guide svg,
-.visit-evidence-row svg {
-  color: var(--brand);
-  flex: none;
-}
-.visit-guide small,
-.visit-evidence-preview small {
-  color: var(--muted);
-  line-height: 1.5;
-}
-.visit-evidence-row {
-  justify-content: space-between;
-  padding: 9px 10px;
-  border-radius: 6px;
-  background: var(--surface);
-}
-.visit-evidence-row span {
-  flex: 1;
-}
-.visit-evidence-row strong {
-  color: var(--brand);
-  font-size: 0.75rem;
-}
-.visit-guide,
-.visit-evidence-preview {
-  display: grid;
-  gap: 10px;
-  padding: 14px;
   margin: 14px 0;
   border: 1px solid color-mix(in srgb, var(--warning) 28%, var(--line));
   border-radius: 8px;
@@ -1385,6 +1345,13 @@ a.contact-row:hover {
   gap: 10px;
   min-width: 0;
   font-size: 0.8125rem;
+}
+.visit-evidence-row {
+  flex-wrap: wrap;
+  justify-content: space-between;
+  padding: 10px;
+  border-radius: 6px;
+  background: var(--surface);
 }
 .visit-guide svg,
 .visit-evidence-row svg {
@@ -1400,6 +1367,32 @@ a.contact-row:hover {
   margin-left: auto;
   color: var(--warning);
   font-size: 0.75rem;
+  text-align: right;
+}
+.visit-evidence-row .secondary,
+.file-action {
+  padding: 7px 10px;
+  font-size: 0.75rem;
+}
+.file-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.file-action input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.visit-photo-preview {
+  width: 100%;
+  max-height: 180px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--line);
 }
 .form-grid > label {
   min-width: 0;

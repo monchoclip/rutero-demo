@@ -223,11 +223,11 @@ export function FaqSection() {
           ],
           [
             "¿Los pagos ya se procesan con Wompi?",
-            "Todavía no. El módulo actual calcula y guarda simulaciones locales de pago. No solicita datos de tarjeta, no se conecta a Wompi y no activa suscripciones reales.",
+            "El módulo calcula cotizaciones y deja comprobantes locales asociados a la empresa. El contrato de checkout y webhook de Wompi está preparado, pero falta validarlo con credenciales sandbox reales antes de cobrar en producción.",
           ],
           [
             "¿Puedo ver la ubicación de mis asesores?",
-            "Puedes programar visitas en la agenda. La captura real de ubicación y la consola de seguimiento están previstas para otra etapa y requieren permisos del usuario y del dispositivo.",
+            "El asesor puede iniciar y cerrar una visita capturando ubicación del navegador, foto y distancia entre puntos. El mapa administrativo y el seguimiento continuo en tiempo real siguen como una entrega posterior.",
           ],
           [
             "¿Quién desarrolla Ruts68?",

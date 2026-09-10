@@ -323,6 +323,98 @@ describe.sequential("real PostgreSQL CRM flow", () => {
         .cancelledAt,
     ).not.toBeNull();
   });
+  it("captures visit start location, closing location and photo before completion", async () => {
+    const scheduled = await request(
+      "POST",
+      "/activities",
+      {
+        clientId,
+        type: "visit",
+        dueAt: new Date(Date.now() + 3600000).toISOString(),
+        notes: "Visita de seguimiento con rectoría",
+        idempotencyKey: crypto.randomUUID(),
+      },
+      advisor.cookie,
+    );
+    expect(scheduled.statusCode).toBe(201);
+    const visitId = scheduled.json().data.id as string;
+    expect(
+      (
+        await request(
+          "POST",
+          `/activities/${visitId}/complete`,
+          {
+            outcome: "contacted",
+            notes: "Sin evidencia",
+            durationSeconds: 600,
+          },
+          advisor.cookie,
+        )
+      ).statusCode,
+    ).toBe(422);
+    expect(
+      (
+        await request(
+          "POST",
+          `/activities/${visitId}/start-visit`,
+          {
+            latitude: 4.71098,
+            longitude: -74.07209,
+            accuracy: 12,
+            capturedAt: new Date().toISOString(),
+            address: "Bogotá",
+          },
+          secondAdvisor.cookie,
+        )
+      ).statusCode,
+    ).toBe(404);
+    const startedAt = new Date().toISOString();
+    const started = await request(
+      "POST",
+      `/activities/${visitId}/start-visit`,
+      {
+        latitude: 4.71098,
+        longitude: -74.07209,
+        accuracy: 12,
+        capturedAt: startedAt,
+        address: "Bogotá",
+      },
+      advisor.cookie,
+    );
+    expect(started.statusCode).toBe(200);
+    expect(started.json().data.visitStartLatitude).toBe(4.71098);
+    const closed = await request(
+      "POST",
+      `/activities/${visitId}/complete`,
+      {
+        outcome: "contacted",
+        notes: "Pedido levantado en sitio",
+        durationSeconds: 900,
+        visitEvidence: {
+          start: {
+            latitude: 4.71098,
+            longitude: -74.07209,
+            accuracy: 12,
+            capturedAt: startedAt,
+            address: "Bogotá",
+          },
+          end: {
+            latitude: 4.711,
+            longitude: -74.072,
+            accuracy: 14,
+            capturedAt: new Date().toISOString(),
+          },
+          photoDataUrl: "data:image/jpeg;base64,aGVsbG8=",
+        },
+      },
+      advisor.cookie,
+    );
+    expect(closed.statusCode).toBe(200);
+    const visit = closed.json().data;
+    expect(visit.status).toBe("completed");
+    expect(visit.visitPhotoDataUrl).toContain("data:image/jpeg;base64");
+    expect(visit.visitDistanceMeters).toBeLessThan(20);
+  });
   it("reassigns pending tasks and reminder recipients, preserves history, revokes old advisor access", async () => {
     expect(
       (
@@ -368,10 +460,11 @@ describe.sequential("real PostgreSQL CRM flow", () => {
       status: string;
       advisor: { id: string };
     }[];
-    expect(entries).toHaveLength(2);
+    expect(entries).toHaveLength(3);
     // Past activities keep the advisor who actually worked them; only the
     // still-pending one moved — this is the audit trail the reassignment
     // must preserve.
+    expect(entries.filter((e) => e.status === "completed")).toHaveLength(2);
     expect(entries.find((e) => e.status === "completed")?.advisor.id).toBe(
       advisor.id,
     );

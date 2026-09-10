@@ -6,6 +6,7 @@ import {
   activitySchema,
   completeSchema,
   assignmentSchema,
+  visitStartSchema,
 } from "../CrmSchema.js";
 import { AppError } from "../../shared/errors.js";
 import type { Handler, Services } from "../../shared/context.js";
@@ -62,6 +63,12 @@ export function crmHandlers({
         r.actor!,
         idSchema.parse(r.params).id,
         completeSchema.parse(r.body),
+      ),
+    startVisit: async (r) =>
+      crm.startVisit(
+        r.actor!,
+        idSchema.parse(r.params).id,
+        visitStartSchema.parse(r.body),
       ),
     mailbox: async (r) => {
       if (production || !localMail)

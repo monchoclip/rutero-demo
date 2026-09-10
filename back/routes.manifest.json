@@ -106,6 +106,13 @@
   },
   {
     "method": "POST",
+    "path": "/activities/:id/start-visit",
+    "operation": "startVisit",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "POST",
     "path": "/activities/:id/complete",
     "operation": "completeActivity",
     "authenticated": true,

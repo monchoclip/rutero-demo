@@ -26,9 +26,39 @@ export const completeSchema = z
     notes: z.string().trim().min(2).max(3000),
     durationSeconds: z.number().int().min(0).max(86400),
     followUpAt: z.iso.datetime({ offset: true }).optional(),
+    visitEvidence: z
+      .object({
+        start: z.object({
+          latitude: z.number().min(-90).max(90),
+          longitude: z.number().min(-180).max(180),
+          accuracy: z.number().min(0).max(10000),
+          capturedAt: z.iso.datetime({ offset: true }),
+          address: z.string().trim().max(240).optional(),
+        }),
+        end: z.object({
+          latitude: z.number().min(-90).max(90),
+          longitude: z.number().min(-180).max(180),
+          accuracy: z.number().min(0).max(10000),
+          capturedAt: z.iso.datetime({ offset: true }),
+        }),
+        photoDataUrl: z
+          .string()
+          .regex(/^data:image\/(jpeg|jpg|png|webp);base64,[A-Za-z0-9+/=]+$/)
+          .max(2_800_000),
+      })
+      .optional(),
   })
   .strict();
 export const assignmentSchema = z.object({ advisorId: z.uuid() }).strict();
+export const visitStartSchema = z
+  .object({
+    latitude: z.number().min(-90).max(90),
+    longitude: z.number().min(-180).max(180),
+    accuracy: z.number().min(0).max(10000),
+    capturedAt: z.iso.datetime({ offset: true }),
+    address: z.string().trim().max(240).optional(),
+  })
+  .strict();
 export const idSchema = z.object({ id: z.uuid() });
 export const listSchema = z.object({
   cursor: z.uuid().optional(),

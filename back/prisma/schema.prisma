@@ -126,6 +126,17 @@ model Activity {
   notes String
   outcome String?
   durationSeconds Int?
+  visitStartedAt DateTime?
+  visitStartLatitude Float?
+  visitStartLongitude Float?
+  visitStartAccuracy Float?
+  visitStartAddress String?
+  visitFinishedAt DateTime?
+  visitEndLatitude Float?
+  visitEndLongitude Float?
+  visitEndAccuracy Float?
+  visitPhotoDataUrl String?
+  visitDistanceMeters Int?
   idempotencyKey String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

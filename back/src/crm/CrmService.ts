@@ -15,6 +15,7 @@ import {
   normalizeModuleConfig,
   type ModuleConfig,
 } from "./OrganizationSchema.js";
+import { distanceMeters } from "./VisitTypes.js";
 export class CrmService {
   constructor(
     private repository: CrmRepository,
@@ -155,13 +156,43 @@ export class CrmService {
       );
     const client = await this.repository.client(actor, activity.clientId);
     if (!client) notFound();
-    const { followUpAt, ...data } = input;
+    const { followUpAt, visitEvidence, ...data } = input;
     if (followUpAt && new Date(followUpAt) <= new Date())
       throw new AppError(
         422,
         "INVALID_DATE",
         "El seguimiento debe ser futuro.",
       );
+    if (activity.type === "visit" && !visitEvidence)
+      throw new AppError(
+        422,
+        "VISIT_EVIDENCE_REQUIRED",
+        "Para cerrar una visita debes capturar ubicación inicial, ubicación final y fotografía.",
+      );
+    if (activity.type !== "visit" && visitEvidence)
+      throw new AppError(
+        422,
+        "VISIT_EVIDENCE_NOT_ALLOWED",
+        "La evidencia de visita solo aplica a actividades de tipo visita.",
+      );
+    const visitData = visitEvidence
+      ? {
+          visitStartedAt: new Date(visitEvidence.start.capturedAt),
+          visitStartLatitude: visitEvidence.start.latitude,
+          visitStartLongitude: visitEvidence.start.longitude,
+          visitStartAccuracy: visitEvidence.start.accuracy,
+          visitStartAddress: visitEvidence.start.address,
+          visitFinishedAt: new Date(visitEvidence.end.capturedAt),
+          visitEndLatitude: visitEvidence.end.latitude,
+          visitEndLongitude: visitEvidence.end.longitude,
+          visitEndAccuracy: visitEvidence.end.accuracy,
+          visitPhotoDataUrl: visitEvidence.photoDataUrl,
+          visitDistanceMeters: distanceMeters(
+            visitEvidence.start,
+            visitEvidence.end,
+          ),
+        }
+      : {};
     const followUp = followUpAt
       ? {
           dueAt: new Date(followUpAt),
@@ -171,8 +202,48 @@ export class CrmService {
         }
       : undefined;
     return (
-      (await this.repository.complete(actor, id, data, followUp)) ??
-      this.repository.activity(actor, id)
+      (await this.repository.complete(
+        actor,
+        id,
+        { ...data, ...visitData },
+        followUp,
+      )) ?? this.repository.activity(actor, id)
+    );
+  }
+  async startVisit(
+    actor: Actor,
+    id: string,
+    input: {
+      latitude: number;
+      longitude: number;
+      accuracy: number;
+      capturedAt: string;
+      address?: string;
+    },
+  ) {
+    requireWriter(actor);
+    const activity = await this.repository.activity(actor, id);
+    if (!activity) notFound();
+    if (activity.type !== "visit")
+      throw new AppError(
+        422,
+        "NOT_A_VISIT",
+        "Solo las visitas pueden iniciar evidencia de ubicación.",
+      );
+    if (activity.status !== "scheduled")
+      throw new AppError(
+        422,
+        "INVALID_STATE_TRANSITION",
+        "Esta visita ya no se puede iniciar.",
+      );
+    return (
+      (await this.repository.startVisit(actor, id, {
+        startedAt: new Date(input.capturedAt),
+        latitude: input.latitude,
+        longitude: input.longitude,
+        accuracy: input.accuracy,
+        address: input.address,
+      })) ?? this.repository.activity(actor, id)
     );
   }
   async history(actor: Actor, clientId: string) {

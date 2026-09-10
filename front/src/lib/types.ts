@@ -52,6 +52,17 @@ export type Activity = {
   notes: string;
   outcome: string | null;
   durationSeconds: number | null;
+  visitStartedAt: string | null;
+  visitStartLatitude: number | null;
+  visitStartLongitude: number | null;
+  visitStartAccuracy: number | null;
+  visitStartAddress: string | null;
+  visitFinishedAt: string | null;
+  visitEndLatitude: number | null;
+  visitEndLongitude: number | null;
+  visitEndAccuracy: number | null;
+  visitPhotoDataUrl: string | null;
+  visitDistanceMeters: number | null;
   createdAt: string;
   completedAt: string | null;
   client: { name: string };

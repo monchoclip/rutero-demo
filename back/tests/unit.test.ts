@@ -34,6 +34,7 @@ import {
   simulationSchema,
 } from "../src/billing/BillingSchema.js";
 import {
+  distanceMeters,
   visitEvidenceCapabilities,
   visitVerificationStatus,
 } from "../src/crm/VisitTypes.js";
@@ -204,21 +205,65 @@ describe("billing simulation math", () => {
   });
 });
 describe("visit evidence preparation", () => {
-  it("keeps F4 visit evidence explicit without implying active tracking", () => {
+  it("exposes browser capture without implying active background tracking", () => {
     expect(visitEvidenceCapabilities).toEqual({
-      location: "not_configured",
-      photo: "not_configured",
+      location: "available",
+      photo: "available",
       realtime: "not_configured",
     });
     expect(
       visitVerificationStatus({ type: "visit", status: "scheduled" }),
     ).toBe("planned");
     expect(
+      visitVerificationStatus({
+        type: "visit",
+        status: "scheduled",
+        visitStartedAt: new Date(),
+      }),
+    ).toBe("in_progress");
+    expect(
       visitVerificationStatus({ type: "visit", status: "completed" }),
     ).toBe("closed_without_evidence");
+    expect(
+      visitVerificationStatus({
+        type: "visit",
+        status: "completed",
+        visitStartedAt: new Date(),
+        visitStartLatitude: 4.71098,
+        visitStartLongitude: -74.07209,
+        visitFinishedAt: new Date(),
+        visitEndLatitude: 4.711,
+        visitEndLongitude: -74.072,
+        visitPhotoDataUrl: "data:image/jpeg;base64,aGVsbG8=",
+        visitDistanceMeters: 12,
+      }),
+    ).toBe("verified");
+    expect(
+      visitVerificationStatus({
+        type: "visit",
+        status: "completed",
+        visitStartedAt: new Date(),
+        visitStartLatitude: 4.71098,
+        visitStartLongitude: -74.07209,
+        visitFinishedAt: new Date(),
+        visitEndLatitude: 4.72,
+        visitEndLongitude: -74.08,
+        visitPhotoDataUrl: "data:image/jpeg;base64,aGVsbG8=",
+        visitDistanceMeters: 1200,
+      }),
+    ).toBe("out_of_range");
     expect(visitVerificationStatus({ type: "call", status: "scheduled" })).toBe(
       null,
     );
+    expect(
+      distanceMeters(
+        { latitude: 4.71098, longitude: -74.07209 },
+        {
+          latitude: 4.711,
+          longitude: -74.072,
+        },
+      ),
+    ).toBeLessThan(20);
   });
 });
 describe("Wompi checkout integrity", () => {

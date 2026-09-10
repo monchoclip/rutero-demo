@@ -201,6 +201,38 @@ export class CrmRepository {
       where: { id, ...activityScope(actor) },
     });
   }
+  startVisit(
+    actor: Actor,
+    id: string,
+    data: {
+      startedAt: Date;
+      latitude: number;
+      longitude: number;
+      accuracy: number;
+      address?: string;
+    },
+  ) {
+    return this.db.$transaction(async (tx) => {
+      const result = await tx.activity.updateMany({
+        where: {
+          id,
+          ...activityScope(actor),
+          status: "scheduled",
+          type: "visit",
+        },
+        data: {
+          visitStartedAt: data.startedAt,
+          visitStartLatitude: data.latitude,
+          visitStartLongitude: data.longitude,
+          visitStartAccuracy: data.accuracy,
+          visitStartAddress: data.address,
+        },
+      });
+      if (!result.count) return null;
+      await this.audit(tx, actor, "visit.started", id);
+      return tx.activity.findUnique({ where: { id } });
+    });
+  }
   byKey(actor: Actor, idempotencyKey: string) {
     return this.db.activity.findFirst({
       where: { ...activityScope(actor), idempotencyKey },
@@ -256,7 +288,22 @@ export class CrmRepository {
   complete(
     actor: Actor,
     id: string,
-    data: { outcome: string; notes: string; durationSeconds: number },
+    data: {
+      outcome: string;
+      notes: string;
+      durationSeconds: number;
+      visitStartedAt?: Date;
+      visitStartLatitude?: number;
+      visitStartLongitude?: number;
+      visitStartAccuracy?: number;
+      visitStartAddress?: string;
+      visitFinishedAt?: Date;
+      visitEndLatitude?: number;
+      visitEndLongitude?: number;
+      visitEndAccuracy?: number;
+      visitPhotoDataUrl?: string;
+      visitDistanceMeters?: number;
+    },
     followUp?: {
       dueAt: Date;
       clientId: string;

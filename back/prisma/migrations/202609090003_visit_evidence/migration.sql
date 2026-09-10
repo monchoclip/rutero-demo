@@ -1,0 +1,11 @@
+ALTER TABLE "Activity" ADD COLUMN "visitStartedAt" TIMESTAMP(3);
+ALTER TABLE "Activity" ADD COLUMN "visitStartLatitude" DOUBLE PRECISION;
+ALTER TABLE "Activity" ADD COLUMN "visitStartLongitude" DOUBLE PRECISION;
+ALTER TABLE "Activity" ADD COLUMN "visitStartAccuracy" DOUBLE PRECISION;
+ALTER TABLE "Activity" ADD COLUMN "visitStartAddress" TEXT;
+ALTER TABLE "Activity" ADD COLUMN "visitFinishedAt" TIMESTAMP(3);
+ALTER TABLE "Activity" ADD COLUMN "visitEndLatitude" DOUBLE PRECISION;
+ALTER TABLE "Activity" ADD COLUMN "visitEndLongitude" DOUBLE PRECISION;
+ALTER TABLE "Activity" ADD COLUMN "visitEndAccuracy" DOUBLE PRECISION;
+ALTER TABLE "Activity" ADD COLUMN "visitPhotoDataUrl" TEXT;
+ALTER TABLE "Activity" ADD COLUMN "visitDistanceMeters" INTEGER;

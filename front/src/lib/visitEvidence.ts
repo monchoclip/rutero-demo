@@ -2,15 +2,15 @@ import type { Activity } from "./types";
 
 export type VisitEvidenceCapability = "location" | "photo" | "realtime";
 
-export type VisitEvidenceCapabilityState = "not_configured";
+export type VisitEvidenceCapabilityState = "available" | "manual_only";
 
 export const visitEvidenceCapabilities: Record<
   VisitEvidenceCapability,
   VisitEvidenceCapabilityState
 > = {
-  location: "not_configured",
-  photo: "not_configured",
-  realtime: "not_configured",
+  location: "available",
+  photo: "available",
+  realtime: "manual_only",
 };
 
 export type VisitEvidenceStatus = {
@@ -19,21 +19,42 @@ export type VisitEvidenceStatus = {
 };
 
 export function visitEvidenceStatus(
-  activity: Pick<Activity, "type" | "status">,
+  activity: Pick<
+    Activity,
+    | "type"
+    | "status"
+    | "visitStartedAt"
+    | "visitFinishedAt"
+    | "visitPhotoDataUrl"
+    | "visitDistanceMeters"
+  >,
 ): VisitEvidenceStatus | null {
   if (activity.type !== "visit") return null;
   if (activity.status === "cancelled")
     return {
       label: "Visita cancelada",
-      detail: "Sin evidencia de ubicación, fotografía o tiempo real.",
+      detail: "Sin evidencia activa.",
     };
   if (activity.status === "completed")
+    return activity.visitFinishedAt && activity.visitPhotoDataUrl
+      ? {
+          label: "Visita verificada",
+          detail:
+            typeof activity.visitDistanceMeters === "number"
+              ? `Inicio y cierre a ${activity.visitDistanceMeters} m.`
+              : "Ubicación y fotografía guardadas.",
+        }
+      : {
+          label: "Visita cerrada sin evidencia",
+          detail: "Resultado guardado sin ubicación o fotografía.",
+        };
+  if (activity.visitStartedAt)
     return {
-      label: "Visita cerrada sin evidencia F4",
-      detail: "Resultado guardado; ubicación y fotografía aún no se capturan.",
+      label: "Visita iniciada",
+      detail: "Ubicación inicial capturada; falta cierre con foto.",
     };
   return {
     label: "Visita planificada",
-    detail: "Ubicación, fotografía y tiempo real están preparados para F4.",
+    detail: "Lista para iniciar con ubicación del dispositivo.",
   };
 }
