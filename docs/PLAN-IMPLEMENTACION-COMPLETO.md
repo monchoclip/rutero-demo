@@ -93,13 +93,15 @@ Evidencia local: `Activity` guarda llave de almacenamiento, SHA-256, tipo MIME y
 
 ### P5 · Catálogo, ofertas y campañas
 
-Estado: pendiente.
+Estado: implementado localmente, pendiente de validación independiente 5.5 (límite de agentes).
 
 Objetivo: administrar productos/servicios y asociarlos a clientes y asesores.
 
 Incluye productos con código, descripción, precio versionado, moneda, vigencia y estado; ofertas; campañas con participación histórica, reactivación sin sobrescribir historial, permisos comerciales y vistas de asesor/coordinador.
 
 Aceptación: un precio usado queda congelado en la actividad/pedido; una campaña vencida no acepta nuevas altas; la cartera y los datos permanecen aislados por empresa; UI tiene estados vacío/carga/error.
+
+Evidencia local: migración `202609100003_catalog_campaigns` con productos, campañas, relación de productos con precio congelado e inscripciones por cliente/asesor. La API `/catalog/*` aplica aislamiento por empresa y permisos (coordinación comercial administra; asesores inscriben solo su cartera), y la pestaña Catálogo y campañas consume los estados de carga/error/vacío. La validación de campaña activa y alcance de cartera está cubierta por integración; falta validar vencimiento y precio histórico en el flujo de pedidos de P6.
 
 ### P6 · Pedidos y adaptador ERP
 
