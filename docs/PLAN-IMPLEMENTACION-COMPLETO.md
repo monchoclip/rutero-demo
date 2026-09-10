@@ -55,7 +55,7 @@ Validación: APROBADO. El botón de actividades conserva un cursor global; su et
 
 ### P2 · Tiempo real de bajo costo
 
-Estado: oro local (0bcfa20, 75cfb62, f361301, 29e80f9; validado por p3_validate_security_final).
+Estado: oro local (5c9d792, eb51567; validado por p2_validate_final2).
 
 Objetivo: actualizar CRM, visitas, chat y cobros sin refrescos manuales.
 
@@ -69,7 +69,7 @@ Evidencia local: se agregó `/realtime/events` con SSE autenticado por cookie y 
 
 ### P3 · Ubicaciones y visita activa
 
-Estado: oro local (91ec770, e416ad5; gates y revisión CTO completados; validación independiente pendiente por límite de agentes).
+Estado: oro local (0bcfa20, 75cfb62, f361301, 29e80f9; validado por p3_validate_security_final).
 
 Objetivo: dar al coordinador una vista clara de visitas y al asesor un estado persistente de visita activa.
 
