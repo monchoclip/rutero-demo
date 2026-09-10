@@ -1934,6 +1934,14 @@ describe.sequential("WhatsApp chat: numbers, webhook and conversations", () => {
     expect(
       (await request("GET", "/catalog/products", undefined, externalAdvisor.cookie)).json().data,
     ).toEqual([]);
+    const expired = await request(
+      "POST",
+      "/catalog/campaigns",
+      { name: "Campaña vencida", description: "No admitir altas", startsAt: new Date(Date.now() - 86400000).toISOString(), endsAt: new Date(Date.now() - 3600000).toISOString(), active: true, productIds: [productId] },
+      owner.cookie,
+    );
+    expect(expired.statusCode).toBe(201);
+    expect((await request("POST", `/catalog/campaigns/${expired.json().data.id}/enroll`, { clientId }, owner.cookie)).statusCode).toBe(404);
   });
   it("creates an idempotent order with frozen price and confirms simulated ERP", async () => {
     const products = await request("GET", "/catalog/products", undefined, owner.cookie);

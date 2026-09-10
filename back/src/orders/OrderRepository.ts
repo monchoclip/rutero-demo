@@ -11,7 +11,8 @@ export class OrderRepository {
       if (existing) return existing;
       const client = await tx.client.findFirst({ where: { id: input.clientId, ...scope(actor) } });
       if (!client) return null;
-      const products = await tx.product.findMany({ where: { organizationId: tenantId(actor), id: { in: input.lines.map((l) => l.productId) }, active: true } });
+      const now = new Date();
+      const products = await tx.product.findMany({ where: { organizationId: tenantId(actor), id: { in: input.lines.map((l) => l.productId) }, active: true, validFrom: { lte: now }, OR: [{ validTo: null }, { validTo: { gt: now } }] } });
       if (products.length !== new Set(input.lines.map((l) => l.productId)).size) return null;
       const lines = input.lines.map((line) => { const p = products.find((candidate) => candidate.id === line.productId)!; return { productId: p.id, productCode: p.code, productName: p.name, unitPriceMinor: p.priceMinor, quantity: line.quantity, lineTotalMinor: p.priceMinor * line.quantity }; });
       return tx.order.create({ data: { organizationId: tenantId(actor), clientId: client.id, advisorId: client.advisorId, totalMinor: lines.reduce((sum, l) => sum + l.lineTotalMinor, 0), currency: client ? "COP" : "COP", idempotencyKey: input.idempotencyKey, lines: { create: lines } }, include: { lines: true, client: { select: { id: true, name: true } }, advisor: { select: { id: true, name: true } } } });

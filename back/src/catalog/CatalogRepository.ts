@@ -37,7 +37,8 @@ export class CatalogRepository {
   }
   enroll(actor: Actor, campaignId: string, clientId: string) {
     return this.db.$transaction(async (tx) => {
-      const campaign = await tx.campaign.findFirst({ where: { id: campaignId, organizationId: tenantId(actor), active: true }, include: { products: true } });
+      const now = new Date();
+      const campaign = await tx.campaign.findFirst({ where: { id: campaignId, organizationId: tenantId(actor), active: true, startsAt: { lte: now }, OR: [{ endsAt: null }, { endsAt: { gt: now } }] }, include: { products: true } });
       if (!campaign) return null;
       const client = await tx.client.findFirst({ where: { id: clientId, organizationId: tenantId(actor), ...(actor.role === "advisor" ? { advisorId: actor.id } : {}) } });
       if (!client) return null;
