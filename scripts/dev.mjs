@@ -11,7 +11,9 @@ const env = {
   WHATSAPP_TOKEN_ENCRYPTION_KEY: whatsappTokenKey,
 };
 function run(args, extra = {}) {
-  return spawn(process.execPath, [npmCli, ...args], {
+  const command = npmCli ? process.execPath : process.platform === "win32" ? "npm.cmd" : "npm";
+  const commandArgs = npmCli ? [npmCli, ...args] : args;
+  return spawn(command, commandArgs, {
     stdio: "inherit",
     env,
     windowsHide: true,
