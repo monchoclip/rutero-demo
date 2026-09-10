@@ -35,9 +35,9 @@ Ruts68 es un CRM web multiempresa y multisector para ventas, atención y fideliz
 
 | Rol técnico | Alcance |
 | --- | --- |
-| `super_admin` | Plataforma. No obtiene acceso implícito a carteras sin contexto de empresa autorizado y auditado. Consola pendiente. |
+| `super_admin` | Plataforma. No obtiene acceso implícito a carteras sin contexto de empresa autorizado y auditado. La consola local permite seleccionar empresas, revisar membresía, registrar líneas y parametrizar módulos; la gestión avanzada sigue pendiente. |
 | `commercial_coordinator` | Su empresa: invitar asesores, asignar/reasignar clientes, programar y registrar contactos. Es el rol del fundador al registrarse. |
-| `administrative_coordinator` | Consulta operativa de su empresa. Gestión administrativa y ubicación se completarán en su etapa; no conceder permisos comerciales por conveniencia. |
+| `administrative_coordinator` | Consulta operativa de su empresa, incluido el mapa de visitas autorizadas. No conceder permisos comerciales por conveniencia. |
 | `advisor` | Su cartera, sus actividades y sus recordatorios. No invita usuarios ni reasigna clientes. |
 
 La existencia de un enum no implica que el módulo de ese perfil esté terminado. Por ahora solo se crean coordinadores comerciales por registro y asesores por invitación. Los roles se toman del usuario vigente en base de datos en cada petición.
