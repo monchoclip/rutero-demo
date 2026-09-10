@@ -8,8 +8,8 @@ Registro de los agentes 5.5 y de los gates ejecutados en local.
 | P2 Tiempo real SSE | `5c9d792`, `eb51567` | APROBADO (`p2_validate_final2`) | `reply.hijack`, aislamiento por empresa, 30 unitarias, 37 integración |
 | P3 Visitas/mapa | `0bcfa20`, `75cfb62`, `f361301`, `29e80f9` | APROBADO (`p3_validate_security_final`) | cierre cruzado bloqueado, mapa, evidencia, 30 unitarias, 38 integración |
 | P4 Fotos/S3 | `91ec770`, `e416ad5` | Pendiente por límite de agentes | gates locales actuales: 35 unitarias, 41 integración, typecheck, rutas y build; revisión CTO completada |
-| P5 Catálogo/campañas | `50b8961`, `2b90487` | Pendiente por límite de agentes | 41 integración; vigencia de campañas/productos y aislamiento revisados localmente |
-| P6 Pedidos/ERP | `ccf8427`, `4230c1a`, `e015bb7` | Pendiente por límite de agentes | 41 integración; snapshot, idempotencia, ERP simulado y cola offline |
+| P5 Catálogo/campañas | `50b8961`, `2b90487` | Pendiente por límite de agentes | 42 integración; vigencia de campañas/productos y aislamiento revisados localmente |
+| P6 Pedidos/ERP | `ccf8427`, `4230c1a`, `e015bb7` | Pendiente por límite de agentes | 42 integración; snapshot, idempotencia, ERP simulado y cola offline |
 | P7 Meta/Wompi | `bd83beb` + adaptadores existentes | Pendiente sandbox externo | Firmas, secretos e idempotencia verificadas localmente; requiere credenciales reales |
 | P8 UX/UI | histórico F1 + módulos P5/P6 | Pendiente por recorrido independiente | typecheck y build estático pasan; revisión local de CSS responsive, foco visible, módulos dinámicos y permisos |
 | P9 AWS | `dce70e6` | Pendiente de staging | plantilla CloudFormation y checklist; no se desplegó |

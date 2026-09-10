@@ -66,7 +66,7 @@ La existencia de un enum no implica que el módulo de ese perfil esté terminado
 
 ## 6. Agenda, correo y estados
 
-`scheduled → completed` o `scheduled → cancelled`; no reabrir actividades por efectos de un reintento. La interfaz F1 implementa completar; cancelación aún pendiente.
+`scheduled → completed` o `scheduled → cancelled`; no reabrir actividades por efectos de un reintento. La interfaz F1 permite completar o cancelar una actividad y detiene el recordatorio pendiente al cancelar.
 
 Las fechas se almacenan en UTC. La interfaz inicial indica explícitamente que usa la zona del dispositivo; el render por zona de empresa debe implementarse antes del uso multizona.
 
