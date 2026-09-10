@@ -351,7 +351,7 @@ export function Workspace({
   return (
     <div className="workspace">
       <aside className="sidebar">
-        <a className="brand" href="/">
+        <a className="brand" href="/" aria-label="Ruts68, inicio">
           <Route size={29} />
           <span>
             ruts<span className="brand-number">68</span>

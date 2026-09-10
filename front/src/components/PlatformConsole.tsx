@@ -95,7 +95,7 @@ export function PlatformConsole({
   return (
     <main className="platform-shell">
       <aside className="platform-side">
-        <a className="brand" href="/">
+        <a className="brand" href="/" aria-label="Ruts68, inicio">
           <Route size={29} />
           <span>
             ruts<span className="brand-number">68</span>

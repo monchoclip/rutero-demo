@@ -41,7 +41,7 @@ export function Auth({
   return (
     <main className="auth-layout">
       <section className="auth-story">
-        <a className="brand" href="/">
+        <a className="brand" href="/" aria-label="Ruts68, inicio">
           <Route size={30} />
           <span>
             ruts<span className="brand-number">68</span>
