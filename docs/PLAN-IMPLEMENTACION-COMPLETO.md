@@ -3,6 +3,8 @@
 Estado: plan aprobado para ejecución incremental.  
 Regla: cada plan se implementa en una rama/commit verificable, después se ejecuta el gate técnico y se levanta un agente validador 5.5 independiente. Solo si el validador aprueba se inicia el siguiente plan.
 
+El registro detallado de dictámenes y gates está en [`docs/VALIDACION-PLANES.md`](./VALIDACION-PLANES.md).
+
 ## Definición de oro
 
 Una fase pasa a oro cuando cumple estas condiciones:
