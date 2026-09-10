@@ -138,6 +138,10 @@ model Activity {
   visitEndLongitude Float?
   visitEndAccuracy Float?
   visitPhotoDataUrl String?
+  visitPhotoStorageKey String?
+  visitPhotoSha256 String?
+  visitPhotoContentType String?
+  visitPhotoSizeBytes Int?
   visitDistanceMeters Int?
   idempotencyKey String
   createdAt DateTime @default(now())

@@ -361,6 +361,10 @@ export class CrmRepository {
       visitEndLongitude?: number;
       visitEndAccuracy?: number;
       visitPhotoDataUrl?: string;
+      visitPhotoStorageKey?: string;
+      visitPhotoSha256?: string;
+      visitPhotoContentType?: string;
+      visitPhotoSizeBytes?: number;
       visitDistanceMeters?: number;
     },
     followUp?: {

@@ -62,6 +62,10 @@ export type Activity = {
   visitEndLongitude: number | null;
   visitEndAccuracy: number | null;
   visitPhotoDataUrl: string | null;
+  visitPhotoStorageKey: string | null;
+  visitPhotoSha256: string | null;
+  visitPhotoContentType: string | null;
+  visitPhotoSizeBytes: number | null;
   visitDistanceMeters: number | null;
   createdAt: string;
   completedAt: string | null;

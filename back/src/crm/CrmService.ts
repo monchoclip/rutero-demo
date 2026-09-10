@@ -18,6 +18,7 @@ import {
 } from "./OrganizationSchema.js";
 import { distanceMeters } from "./VisitTypes.js";
 import type { EventHub } from "../realtime/EventHub.js";
+import { storeVisitPhoto } from "../storage/VisitPhotoStorage.js";
 export class CrmService {
   constructor(
     private repository: CrmRepository,
@@ -195,22 +196,33 @@ export class CrmService {
         "La evidencia de visita solo aplica a actividades de tipo visita.",
       );
     const visitData = visitEvidence
-      ? {
-          visitStartedAt: new Date(visitEvidence.start.capturedAt),
-          visitStartLatitude: visitEvidence.start.latitude,
-          visitStartLongitude: visitEvidence.start.longitude,
-          visitStartAccuracy: visitEvidence.start.accuracy,
-          visitStartAddress: visitEvidence.start.address,
-          visitFinishedAt: new Date(visitEvidence.end.capturedAt),
-          visitEndLatitude: visitEvidence.end.latitude,
-          visitEndLongitude: visitEvidence.end.longitude,
-          visitEndAccuracy: visitEvidence.end.accuracy,
-          visitPhotoDataUrl: visitEvidence.photoDataUrl,
-          visitDistanceMeters: distanceMeters(
-            visitEvidence.start,
-            visitEvidence.end,
-          ),
-        }
+      ? (() => {
+          const photo = storeVisitPhoto({
+            organizationId: actor.organizationId!,
+            activityId: id,
+            dataUrl: visitEvidence.photoDataUrl,
+          });
+          return {
+            visitStartedAt: new Date(visitEvidence.start.capturedAt),
+            visitStartLatitude: visitEvidence.start.latitude,
+            visitStartLongitude: visitEvidence.start.longitude,
+            visitStartAccuracy: visitEvidence.start.accuracy,
+            visitStartAddress: visitEvidence.start.address,
+            visitFinishedAt: new Date(visitEvidence.end.capturedAt),
+            visitEndLatitude: visitEvidence.end.latitude,
+            visitEndLongitude: visitEvidence.end.longitude,
+            visitEndAccuracy: visitEvidence.end.accuracy,
+            visitPhotoDataUrl: photo.dataUrl,
+            visitPhotoStorageKey: photo.storageKey,
+            visitPhotoSha256: photo.sha256,
+            visitPhotoContentType: photo.contentType,
+            visitPhotoSizeBytes: photo.sizeBytes,
+            visitDistanceMeters: distanceMeters(
+              visitEvidence.start,
+              visitEvidence.end,
+            ),
+          };
+        })()
       : {};
     const followUp = followUpAt
       ? {

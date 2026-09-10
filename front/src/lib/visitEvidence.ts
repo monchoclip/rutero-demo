@@ -26,6 +26,7 @@ export function visitEvidenceStatus(
     | "visitStartedAt"
     | "visitFinishedAt"
     | "visitPhotoDataUrl"
+    | "visitPhotoStorageKey"
     | "visitDistanceMeters"
   >,
 ): VisitEvidenceStatus | null {
@@ -36,7 +37,8 @@ export function visitEvidenceStatus(
       detail: "Sin evidencia activa.",
     };
   if (activity.status === "completed")
-    return activity.visitFinishedAt && activity.visitPhotoDataUrl
+    return activity.visitFinishedAt &&
+      (activity.visitPhotoDataUrl || activity.visitPhotoStorageKey)
       ? {
           label: "Visita verificada",
           detail:

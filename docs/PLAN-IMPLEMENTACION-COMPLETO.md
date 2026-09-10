@@ -81,13 +81,15 @@ Evidencia local: el asesor ve un panel de visita activa cuando una visita tiene 
 
 ### P4 · Evidencia y multimedia en almacenamiento económico
 
-Estado: pendiente.
+Estado: implementado localmente, pendiente de validación independiente 5.5.
 
 Objetivo: retirar fotografías y multimedia pesada de PostgreSQL.
 
 Incluye adaptador S3 compatible, URLs presignadas, hash/tamaño/content-type, límites, retención, eliminación autorizada y fallback local únicamente para desarrollo.
 
 Aceptación: la base guarda metadata y llave, nunca el binario en producción; descargas autorizadas funcionan; errores de carga se pueden reintentar; pruebas de seguridad de tipo y tamaño pasan.
+
+Evidencia local: `Activity` ahora guarda llave de almacenamiento, SHA-256, tipo MIME y tamaño de la foto de visita. El backend calcula metadata desde el `data:` recibido, mantiene previsualización local por defecto y permite `VISIT_PHOTO_STORAGE_MODE=external` para no persistir el binario en la fila cuando el almacenamiento externo esté listo. Falta conectar bucket S3 real, URLs presignadas y reglas de retención con credenciales AWS.
 
 ### P5 · Catálogo, ofertas y campañas
 

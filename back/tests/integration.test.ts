@@ -484,6 +484,12 @@ describe.sequential("real PostgreSQL CRM flow", () => {
     const visit = closed.json().data;
     expect(visit.status).toBe("completed");
     expect(visit.visitPhotoDataUrl).toContain("data:image/jpeg;base64");
+    expect(visit.visitPhotoStorageKey).toContain(`/visits/${visitId}/`);
+    expect(visit.visitPhotoSha256).toBe(
+      "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+    );
+    expect(visit.visitPhotoContentType).toBe("image/jpeg");
+    expect(visit.visitPhotoSizeBytes).toBe(5);
     expect(visit.visitDistanceMeters).toBeLessThan(20);
   });
   it("reassigns pending tasks and reminder recipients, preserves history, revokes old advisor access", async () => {

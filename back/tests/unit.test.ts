@@ -40,6 +40,7 @@ import {
   visitVerificationStatus,
 } from "../src/crm/VisitTypes.js";
 import { EventHub } from "../src/realtime/EventHub.js";
+import { storeVisitPhoto } from "../src/storage/VisitPhotoStorage.js";
 
 function fakeReply() {
   const chunks: string[] = [];
@@ -107,6 +108,21 @@ describe("realtime event hub", () => {
     const reply = fakeReply();
     hub.subscribe(actor(null), reply as never);
     expect(reply.chunks.join("")).toContain("TENANT_REQUIRED");
+  });
+});
+describe("visit photo storage metadata", () => {
+  it("builds a storage key, hash and size from an image data URL", () => {
+    const photo = storeVisitPhoto({
+      organizationId: "org-1",
+      activityId: "act-1",
+      dataUrl: "data:image/jpeg;base64,aGVsbG8=",
+    });
+    expect(photo.storageKey).toBe(
+      "organizations/org-1/visits/act-1/2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824.jpg",
+    );
+    expect(photo.contentType).toBe("image/jpeg");
+    expect(photo.sizeBytes).toBe(5);
+    expect(photo.dataUrl).toContain("data:image/jpeg;base64");
   });
 });
 describe("calendar-month trial", () => {
