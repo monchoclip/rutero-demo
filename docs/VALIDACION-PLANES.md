@@ -7,11 +7,11 @@ Registro de los agentes 5.5 y de los gates ejecutados en local.
 | P1 Paginación | `a9ef2da` | APROBADO (`p1_validate_final`) | 27 unitarias, 36 integración, typecheck, rutas y build |
 | P2 Tiempo real SSE | `5c9d792`, `eb51567` | APROBADO (`p2_validate_final2`) | `reply.hijack`, aislamiento por empresa, 30 unitarias, 37 integración |
 | P3 Visitas/mapa | `0bcfa20`, `75cfb62`, `f361301`, `29e80f9` | APROBADO (`p3_validate_security_final`) | cierre cruzado bloqueado, mapa, evidencia, 30 unitarias, 38 integración |
-| P4 Fotos/S3 | `91ec770`, `e416ad5` | Pendiente por límite de agentes | gates locales actuales: 35 unitarias, 41 integración, typecheck, rutas y build; revisión CTO completada |
-| P5 Catálogo/campañas | `50b8961`, `2b90487` | Pendiente por límite de agentes | 42 integración; vigencia de campañas/productos y aislamiento revisados localmente |
-| P6 Pedidos/ERP | `ccf8427`, `4230c1a`, `e015bb7` | Pendiente por límite de agentes | 42 integración; snapshot, idempotencia, ERP simulado y cola offline |
+| P4 Fotos/S3 | `91ec770`, `e416ad5` | APROBADO (`catalog_campaigns`) | 35 unitarias, 42 integración, typecheck, rutas y build; sin hallazgos P0/P1 |
+| P5 Catálogo/campañas | `50b8961`, `2b90487` | APROBADO (`catalog_campaigns`) | 42 integración; vigencia, aislamiento y selección de productos revisados; sin hallazgos P0/P1 |
+| P6 Pedidos/ERP | `ccf8427`, `4230c1a`, `e015bb7` | APROBADO (`catalog_campaigns`) | 42 integración; snapshot, idempotencia, ERP simulado y cola offline; sin hallazgos P0/P1 |
 | P7 Meta/Wompi | `bd83beb` + adaptadores existentes | Pendiente sandbox externo | Firmas, secretos e idempotencia verificadas localmente; requiere credenciales reales |
-| P8 UX/UI | histórico F1 + módulos P5/P6 | Pendiente por recorrido independiente | typecheck y build estático pasan; revisión local de CSS responsive, foco visible, módulos dinámicos y permisos |
+| P8 UX/UI | histórico F1 + módulos P5/P6 | APROBADO (`catalog_campaigns`) | typecheck y build estático pasan; CSS responsive, foco visible, módulos dinámicos y permisos revisados; sin hallazgos P0/P1 |
 | P9 AWS | `dce70e6` | Pendiente de staging | plantilla CloudFormation y checklist; no se desplegó |
 
-Los rechazos de P2 y P3 se corrigieron antes de avanzar. El agente de P4 detectó tres riesgos, corregidos en `e416ad5`; al intentar levantar validadores adicionales la plataforma informó límite de hilos/cuota. En el HEAD `d2e0c1a` se ejecutaron de nuevo `npm run typecheck`, `npm test`, `npm run test:integration`, `npm run routes:check` y `npm run build`: todos pasaron. La revisión local de 5.5 confirma la implementación de P4–P6 y P8 sin fallos P0/P1 conocidos, pero no sustituye la validación independiente formal ni la certificación de producción. P7/P9 requieren credenciales sandbox y una cuenta AWS de staging.
+Los rechazos de P2 y P3 se corrigieron antes de avanzar. El agente de P4 detectó tres riesgos, corregidos en `e416ad5`. El validador independiente 5.5 `catalog_campaigns` respondió `APROBADO` para P4, P5, P6 y P8, sin hallazgos P0/P1, sobre el HEAD que incluye cancelación de actividades y captura automática de ubicación al tomar la foto. P7 requiere credenciales sandbox; P9 requiere una cuenta AWS de staging.

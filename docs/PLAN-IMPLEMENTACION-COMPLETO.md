@@ -81,7 +81,7 @@ Evidencia local: el asesor ve un panel de visita activa cuando una visita tiene 
 
 ### P4 · Evidencia y multimedia en almacenamiento económico
 
-Estado: implementado localmente, pendiente de validación independiente 5.5.
+Estado: oro local (`e416ad5`; validado por `catalog_campaigns`).
 
 Objetivo: retirar fotografías y multimedia pesada de PostgreSQL.
 
@@ -89,11 +89,11 @@ Incluye adaptador S3 compatible, URLs presignadas, hash/tamaño/content-type, l�
 
 Aceptación: la base guarda metadata y llave, nunca el binario en producción; descargas autorizadas funcionan; errores de carga se pueden reintentar; pruebas de seguridad de tipo y tamaño pasan.
 
-Evidencia local: `Activity` guarda llave de almacenamiento, SHA-256, tipo MIME y tamaño de la foto de visita. El backend calcula metadata desde el `data:` recibido, mantiene previsualización local solo en desarrollo, añade adaptador privado S3 compatible con URLs presignadas, descarga autorizada, límite de bytes, retención configurada y eliminación autorizada de objeto + metadata. Producción exige modo S3 y se validan magic bytes reales; la verificación acepta metadata externa sin `dataUrl`. Las pruebas cubren el contrato local y externo con mock sin credenciales reales. Falta provisionar bucket/IAM/ciclo de vida y validar con credenciales de staging antes de datos reales. Los gates pasan; el agente independiente no pudo ejecutarse por límite de cuota.
+Evidencia local: `Activity` guarda llave de almacenamiento, SHA-256, tipo MIME y tamaño de la foto de visita. El backend calcula metadata desde el `data:` recibido, mantiene previsualización local solo en desarrollo, añade adaptador privado S3 compatible con URLs presignadas, descarga autorizada, límite de bytes, retención configurada y eliminación autorizada de objeto + metadata. Producción exige modo S3 y se validan magic bytes reales; la verificación acepta metadata externa sin `dataUrl`. Las pruebas cubren el contrato local y externo con mock sin credenciales reales. El validador independiente `catalog_campaigns` respondió APROBADO sin hallazgos P0/P1. Falta provisionar bucket/IAM/ciclo de vida y validar con credenciales de staging antes de datos reales.
 
 ### P5 · Catálogo, ofertas y campañas
 
-Estado: implementado localmente, pendiente de validación independiente 5.5 (límite de agentes).
+Estado: oro local (`50b8961`, `2b90487`; validado por `catalog_campaigns`).
 
 Objetivo: administrar productos/servicios y asociarlos a clientes y asesores.
 
@@ -101,15 +101,15 @@ Incluye productos con código, descripción, precio versionado, moneda, vigencia
 
 Aceptación: un precio usado queda congelado en la actividad/pedido; una campaña vencida no acepta nuevas altas; la cartera y los datos permanecen aislados por empresa; UI tiene estados vacío/carga/error.
 
-Evidencia local: migración `202609100003_catalog_campaigns` con productos, campañas, relación de productos con precio congelado e inscripciones por cliente/asesor. La API `/catalog/*` aplica aislamiento por empresa y permisos (coordinación comercial administra; asesores inscriben solo su cartera), y la pestaña Catálogo y campañas consume los estados de carga/error/vacío. La integración cubre vigencia de campañas/productos, aislamiento entre empresas y conservación del precio histórico al crear pedidos; queda la validación independiente 5.5.
+Evidencia local: migración `202609100003_catalog_campaigns` con productos, campañas, relación de productos con precio congelado e inscripciones por cliente/asesor. La API `/catalog/*` aplica aislamiento por empresa y permisos (coordinación comercial administra; asesores inscriben solo su cartera), y la pestaña Catálogo y campañas consume los estados de carga/error/vacío. La integración cubre vigencia de campañas/productos, aislamiento entre empresas y conservación del precio histórico al crear pedidos. El validador independiente `catalog_campaigns` respondió APROBADO sin hallazgos P0/P1.
 
 ### P6 · Pedidos y adaptador ERP
 
-Estado: implementado localmente, pendiente de validación independiente 5.5 (límite de agentes).
+Estado: oro local (`ccf8427`, `4230c1a`; validado por `catalog_campaigns`).
 
 Objetivo: convertir una oportunidad en pedido trazable.
 
-Incluye pedido borrador/confirmado/pendiente ERP/enviado/error, líneas con snapshot de precio, idempotencia, reintentos, adaptador ERP simulado y bandeja de errores para coordinación.
+Incluye pedido borrador/confirmado/pendiente ERP/enviado/error, líneas con snapshot de precio, idempotencia, reintentos, adaptador ERP simulado y bandeja de errores para coordinación. El validador independiente `catalog_campaigns` respondió APROBADO sin hallazgos P0/P1.
 
 Aceptación: no se duplica un pedido por reintento, nunca se marca enviado sin confirmación del adaptador, y el asesor puede trabajar el borrador sin perderlo offline.
 
@@ -129,7 +129,7 @@ Evidencia local: el adaptador Meta Cloud API valida número, envía texto/planti
 
 ### P8 · UX/UI de operación de campo
 
-Estado: implementado localmente, pendiente de validación independiente 5.5 (límite de agentes).
+Estado: oro local (histórico F1 + módulos P5/P6; validado por `catalog_campaigns`).
 
 Objetivo: reducir pasos del asesor y dar claridad a coordinación.
 
@@ -137,7 +137,7 @@ Incluye bandeja de chat con estados, panel de visita activa, acciones rápidas, 
 
 Aceptación: navegación por teclado, foco visible, mensajes de error comprensibles, modal de ficha sin salto de página, y cada perfil ve solo sus acciones.
 
-Evidencia local: tokens semánticos de color y foco visible global, modales nativos para ficha/formularios/pago, panel de visita activa, estados de Chat y Catálogo/Pedidos, navegación dinámica por `moduleConfig` y reglas de rol en servidor. Las hojas responsive cubren 375/768/1440 px y respetan `prefers-reduced-motion`; build estático pasa. Falta recorrido manual con dispositivos reales y una revisión independiente 5.5.
+Evidencia local: tokens semánticos de color y foco visible global, modales nativos para ficha/formularios/pago, panel de visita activa, estados de Chat y Catálogo/Pedidos, navegación dinámica por `moduleConfig` y reglas de rol en servidor. Las hojas responsive cubren 375/768/1440 px y respetan `prefers-reduced-motion`; build estático pasa. El validador independiente `catalog_campaigns` respondió APROBADO sin hallazgos P0/P1; falta recorrido manual con dispositivos reales.
 
 ### P9 · Preparación AWS, seguridad y operación
 
