@@ -981,7 +981,7 @@ export function Workspace({
               )}
               {tab === "agenda" && (
                 <>
-                  {activeVisits.length > 0 && (
+                  {advisorMode && activeVisits.length > 0 && (
                     <ActiveVisitPanel
                       visits={activeVisits}
                       onComplete={(activity) =>
@@ -1294,6 +1294,7 @@ function ActiveVisitPanel({
 
 function VisitMapPanel({ visits }: { visits: Activity[] }) {
   const visibleVisits = visits.slice(0, 8);
+  const bounds = visitMapBounds(visibleVisits);
   return (
     <section className="panel visit-map-panel">
       <div className="section-heading">
@@ -1307,14 +1308,16 @@ function VisitMapPanel({ visits }: { visits: Activity[] }) {
       </div>
       <div className="visit-map-grid">
         <div className="visit-map-canvas" aria-label="Mapa operativo">
-          {visibleVisits.map((visit, index) => (
-            <span
-              className={`map-marker ${visit.status === "completed" ? "done" : "active"}`}
-              key={visit.id}
-              style={markerStyle(visit, index)}
-              title={`${visit.client.name} · ${visit.advisor.name}`}
-            />
-          ))}
+          {visibleVisits.flatMap((visit) =>
+            visitMapPoints(visit).map((point) => (
+              <span
+                className={`map-marker ${point.kind} ${visit.status === "completed" ? "done" : "active"}`}
+                key={`${visit.id}-${point.kind}`}
+                style={markerStyle(point, bounds)}
+                title={`${point.kind === "start" ? "Inicio" : "Cierre"} · ${visit.client.name} · ${visit.advisor.name}`}
+              />
+            )),
+          )}
         </div>
         <div className="visit-map-list">
           {visibleVisits.map((visit) => (
@@ -1328,14 +1331,18 @@ function VisitMapPanel({ visits }: { visits: Activity[] }) {
                   {visit.advisor.name} ·{" "}
                   {visit.status === "completed" ? "cerrada" : "activa"}
                 </small>
+                <span>Inicio {pointSummary(visit, "start")}</span>
                 <span>
-                  Inicio {coordinateLabel(visit.visitStartLatitude)}
+                  Cierre {pointSummary(visit, "end")}
                   {visit.visitDistanceMeters !== null
                     ? ` · distancia ${visit.visitDistanceMeters} m`
                     : ""}
                 </span>
               </div>
-              <MapLink activity={visit} point="start" compact />
+              <div className="visit-map-links">
+                <MapLink activity={visit} point="start" compact />
+                <MapLink activity={visit} point="end" compact />
+              </div>
             </article>
           ))}
         </div>
@@ -1368,11 +1375,11 @@ function MapLink({
       href={`https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`}
       target="_blank"
       rel="noreferrer"
-      aria-label="Abrir ubicación en Google Maps"
-      title="Abrir ubicación"
+      aria-label={`Abrir ${point === "start" ? "inicio" : "cierre"} en Google Maps`}
+      title={`Abrir ${point === "start" ? "inicio" : "cierre"}`}
     >
       <Navigation size={compact ? 16 : 15} />
-      {!compact && "Abrir ubicación"}
+      {!compact && `Abrir ${point === "start" ? "inicio" : "cierre"}`}
     </a>
   );
 }
@@ -1381,10 +1388,90 @@ function coordinateLabel(value: number | null) {
   return value === null ? "sin coordenada" : value.toFixed(5);
 }
 
-function markerStyle(activity: Activity, index: number): CSSProperties {
-  const latitude = activity.visitStartLatitude ?? 0;
-  const longitude = activity.visitStartLongitude ?? 0;
-  const x = 10 + Math.abs((longitude * 997 + index * 17) % 78);
-  const y = 12 + Math.abs((latitude * 991 + index * 23) % 72);
+function accuracyLabel(value: number | null) {
+  return value === null ? "sin precisión" : `±${Math.round(value)} m`;
+}
+
+function pointSummary(activity: Activity, point: "start" | "end") {
+  const latitude =
+    point === "start" ? activity.visitStartLatitude : activity.visitEndLatitude;
+  const longitude =
+    point === "start"
+      ? activity.visitStartLongitude
+      : activity.visitEndLongitude;
+  const accuracy =
+    point === "start" ? activity.visitStartAccuracy : activity.visitEndAccuracy;
+  const capturedAt =
+    point === "start" ? activity.visitStartedAt : activity.visitFinishedAt;
+  if (latitude === null || longitude === null) return "sin coordenada";
+  return `${coordinateLabel(latitude)}, ${coordinateLabel(longitude)} · ${accuracyLabel(accuracy)} · ${capturedAt ? dateTime(capturedAt) : "sin hora"}`;
+}
+
+type VisitMapPoint = {
+  kind: "start" | "end";
+  latitude: number;
+  longitude: number;
+};
+
+type VisitMapBounds = {
+  minLatitude: number;
+  maxLatitude: number;
+  minLongitude: number;
+  maxLongitude: number;
+};
+
+function visitMapPoints(activity: Activity): VisitMapPoint[] {
+  const points: VisitMapPoint[] = [];
+  if (
+    activity.visitStartLatitude !== null &&
+    activity.visitStartLongitude !== null
+  )
+    points.push({
+      kind: "start",
+      latitude: activity.visitStartLatitude,
+      longitude: activity.visitStartLongitude,
+    });
+  if (activity.visitEndLatitude !== null && activity.visitEndLongitude !== null)
+    points.push({
+      kind: "end",
+      latitude: activity.visitEndLatitude,
+      longitude: activity.visitEndLongitude,
+    });
+  return points;
+}
+
+function visitMapBounds(visits: Activity[]): VisitMapBounds {
+  const points = visits.flatMap(visitMapPoints);
+  const latitudes = points.map((point) => point.latitude);
+  const longitudes = points.map((point) => point.longitude);
+  if (!points.length)
+    return {
+      minLatitude: 0,
+      maxLatitude: 0,
+      minLongitude: 0,
+      maxLongitude: 0,
+    };
+  return {
+    minLatitude: Math.min(...latitudes),
+    maxLatitude: Math.max(...latitudes),
+    minLongitude: Math.min(...longitudes),
+    maxLongitude: Math.max(...longitudes),
+  };
+}
+
+function markerStyle(
+  point: VisitMapPoint,
+  bounds: VisitMapBounds,
+): CSSProperties {
+  const longitudeRange = bounds.maxLongitude - bounds.minLongitude;
+  const latitudeRange = bounds.maxLatitude - bounds.minLatitude;
+  const x =
+    longitudeRange === 0
+      ? 50
+      : 10 + ((point.longitude - bounds.minLongitude) / longitudeRange) * 80;
+  const y =
+    latitudeRange === 0
+      ? 50
+      : 90 - ((point.latitude - bounds.minLatitude) / latitudeRange) * 80;
   return { left: `${x}%`, top: `${y}%` };
 }

@@ -77,7 +77,7 @@ Aceptación: coordinadores ven solo su empresa, asesores no ven ubicaciones ajen
 
 Evidencia esperada: vista de mapa para perfiles autorizados, panel persistente de visita activa, sincronización offline de inicio/cierre/foto, cálculo visual de distancia entre coordenadas y pruebas de permisos por rol.
 
-Evidencia local: el asesor ve un panel de visita activa cuando una visita tiene ubicación inicial y cierre pendiente; coordinación comercial/administrativa ve un mapa operativo con puntos capturados, lista auditable, estado activa/cerrada, distancia y enlace a Google Maps. Reutiliza actividades ya filtradas por servidor y refrescadas por SSE, por lo que no agrega costo de proveedor de mapas ni endpoints nuevos.
+Evidencia local: el asesor ve un panel de visita activa cuando una visita tiene ubicación inicial y cierre pendiente; coordinación comercial/administrativa ve un mapa operativo con puntos capturados, lista auditable, estado activa/cerrada, precisión, hora, distancia y enlaces independientes a inicio y cierre en Google Maps. El lienzo ubica marcadores con escala determinista a partir del rango latitud/longitud visible y reutiliza actividades ya filtradas por servidor y refrescadas por SSE, por lo que no agrega costo de proveedor de mapas ni endpoints nuevos.
 
 ### P4 · Evidencia y multimedia en almacenamiento económico
 

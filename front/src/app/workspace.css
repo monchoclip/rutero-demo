@@ -1397,6 +1397,11 @@ a.contact-row:hover {
 .map-marker.done {
   background: var(--success);
 }
+.map-marker.end {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #fff;
+}
 .visit-map-list {
   display: grid;
   align-content: start;
@@ -1441,6 +1446,11 @@ a.contact-row:hover {
 .map-link {
   gap: 7px;
 }
+.visit-map-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .icon-button.map-link {
   color: var(--brand);
 }
@@ -1459,6 +1469,10 @@ a.contact-row:hover {
   }
   .visit-map-grid {
     grid-template-columns: 1fr;
+  }
+  .visit-map-links {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 .dialog::backdrop {
