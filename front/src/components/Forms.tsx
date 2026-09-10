@@ -583,7 +583,11 @@ function VisitCloseGuide({
     if (!file) return;
     setCapturing("photo");
     try {
-      onChange({ ...value, photoDataUrl: await readPhoto(file) });
+      const [photoDataUrl, end] = await Promise.all([
+        readPhoto(file),
+        captureLocation(),
+      ]);
+      onChange({ ...value, photoDataUrl, end });
       onError("");
     } catch (error) {
       onError((error as Error).message);
@@ -603,7 +607,7 @@ function VisitCloseGuide({
       </div>
       <div className="visit-evidence-row">
         <Camera size={17} />
-        <span>Foto de cierre</span>
+        <span>Foto y ubicación de cierre</span>
         <strong>{value.photoDataUrl ? "Foto cargada" : "Pendiente"}</strong>
         <label className="secondary file-action">
           {capturing === "photo" ? "Leyendo..." : "Tomar foto"}
