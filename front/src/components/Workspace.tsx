@@ -1188,10 +1188,10 @@ export function Workspace({
                 />
               )}
               {tab === "catalog" && (
-                <Catalog commercial={commercial} clients={clients} />
+                <Catalog commercial={commercial} canEnroll={writer} clients={clients} />
               )}
               {tab === "orders" && (
-                <Orders clients={clients} commercial={commercial} />
+                <Orders clients={clients} canWrite={writer} />
               )}
               {tab === "mail" && (
                 <section className="panel">
