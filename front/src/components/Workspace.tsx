@@ -30,9 +30,11 @@ import {
   Building2,
   Receipt,
   MessageCircle,
+  Target,
 } from "lucide-react";
 import { api, post, ApiError } from "../lib/api";
 import {
+  activityLabels,
   roleLabels,
   type User,
   type Organization,
@@ -108,6 +110,24 @@ const headings: Record<Tab, { title: string; text: string }> = {
   mail: {
     title: "Bandeja de desarrollo",
     text: "Estos mensajes no se han enviado a correos reales.",
+  },
+};
+const advisorHeadings: Partial<Record<Tab, { title: string; text: string }>> = {
+  overview: {
+    title: "Mi jornada comercial",
+    text: "Prioriza visitas, llamadas y clientes sin siguiente paso.",
+  },
+  sequence: {
+    title: "Mi secuencia de trabajo",
+    text: "Tarjetas por urgencia para cerrar pendientes y programar avances.",
+  },
+  clients: {
+    title: "Mi cartera asignada",
+    text: "Clientes bajo tu responsabilidad con ficha, historial y agenda.",
+  },
+  agenda: {
+    title: "Mi agenda del día",
+    text: "Contactos pendientes, vencidos y gestiones ya registradas.",
   },
 };
 const dateTime = (date: string) =>
@@ -188,6 +208,7 @@ export function Workspace({
   const [history, setHistory] = useState<Activity[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const commercial = user.role === "commercial_coordinator";
+  const advisorMode = user.role === "advisor";
   const writer = commercial || user.role === "advisor";
   const coordinator = commercial || user.role === "administrative_coordinator";
   const load = useCallback(async () => {
@@ -312,6 +333,21 @@ export function Workspace({
       setTab(visibleTabs[0]?.id ?? "overview");
   }, [tab, visibleTabs]);
   const completionTrend = weeklyTrend(activities, () => true);
+  const todayActivities = scheduled.filter((activity) => {
+    const due = new Date(activity.dueAt).getTime();
+    return due <= new Date().setHours(23, 59, 59, 999);
+  });
+  const activeHeading = advisorMode
+    ? (advisorHeadings[tab] ?? headings[tab])
+    : headings[tab];
+  const nextActivity =
+    [...scheduled].sort(
+      (left, right) =>
+        new Date(left.dueAt).getTime() - new Date(right.dueAt).getTime(),
+    )[0] ?? null;
+  const clientsWithoutNext = clients.filter(
+    (client) => !scheduled.some((activity) => activity.clientId === client.id),
+  );
   return (
     <div className="workspace">
       <aside className="sidebar">
@@ -414,8 +450,8 @@ export function Workspace({
                   month: "long",
                 })}
               </span>
-              <h1>{headings[tab].title}</h1>
-              <p>{headings[tab].text}</p>
+              <h1>{activeHeading.title}</h1>
+              <p>{activeHeading.text}</p>
             </div>
             {writer && tab !== "billing" && tab !== "chats" && (
               <button
@@ -464,6 +500,54 @@ export function Workspace({
             <div className="tab-panel" key={tab}>
               {tab === "overview" && (
                 <>
+                  {advisorMode && (
+                    <section className="advisor-command">
+                      <div>
+                        <span className="eyebrow">MODO ASESOR</span>
+                        <h2>
+                          {nextActivity
+                            ? `Primero: ${nextActivity.client.name}`
+                            : "Tu jornada está despejada"}
+                        </h2>
+                        <p>
+                          {nextActivity
+                            ? `${activityLabels[nextActivity.type]} · ${dateTime(nextActivity.dueAt)}`
+                            : "Crea el siguiente contacto o revisa clientes sin próxima gestión."}
+                        </p>
+                      </div>
+                      <div className="advisor-command-actions">
+                        {nextActivity && (
+                          <button
+                            className="primary"
+                            onClick={() =>
+                              setForm({
+                                kind: "complete",
+                                activity: nextActivity,
+                              })
+                            }
+                          >
+                            <Check size={17} />
+                            Registrar resultado
+                          </button>
+                        )}
+                        <button
+                          className="secondary"
+                          onClick={() =>
+                            clientsWithoutNext[0]
+                              ? setForm({
+                                  kind: "activity",
+                                  client: clientsWithoutNext[0],
+                                })
+                              : setForm({ kind: "activity" })
+                          }
+                          disabled={!clients.length}
+                        >
+                          <Target size={17} />
+                          Programar avance
+                        </button>
+                      </div>
+                    </section>
+                  )}
                   <div className="metrics">
                     <StatCard
                       index={0}
@@ -474,9 +558,17 @@ export function Workspace({
                     />
                     <StatCard
                       index={1}
-                      label="Contactos pendientes"
-                      value={scheduled.length}
-                      detail="Tu agenda por completar"
+                      label={
+                        advisorMode ? "Agenda de hoy" : "Contactos pendientes"
+                      }
+                      value={
+                        advisorMode ? todayActivities.length : scheduled.length
+                      }
+                      detail={
+                        advisorMode
+                          ? "Vencidos y compromisos del día"
+                          : "Tu agenda por completar"
+                      }
                       icon={<CalendarDays size={19} />}
                     />
                     <StatCard

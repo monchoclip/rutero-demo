@@ -753,6 +753,10 @@ a.contact-row:hover {
   font-size: 0.875rem;
   color: var(--muted);
 }
+.next-contact-card.idle {
+  background: var(--surface-muted);
+  border-color: var(--line);
+}
 .client-detail h3 {
   font-size: 1rem;
   margin: 0 0 14px;
@@ -1209,6 +1213,54 @@ a.contact-row:hover {
   color: var(--ink);
   box-shadow: 0 30px 100px #122d2933;
 }
+.advisor-command {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 22px;
+  padding: 22px 24px;
+  border: 1px solid color-mix(in srgb, var(--brand) 25%, var(--line));
+  border-radius: 16px;
+  background: linear-gradient(120deg, var(--brand), #1e5b42);
+  color: #fff;
+  box-shadow: 0 16px 36px rgb(18 53 39 / 16%);
+}
+.advisor-command h2 {
+  margin: 4px 0 5px;
+  color: #fff;
+  font-size: 1.25rem;
+}
+.advisor-command p {
+  margin: 0;
+  color: #d5e8dd;
+}
+.advisor-command .eyebrow {
+  color: #a9d4bb;
+}
+.advisor-command-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.advisor-command-actions .secondary {
+  border-color: rgb(255 255 255 / 35%);
+  color: #fff;
+  background: rgb(255 255 255 / 10%);
+}
+.advisor-command-actions .primary {
+  background: #fff;
+  color: var(--brand);
+}
+@media (max-width: 760px) {
+  .advisor-command {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .advisor-command-actions > button {
+    flex: 1;
+  }
+}
 .dialog::backdrop {
   background: #071c17a0;
   backdrop-filter: blur(3px);
@@ -1224,9 +1276,37 @@ a.contact-row:hover {
   font-size: 1.5rem;
   margin: 10px 0 0;
 }
+.dialog-heading p {
+  max-width: 420px;
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
 .dialog-heading .eyebrow {
   font-size: 0.625rem;
   color: var(--muted);
+}
+.dialog-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.dialog-summary {
+  display: grid;
+  gap: 4px;
+  min-height: 74px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-muted);
+}
+.dialog-summary strong {
+  font-size: 0.8125rem;
+}
+.dialog-summary small {
+  font-size: 0.75rem;
+  line-height: 1.45;
 }
 .dialog-actions {
   display: flex;
@@ -1247,6 +1327,79 @@ a.contact-row:hover {
 }
 .chosen-client strong {
   color: var(--ink);
+}
+.visit-guide,
+.visit-evidence-preview {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  margin: 4px 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-muted);
+}
+.visit-guide > div,
+.visit-evidence-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8125rem;
+}
+.visit-guide svg,
+.visit-evidence-row svg {
+  color: var(--brand);
+  flex: none;
+}
+.visit-guide small,
+.visit-evidence-preview small {
+  color: var(--muted);
+  line-height: 1.5;
+}
+.visit-evidence-row {
+  justify-content: space-between;
+  padding: 9px 10px;
+  border-radius: 6px;
+  background: var(--surface);
+}
+.visit-evidence-row span {
+  flex: 1;
+}
+.visit-evidence-row strong {
+  color: var(--brand);
+  font-size: 0.75rem;
+}
+.visit-guide,
+.visit-evidence-preview {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  margin: 14px 0;
+  border: 1px solid color-mix(in srgb, var(--warning) 28%, var(--line));
+  border-radius: 8px;
+  background: var(--warning-soft);
+}
+.visit-guide > div,
+.visit-evidence-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  font-size: 0.8125rem;
+}
+.visit-guide svg,
+.visit-evidence-row svg {
+  flex: none;
+  color: var(--warning);
+}
+.visit-guide small,
+.visit-evidence-preview small {
+  color: #7c4a03;
+  line-height: 1.45;
+}
+.visit-evidence-row strong {
+  margin-left: auto;
+  color: var(--warning);
+  font-size: 0.75rem;
 }
 .form-grid > label {
   min-width: 0;
@@ -1288,6 +1441,13 @@ a.contact-row:hover {
   }
   .overview-grid {
     grid-template-columns: 1fr;
+  }
+  .advisor-command {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .advisor-command-actions {
+    justify-content: flex-start;
   }
   .next-step {
     display: none;
@@ -1372,6 +1532,16 @@ a.contact-row:hover {
   .page-heading h1 {
     font-size: 1.8rem;
   }
+  .advisor-command,
+  .advisor-command-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .advisor-command-actions .primary,
+  .advisor-command-actions .secondary {
+    width: 100%;
+    justify-content: center;
+  }
   .metrics {
     gap: 10px;
   }
@@ -1416,6 +1586,9 @@ a.contact-row:hover {
   }
   .dialog {
     padding: 22px;
+  }
+  .dialog-summary-grid {
+    grid-template-columns: 1fr;
   }
   .invitation-row {
     align-items: flex-start;

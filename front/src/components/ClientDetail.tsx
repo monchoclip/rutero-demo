@@ -1,4 +1,12 @@
-import { Mail, Phone, MapPin, User as UserIcon, Plus, X } from "lucide-react";
+import {
+  CalendarPlus,
+  Mail,
+  Phone,
+  MapPin,
+  User as UserIcon,
+  Plus,
+  X,
+} from "lucide-react";
 import { ActivityIcon, Empty } from "./WorkspaceViews";
 import { clientStats, nextContact } from "../lib/metrics";
 import {
@@ -145,6 +153,22 @@ export function ClientDetail({
                   {nextVisitEvidence.label}: {nextVisitEvidence.detail}
                 </small>
               )}
+            </div>
+          )}
+          {!next && writer && (
+            <div className="next-contact-card idle">
+              <div className="next-contact-heading">
+                <span className="activity-icon follow_up">
+                  <CalendarPlus size={18} />
+                </span>
+                <div>
+                  <span className="eyebrow">SIN SIGUIENTE PASO</span>
+                  <strong>Programa una llamada, visita o seguimiento</strong>
+                </div>
+                <button className="secondary" onClick={onSchedule}>
+                  Crear agenda
+                </button>
+              </div>
             </div>
           )}
           <h3>Historial de contacto</h3>

@@ -6,7 +6,7 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
-import { X } from "lucide-react";
+import { Camera, CheckCircle2, LocateFixed, MapPin, X } from "lucide-react";
 import { api, post } from "../lib/api";
 import {
   activityLabels,
@@ -21,6 +21,14 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
       {label}
       {children}
     </label>
+  );
+}
+function DialogSummary({ title, text }: { title: string; text: string }) {
+  return (
+    <div className="dialog-summary">
+      <strong>{title}</strong>
+      <small>{text}</small>
+    </div>
   );
 }
 export function FormDialog({
@@ -47,6 +55,8 @@ export function FormDialog({
   const dialog = useRef<HTMLDialogElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [activityType, setActivityType] =
+    useState<Activity["type"]>("follow_up");
   const key = useRef(crypto.randomUUID());
   useEffect(() => {
     dialog.current?.showModal();
@@ -57,6 +67,18 @@ export function FormDialog({
     activity: "Programar un contacto",
     complete: "Registrar resultado",
     assign: "Reasignar cliente",
+  };
+  const helperText = {
+    client:
+      "Crea una ficha útil para seguimiento, agenda y conversaciones vinculadas.",
+    invite:
+      "El asesor recibirá un enlace para crear contraseña y entrar solo a su cartera.",
+    activity:
+      "Programa el siguiente paso con fecha, objetivo y recordatorio local.",
+    complete:
+      "Cierra la gestión con resultado, duración y próximo seguimiento opcional.",
+    assign:
+      "Reasigna el cliente conservando historial y moviendo tareas pendientes.",
   };
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -96,6 +118,7 @@ export function FormDialog({
   }
   const portfolioSize = (advisorId: string) =>
     clients.filter((c) => c.advisorId === advisorId).length;
+  const ownAdvisor = user.role === "advisor";
   const advisorSelect = (
     <select
       name="advisorId"
@@ -124,6 +147,9 @@ export function FormDialog({
         ))}
     </select>
   );
+  const advisorHiddenInput = (
+    <input type="hidden" name="advisorId" value={user.id} />
+  );
   return (
     <dialog
       ref={dialog}
@@ -138,6 +164,7 @@ export function FormDialog({
         <div>
           <span className="eyebrow">GESTIÓN COMERCIAL</span>
           <h2 id="dialog-title">{titles[kind]}</h2>
+          <p>{helperText[kind]}</p>
         </div>
         <button
           className="icon-button"
@@ -151,6 +178,16 @@ export function FormDialog({
       <form onSubmit={submit}>
         {kind === "client" && (
           <>
+            <div className="dialog-summary-grid">
+              <DialogSummary
+                title="Contacto"
+                text="Nombre, teléfono, correo y ciudad listos para operar."
+              />
+              <DialogSummary
+                title="Cartera"
+                text="El asesor queda asociado desde el primer registro."
+              />
+            </div>
             {prefill && (
               <p className="hint chosen-client">
                 Identificado por el número de WhatsApp que escribió.
@@ -186,7 +223,16 @@ export function FormDialog({
                 <input name="city" required minLength={2} />
               </Field>
             </div>
-            <Field label="Asesor responsable">{advisorSelect}</Field>
+            {ownAdvisor ? (
+              <>
+                {advisorHiddenInput}
+                <p className="hint chosen-client">
+                  Quedará asignado a tu cartera como asesor responsable.
+                </p>
+              </>
+            ) : (
+              <Field label="Asesor responsable">{advisorSelect}</Field>
+            )}
             <Field label="Notas (opcional)">
               <textarea name="notes" maxLength={3000} />
             </Field>
@@ -208,6 +254,16 @@ export function FormDialog({
         )}
         {kind === "activity" && (
           <>
+            <div className="dialog-summary-grid">
+              <DialogSummary
+                title="Secuencia"
+                text="La tarjeta entra al tablero según urgencia y fecha."
+              />
+              <DialogSummary
+                title="Recordatorio"
+                text="La cola local queda preparada 15 minutos antes."
+              />
+            </div>
             {client ? (
               <>
                 <p className="hint chosen-client">
@@ -231,7 +287,13 @@ export function FormDialog({
             )}
             <div className="form-grid">
               <Field label="Tipo de contacto">
-                <select name="type">
+                <select
+                  name="type"
+                  value={activityType}
+                  onChange={(event) =>
+                    setActivityType(event.target.value as Activity["type"])
+                  }
+                >
                   {Object.entries(activityLabels).map(([value, label]) => (
                     <option value={value} key={value}>
                       {label}
@@ -250,16 +312,26 @@ export function FormDialog({
               Horario de este dispositivo. Recordatorio preparado 15 minutos
               antes.
             </p>
-            <p className="hint">
-              Si eliges visita, quedará como gestión planificada. La captura
-              real de ubicación, fotografía y tiempo real sigue pendiente para
-              F4.
-            </p>
+            {activityType === "visit" && <VisitPreparation />}
           </>
         )}
         {kind === "complete" && (
           <>
-            <p className="hint">{activity?.client.name}</p>
+            <div className="dialog-summary-grid">
+              <DialogSummary
+                title={activity?.client.name ?? "Cliente"}
+                text={
+                  activity
+                    ? `${activityLabels[activity.type]} pendiente de cierre`
+                    : "Gestión pendiente de cierre"
+                }
+              />
+              <DialogSummary
+                title="Siguiente paso"
+                text="Puedes dejar un seguimiento creado al guardar."
+              />
+            </div>
+            {activity?.type === "visit" && <VisitCloseGuide />}
             <Field label="Resultado">
               <select name="outcome">
                 <option value="contacted">Contacto realizado</option>
@@ -322,5 +394,55 @@ export function FormDialog({
         </div>
       </form>
     </dialog>
+  );
+}
+
+function VisitPreparation() {
+  return (
+    <div className="visit-guide">
+      <div>
+        <MapPin size={17} />
+        <span>
+          Al iniciar la visita se debe confirmar ubicación del asesor.
+        </span>
+      </div>
+      <div>
+        <Camera size={17} />
+        <span>
+          Al cerrar se pedirá fotografía del lugar y segunda ubicación.
+        </span>
+      </div>
+      <small>
+        En esta etapa se agenda la visita y se registra el resultado. La captura
+        persistente de coordenadas, foto y comparación se conecta en F4.
+      </small>
+    </div>
+  );
+}
+
+function VisitCloseGuide() {
+  return (
+    <div className="visit-evidence-preview">
+      <div className="visit-evidence-row">
+        <LocateFixed size={17} />
+        <span>Ubicación inicial</span>
+        <strong>Preparada</strong>
+      </div>
+      <div className="visit-evidence-row">
+        <Camera size={17} />
+        <span>Foto de cierre</span>
+        <strong>Preparada</strong>
+      </div>
+      <div className="visit-evidence-row">
+        <CheckCircle2 size={17} />
+        <span>Comparación de puntos</span>
+        <strong>F4</strong>
+      </div>
+      <small>
+        Guarda aquí el resultado operativo. Todavía no se envían coordenadas ni
+        archivos al servidor porque el contrato de evidencia no tiene tabla ni
+        endpoint activo.
+      </small>
+    </div>
   );
 }
