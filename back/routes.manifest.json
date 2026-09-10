@@ -141,6 +141,27 @@
   },
   {
     "method": "GET",
+    "path": "/orders",
+    "operation": "orders",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "POST",
+    "path": "/orders",
+    "operation": "createOrder",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "POST",
+    "path": "/orders/:id/submit",
+    "operation": "submitOrder",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "GET",
     "path": "/realtime/events",
     "operation": "realtimeEvents",
     "authenticated": true,

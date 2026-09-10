@@ -1935,4 +1935,20 @@ describe.sequential("WhatsApp chat: numbers, webhook and conversations", () => {
       (await request("GET", "/catalog/products", undefined, externalAdvisor.cookie)).json().data,
     ).toEqual([]);
   });
+  it("creates an idempotent order with frozen price and confirms simulated ERP", async () => {
+    const products = await request("GET", "/catalog/products", undefined, owner.cookie);
+    const productId = products.json().data[0].id as string;
+    const key = crypto.randomUUID();
+    const payload = { clientId, idempotencyKey: key, lines: [{ productId, quantity: 2 }] };
+    const first = await request("POST", "/orders", payload, owner.cookie);
+    expect(first.statusCode).toBe(201);
+    const second = await request("POST", "/orders", payload, owner.cookie);
+    expect(second.statusCode).toBe(201);
+    expect(second.json().data.id).toBe(first.json().data.id);
+    expect(second.json().data.lines[0].unitPriceMinor).toBe(first.json().data.lines[0].unitPriceMinor);
+    const sent = await request("POST", `/orders/${first.json().data.id}/submit`, {}, owner.cookie);
+    expect(sent.statusCode).toBe(200);
+    expect(sent.json().data.status).toBe("sent");
+    expect(sent.json().data.erpReference).toMatch(/^ERP-/);
+  });
 });

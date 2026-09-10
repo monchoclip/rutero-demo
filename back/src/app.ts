@@ -25,6 +25,9 @@ import { EventHub } from "./realtime/EventHub.js";
 import { CatalogRepository } from "./catalog/CatalogRepository.js";
 import { CatalogService } from "./catalog/CatalogService.js";
 import { catalogHandlers } from "./catalog/handlers.js";
+import { OrderRepository } from "./orders/OrderRepository.js";
+import { OrderService } from "./orders/OrderService.js";
+import { orderHandlers } from "./orders/handlers.js";
 import {
   createVisitPhotoStorage,
   visitPhotoStorageConfigFromEnv,
@@ -81,6 +84,7 @@ export async function createApp(
   const identity = new IdentityService(new IdentityRepository(db));
   const realtime = new EventHub();
   const catalog = new CatalogService(new CatalogRepository(db), realtime);
+  const orders = new OrderService(new OrderRepository(db), undefined, realtime);
   const visitPhotoStorage =
     options.visitPhotoStorage ??
     createVisitPhotoStorage(visitPhotoStorageConfigFromEnv());
@@ -119,6 +123,7 @@ export async function createApp(
     ...billingHandlers(billing),
     ...whatsAppHandlers(whatsapp, options.metaWebhookVerifyToken),
     ...catalogHandlers(catalog),
+    ...orderHandlers(orders),
   };
   app.get("/health", async () => ({ status: "ok" }));
   for (const [method, url, operation, protectedRoute, external] of routes) {

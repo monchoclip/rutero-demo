@@ -60,6 +60,7 @@ import { Billing } from "./Billing";
 import { Chat } from "./Chat";
 import { SequenceBoard } from "./SequenceBoard";
 import { Catalog } from "./Catalog";
+import { Orders } from "./Orders";
 type Tab =
   | "overview"
   | "sequence"
@@ -69,6 +70,7 @@ type Tab =
   | "chats"
   | "billing"
   | "catalog"
+  | "orders"
   | "mail";
 const tabs = [
   { id: "overview", label: "Resumen", icon: LayoutDashboard },
@@ -79,6 +81,7 @@ const tabs = [
   { id: "chats", label: "WhatsApp", icon: MessageCircle },
   { id: "billing", label: "Cobro simulado", icon: Receipt },
   { id: "catalog", label: "Catálogo y campañas", icon: Target },
+  { id: "orders", label: "Pedidos", icon: Receipt },
   { id: "mail", label: "Correo de prueba", icon: Mail },
 ] as const;
 const defaultModuleConfig: Record<ModuleKey, boolean> = {
@@ -90,6 +93,7 @@ const defaultModuleConfig: Record<ModuleKey, boolean> = {
   chats: true,
   billing: true,
   catalog: true,
+  orders: true,
   mail: false,
 };
 const headings: Record<Tab, { title: string; text: string }> = {
@@ -124,6 +128,10 @@ const headings: Record<Tab, { title: string; text: string }> = {
   catalog: {
     title: "Catálogo y campañas",
     text: "Productos con precio vigente y campañas para reactivar clientes.",
+  },
+  orders: {
+    title: "Pedidos trazables",
+    text: "Convierte una oportunidad en un pedido listo para tu ERP.",
   },
   mail: {
     title: "Bandeja de desarrollo",
@@ -1178,6 +1186,9 @@ export function Workspace({
               )}
               {tab === "catalog" && (
                 <Catalog commercial={commercial} clients={clients} />
+              )}
+              {tab === "orders" && (
+                <Orders clients={clients} commercial={commercial} />
               )}
               {tab === "mail" && (
                 <section className="panel">

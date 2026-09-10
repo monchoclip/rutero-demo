@@ -1462,7 +1462,13 @@ a.contact-row:hover {
 .campaign-card { flex-wrap: wrap; }
 .campaign-card .badge { margin-left: auto; }
 .catalog-enroll { width: 100%; padding: 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.order-create { display: grid; grid-template-columns: 1fr 1fr 90px auto; gap: 10px; margin-bottom: 18px; }
+.order-create select, .order-create input { min-width: 0; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.order-row { display: flex; align-items: center; gap: 14px; padding: 15px 0; border-top: 1px solid var(--line); }
+.order-row > div { flex: 1; } .order-row small { display: block; color: var(--muted); margin-top: 4px; }
+.order-ok { color: var(--success); }
 @media (max-width: 760px) { .catalog-grid { grid-template-columns: 1fr; } .catalog-actions { flex-wrap: wrap; } }
+@media (max-width: 760px) { .order-create { grid-template-columns: 1fr; } .order-row { align-items: flex-start; flex-wrap: wrap; } }
 @media (max-width: 760px) {
   .advisor-command {
     align-items: stretch;

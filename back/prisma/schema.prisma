@@ -52,6 +52,7 @@ model Organization {
   products Product[]
   campaigns Campaign[]
   campaignEnrollments CampaignEnrollment[]
+  orders Order[]
 }
 model User {
   id String @id @default(uuid())
@@ -70,6 +71,7 @@ model User {
   assignedWhatsAppNumbers WhatsAppNumber[] @relation("WhatsAppNumberAdvisor")
   sentWhatsAppMessages WhatsAppMessage[] @relation("WhatsAppMessageSender")
   campaignEnrollments CampaignEnrollment[]
+  orders Order[]
   @@unique([organizationId,id])
 }
 model Session {
@@ -113,6 +115,7 @@ model Client {
   activities Activity[]
   whatsAppConversations WhatsAppConversation[]
   campaignEnrollments CampaignEnrollment[]
+  orders Order[]
   @@unique([organizationId,id])
   @@index([organizationId,advisorId,createdAt])
   @@index([organizationId,advisorId,id])
@@ -173,6 +176,7 @@ model Product {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   campaignItems CampaignProduct[]
+  orderLines OrderLine[]
   @@unique([organizationId, code])
   @@index([organizationId, active, validFrom])
 }
@@ -216,6 +220,41 @@ model CampaignEnrollment {
   enrolledAt DateTime @default(now())
   @@unique([campaignId, clientId])
   @@index([organizationId, clientId, status])
+}
+
+model Order {
+  id String @id @default(uuid())
+  organizationId String
+  organization Organization @relation(fields:[organizationId], references:[id], onDelete:Cascade)
+  clientId String
+  client Client @relation(fields:[clientId], references:[id])
+  advisorId String
+  advisor User @relation(fields:[advisorId], references:[id])
+  status String @default("draft")
+  currency String @default("COP")
+  totalMinor Int
+  idempotencyKey String
+  erpReference String?
+  erpError String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  lines OrderLine[]
+  @@unique([organizationId, idempotencyKey])
+  @@index([organizationId, status, createdAt])
+}
+
+model OrderLine {
+  id String @id @default(uuid())
+  orderId String
+  order Order @relation(fields:[orderId], references:[id], onDelete:Cascade)
+  productId String?
+  product Product? @relation(fields:[productId], references:[id], onDelete:SetNull)
+  productCode String
+  productName String
+  unitPriceMinor Int
+  quantity Int
+  lineTotalMinor Int
+  @@index([orderId])
 }
 model EmailJob {
   id String @id @default(uuid())

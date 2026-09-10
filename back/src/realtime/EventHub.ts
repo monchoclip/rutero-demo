@@ -14,7 +14,8 @@ export type RealtimeEventType =
   | "chat.received"
   | "membership.updated"
   | "catalog.updated"
-  | "campaign.enrolled";
+  | "campaign.enrolled"
+  | "order.updated";
 
 export type RealtimeEvent = {
   id: string;
