@@ -24,6 +24,8 @@ const moduleLabels = {
   team: "Mi equipo",
   chats: "WhatsApp",
   billing: "Cobros",
+  catalog: "Catálogo y campañas",
+  orders: "Pedidos",
   mail: "Correo de prueba",
 } as const;
 
