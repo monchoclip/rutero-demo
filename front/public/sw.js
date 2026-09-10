@@ -15,7 +15,9 @@ self.addEventListener("activate", (event) => {
       .then((keys) =>
         Promise.all(
           keys
-            .filter((key) => key.startsWith("ruts68-shell-") && key !== CACHE_NAME)
+            .filter(
+              (key) => key.startsWith("ruts68-shell-") && key !== CACHE_NAME,
+            )
             .map((key) => caches.delete(key)),
         ),
       ),
@@ -25,7 +27,10 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const request = event.request;
-  if (request.method !== "GET" || new URL(request.url).origin !== self.location.origin)
+  if (
+    request.method !== "GET" ||
+    new URL(request.url).origin !== self.location.origin
+  )
     return;
   event.respondWith(
     fetch(request)
@@ -34,13 +39,21 @@ self.addEventListener("fetch", (event) => {
         void caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
         return response;
       })
-      .catch(() => caches.match(request).then((cached) => cached ?? caches.match("/"))),
+      .catch(() =>
+        caches.match(request).then((cached) => cached ?? caches.match("/")),
+      ),
   );
 });
 
 self.addEventListener("sync", (event) => {
   if (event.tag !== "ruts68-sync") return;
-  event.waitUntil(self.clients.matchAll({ type: "window" }).then((clients) =>
-    clients.forEach((client) => client.postMessage({ type: "ruts68:sync" })),
-  ));
+  event.waitUntil(
+    self.clients
+      .matchAll({ type: "window" })
+      .then((clients) =>
+        clients.forEach((client) =>
+          client.postMessage({ type: "ruts68:sync" }),
+        ),
+      ),
+  );
 });

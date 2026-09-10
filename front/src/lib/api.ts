@@ -11,7 +11,10 @@ export class ApiError extends Error {
 }
 export class OfflineQueuedError extends ApiError {
   constructor() {
-    super(0, "Sin conexión: guardamos la actividad en este dispositivo y la sincronizaremos al volver a estar en línea.");
+    super(
+      0,
+      "Sin conexión: guardamos la actividad en este dispositivo y la sincronizaremos al volver a estar en línea.",
+    );
     this.name = "OfflineQueuedError";
   }
 }
@@ -37,7 +40,11 @@ export async function api<T>(
       typeof window !== "undefined" &&
       canQueueOfflineMutation(method, path)
     ) {
-      await enqueueMutation(method as "POST" | "PATCH", path, options.body ? JSON.parse(String(options.body)) : null);
+      await enqueueMutation(
+        method as "POST" | "PATCH",
+        path,
+        options.body ? JSON.parse(String(options.body)) : null,
+      );
       throw new OfflineQueuedError();
     }
     throw new ApiError(

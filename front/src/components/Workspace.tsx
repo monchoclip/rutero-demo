@@ -253,14 +253,18 @@ export function Workspace({
   useEffect(() => {
     setOnline(navigator.onLine);
     const refreshQueue = () => {
-      void queuedMutationCount().then(setPendingSync).catch(() => setPendingSync(0));
+      void queuedMutationCount()
+        .then(setPendingSync)
+        .catch(() => setPendingSync(0));
     };
     const sync = () => {
       setOnline(true);
       void replayOfflineQueue().then(({ synced, remaining }) => {
         setPendingSync(remaining);
         if (synced) {
-          setNotice(`${synced} actividad${synced === 1 ? "" : "es"} sincronizada${synced === 1 ? "" : "s"}.`);
+          setNotice(
+            `${synced} actividad${synced === 1 ? "" : "es"} sincronizada${synced === 1 ? "" : "s"}.`,
+          );
           void load();
         }
       });
@@ -463,9 +467,15 @@ export function Workspace({
             <strong>{tabs.find((t) => t.id === tab)?.label}</strong>
           </span>
           <div className="topbar-right">
-            <span className={online ? "environment-dot" : "environment-dot offline"} /> {online ? "En línea" : "Sin conexión"}{" "}
+            <span
+              className={online ? "environment-dot" : "environment-dot offline"}
+            />{" "}
+            {online ? "En línea" : "Sin conexión"}{" "}
             {pendingSync > 0 && (
-              <span className="sync-queue" title="Actividades pendientes de sincronización">
+              <span
+                className="sync-queue"
+                title="Actividades pendientes de sincronización"
+              >
                 {pendingSync} pendiente{pendingSync === 1 ? "" : "s"}
               </span>
             )}{" "}
