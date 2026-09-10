@@ -1213,6 +1213,26 @@ a.contact-row:hover {
   color: var(--ink);
   box-shadow: 0 30px 100px #122d2933;
 }
+.client-detail-dialog {
+  width: min(1040px, calc(100% - 32px));
+  max-width: 1040px;
+  padding: 28px;
+  overflow: hidden;
+}
+.client-detail-dialog .client-detail-header {
+  flex: none;
+}
+.client-detail-scroll {
+  max-height: min(680px, calc(90vh - 132px));
+  overflow-y: auto;
+  padding: 2px 6px 4px 0;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.client-detail-dialog .client-detail-side {
+  position: sticky;
+  top: 0;
+}
 .advisor-command {
   display: flex;
   align-items: center;
@@ -1579,6 +1599,14 @@ a.contact-row:hover {
   }
   .dialog {
     padding: 22px;
+  }
+  .client-detail-dialog {
+    width: calc(100% - 20px);
+    padding: 18px;
+  }
+  .client-detail-scroll {
+    max-height: calc(92vh - 128px);
+    padding-right: 2px;
   }
   .dialog-summary-grid {
     grid-template-columns: 1fr;

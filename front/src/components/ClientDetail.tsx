@@ -65,7 +65,20 @@ export function ClientDetail({
   const nextVisitEvidence = next ? visitEvidenceStatus(next) : null;
   const timeline = history.filter((a) => a.id !== next?.id);
   return (
-    <section className="panel client-detail">
+    <dialog
+      className="dialog client-detail client-detail-dialog"
+      ref={(node) => {
+        if (node && !node.open) node.showModal();
+      }}
+      aria-labelledby="client-detail-title"
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
       <div className="client-detail-header">
         <div className="client-identity">
           <span className="avatar client-avatar-lg">
@@ -73,7 +86,7 @@ export function ClientDetail({
           </span>
           <div>
             <span className="eyebrow">FICHA DEL CLIENTE</span>
-            <h2>{client.name}</h2>
+            <h2 id="client-detail-title">{client.name}</h2>
             <div className="client-meta">
               <span className="badge">{client.city}</span>
               <small>Cliente desde {dateOnly(client.createdAt)}</small>
@@ -84,7 +97,8 @@ export function ClientDetail({
           <X size={16} /> Cerrar ficha
         </button>
       </div>
-      <div className="client-detail-grid">
+      <div className="client-detail-scroll">
+        <div className="client-detail-grid">
         <div className="client-detail-main">
           <div className="contact-list">
             <a className="contact-row" href={`tel:${client.phone}`}>
@@ -240,7 +254,8 @@ export function ClientDetail({
             </button>
           )}
         </aside>
+        </div>
       </div>
-    </section>
+    </dialog>
   );
 }
