@@ -41,6 +41,7 @@ export function canQueueOfflineMutation(method: string, path: string) {
   return (
     normalized === "POST" &&
     (path === "/activities" ||
+      path === "/orders" ||
       /^\/activities\/[^/]+\/(complete|start-visit)$/.test(path))
   );
 }
@@ -172,7 +173,24 @@ async function currentActivities() {
   return body.data ?? [];
 }
 
+async function currentOrders() {
+  const response = await fetch(`${API_URL}/orders`, {
+    credentials: "include",
+    headers: { "Content-Type": "application/json", "X-Ruts68-Request": "1" },
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!response.ok) return [];
+  const body = (await response.json()) as { data?: Array<Record<string, unknown>> };
+  return body.data ?? [];
+}
+
 async function alreadyApplied(mutation: OfflineMutation) {
+  if (mutation.path === "/orders") {
+    const key = (mutation.body as { idempotencyKey?: string } | null)?.idempotencyKey;
+    if (!key) return false;
+    const orders = await currentOrders();
+    return orders.some((order) => order.idempotencyKey === key);
+  }
   const activities = await currentActivities();
   if (mutation.path === "/activities") {
     const key = (mutation.body as { idempotencyKey?: string } | null)

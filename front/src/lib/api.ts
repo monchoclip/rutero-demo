@@ -13,7 +13,7 @@ export class OfflineQueuedError extends ApiError {
   constructor() {
     super(
       0,
-      "Sin conexión: guardamos la actividad en este dispositivo y la sincronizaremos al volver a estar en línea.",
+      "Sin conexión: guardamos el cambio en este dispositivo y lo sincronizaremos al volver a estar en línea.",
     );
     this.name = "OfflineQueuedError";
   }
