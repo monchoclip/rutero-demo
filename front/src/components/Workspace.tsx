@@ -381,6 +381,7 @@ export function Workspace({
         [
           "activity.created",
           "activity.completed",
+          "activity.cancelled",
           "client.created",
           "client.updated",
           "visit.started",
