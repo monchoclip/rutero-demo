@@ -1955,6 +1955,34 @@ a.contact-row:hover {
   font-size: 0.75rem;
   line-height: 1.45;
 }
+.plan-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.plan-editor-card {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-muted);
+}
+.plan-editor-card legend {
+  padding: 0 6px;
+  color: var(--ink);
+  font-size: 0.8125rem;
+  font-weight: 650;
+}
+.plan-editor-card label {
+  gap: 5px;
+  font-size: 0.75rem;
+}
+.plan-editor-card input {
+  width: 100%;
+}
 .billing-inputs {
   max-width: 560px;
 }

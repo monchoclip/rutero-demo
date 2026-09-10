@@ -61,6 +61,7 @@ export function Billing({
   const [users, setUsers] = useState(5);
   const [outcome, setOutcome] = useState<SimulationOutcome>("approved");
   const [editing, setEditing] = useState(false);
+  const [editingPlans, setEditingPlans] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
@@ -164,6 +165,39 @@ export function Billing({
     }
   }
 
+  async function savePlans(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!settings) return;
+    setBusy(true);
+    setNotice("");
+    setError("");
+    const form = new FormData(event.currentTarget);
+    const plans = settings.configuration.plans.map((plan) => ({
+      ...plan,
+      name: String(form.get(`plan-${plan.id}-name`) ?? plan.name).trim(),
+      baseMinor: Number(form.get(`plan-${plan.id}-baseMinor`)),
+      includedUsers: Number(form.get(`plan-${plan.id}-includedUsers`)),
+      userMinor: Number(form.get(`plan-${plan.id}-userMinor`)),
+    }));
+    try {
+      const saved = await patch<BillingSettings>("/billing/settings", {
+        version: settings.version,
+        configuration: {
+          ...settings.configuration,
+          plans,
+        } satisfies BillingConfiguration,
+      });
+      setSettings(saved);
+      setEditingPlans(false);
+      setNotice("Los planes y sus límites quedaron guardados.");
+    } catch (failure) {
+      setError(describe(failure));
+      await load();
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (!settings)
     return (
       <section className="panel">
@@ -186,9 +220,9 @@ export function Billing({
       <div className="notice-strip" role="note">
         <ShieldAlert size={18} />
         <span>
-          Ensayo local del cobro: no hay pasarela conectada, ningún importe se
-          cobra y ningún plan queda activo. Sirve para revisar el desglose antes
-          de definir el contrato con Wompi.
+          Ensayo local del cobro: no hay pasarela conectada ni se cobra dinero.
+          Si apruebas el ensayo, la membresía demo se activa para comprobar el
+          flujo completo antes de definir el contrato con Wompi.
         </span>
       </div>
       {organization && (
@@ -264,6 +298,98 @@ export function Billing({
             </select>
           </label>
         </div>
+      </section>
+      <section className="panel">
+        <div className="section-heading">
+          <div>
+            <h2>Planes y límites</h2>
+            <p>
+              Define el nombre, precio base, usuarios incluidos y valor por
+              usuario adicional. Cada cambio crea una nueva versión de tarifas.
+            </p>
+          </div>
+          {commercial && (
+            <button
+              className="text-button"
+              onClick={() => setEditingPlans((open) => !open)}
+            >
+              {editingPlans ? "Cancelar" : "Editar planes"}
+            </button>
+          )}
+        </div>
+        {editingPlans ? (
+          <form onSubmit={savePlans}>
+            <div className="plan-editor-grid">
+              {configuration.plans.map((plan) => (
+                <fieldset className="plan-editor-card" key={plan.id}>
+                  <legend>{plan.name}</legend>
+                  <label>
+                    Nombre visible
+                    <input
+                      name={`plan-${plan.id}-name`}
+                      defaultValue={plan.name}
+                      required
+                      minLength={2}
+                      maxLength={60}
+                    />
+                  </label>
+                  <label>
+                    Precio base (unidades menores de COP)
+                    <input
+                      name={`plan-${plan.id}-baseMinor`}
+                      type="number"
+                      min={0}
+                      max={100000000}
+                      defaultValue={plan.baseMinor}
+                      required
+                    />
+                  </label>
+                  <label>
+                    Usuarios incluidos
+                    <input
+                      name={`plan-${plan.id}-includedUsers`}
+                      type="number"
+                      min={1}
+                      max={500}
+                      defaultValue={plan.includedUsers}
+                      required
+                    />
+                  </label>
+                  <label>
+                    Usuario adicional (unidades menores)
+                    <input
+                      name={`plan-${plan.id}-userMinor`}
+                      type="number"
+                      min={0}
+                      max={100000000}
+                      defaultValue={plan.userMinor}
+                      required
+                    />
+                  </label>
+                </fieldset>
+              ))}
+            </div>
+            <button className="primary" disabled={busy} type="submit">
+              {busy ? "Guardando…" : "Guardar planes"}
+            </button>
+          </form>
+        ) : (
+          <div className="plan-grid" aria-label="Planes configurados">
+            {configuration.plans.map((plan) => (
+              <article className="plan-card" key={plan.id}>
+                <strong>{plan.name}</strong>
+                <span className="plan-amount">
+                  {money(plan.baseMinor, configuration.currency)}
+                </span>
+                <small>
+                  {plan.includedUsers} usuarios incluidos ·{" "}
+                  {money(plan.userMinor, configuration.currency)} por usuario
+                  adicional
+                </small>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
       <section className="panel">
         <div className="section-heading">
