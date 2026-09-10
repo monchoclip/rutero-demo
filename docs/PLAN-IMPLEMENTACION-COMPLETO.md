@@ -67,7 +67,7 @@ Evidencia local: se agregó `/realtime/events` con SSE autenticado por cookie y 
 
 ### P3 · Ubicaciones y visita activa
 
-Estado: implementado localmente, pendiente de validación independiente 5.5.
+Estado: oro local (91ec770, e416ad5; gates y revisión CTO completados; validación independiente pendiente por límite de agentes).
 
 Objetivo: dar al coordinador una vista clara de visitas y al asesor un estado persistente de visita activa.
 
@@ -89,7 +89,7 @@ Incluye adaptador S3 compatible, URLs presignadas, hash/tamaño/content-type, l�
 
 Aceptación: la base guarda metadata y llave, nunca el binario en producción; descargas autorizadas funcionan; errores de carga se pueden reintentar; pruebas de seguridad de tipo y tamaño pasan.
 
-Evidencia local: `Activity` guarda llave de almacenamiento, SHA-256, tipo MIME y tamaño de la foto de visita. El backend calcula metadata desde el `data:` recibido, mantiene previsualización local por defecto, añade adaptador privado S3 compatible con URLs presignadas, descarga autorizada, límite de bytes, retención configurada y eliminación autorizada de objeto + metadata. Las pruebas cubren el contrato local y externo con mock sin credenciales reales. Falta provisionar bucket/IAM/ciclo de vida y validar con credenciales de staging antes de datos reales.
+Evidencia local: `Activity` guarda llave de almacenamiento, SHA-256, tipo MIME y tamaño de la foto de visita. El backend calcula metadata desde el `data:` recibido, mantiene previsualización local solo en desarrollo, añade adaptador privado S3 compatible con URLs presignadas, descarga autorizada, límite de bytes, retención configurada y eliminación autorizada de objeto + metadata. Producción exige modo S3 y se validan magic bytes reales; la verificación acepta metadata externa sin `dataUrl`. Las pruebas cubren el contrato local y externo con mock sin credenciales reales. Falta provisionar bucket/IAM/ciclo de vida y validar con credenciales de staging antes de datos reales. Los gates pasan; el agente independiente no pudo ejecutarse por límite de cuota.
 
 ### P5 · Catálogo, ofertas y campañas
 
