@@ -3,6 +3,38 @@
 Estado: plan aprobado para ejecución incremental.  
 Regla: cada plan se implementa en una rama/commit verificable, después se ejecuta el gate técnico y se levanta un agente validador 5.5 independiente. Solo si el validador aprueba se inicia el siguiente plan.
 
+## Definición de oro
+
+Una fase pasa a oro cuando cumple estas condiciones:
+
+- El alcance funcional de la fase queda conectado de punta a punta en front, back, datos, permisos y documentación.
+- Los gates locales pasan: `npm run typecheck`, `npm test`, `npm run test:integration`, `npm run routes:check` y `npm run build`.
+- El validador independiente responde `APROBADO` sin hallazgos P0/P1 abiertos.
+- `docs/ESTADO-DESARROLLO.md` queda actualizado con lo implementado, lo probado y los límites que siguen vivos.
+- El commit de la fase queda como punto de control identificable.
+
+Si aparece un hallazgo P0/P1, la fase no avanza. Se corrige en la misma fase, se repiten los gates y se levanta una nueva validación.
+
+## Roles de agentes por fase
+
+Cada fase usa el mismo circuito para mantener costo bajo y control de calidad:
+
+- Agente implementador 5.5: desarrolla solo el alcance de la fase vigente, respeta `CLAUDE.md`, `AGENTS.md`, `front/CLAUDE.md` y `back/CLAUDE.md`, actualiza pruebas y deja commit.
+- Agente validador 5.5: no edita archivos; revisa diff, rutas, permisos, migraciones, UX, riesgos, pruebas y criterios de aceptación. Debe responder `APROBADO` o `RECHAZADO`.
+- Agente CTO 5.5: se levanta al cerrar un bloque grande, por ejemplo P3, P6 y P9. Revisa arquitectura, costos AWS, seguridad, deuda técnica y coherencia comercial.
+- Agente UX/CRM 5.5: se levanta en fases con interfaz pesada, especialmente P3, P5, P6 y P8. Revisa flujo operativo real de asesor, coordinador y administrador.
+
+## Secuencia automática de trabajo
+
+1. Se toma la primera fase con estado pendiente.
+2. Se entrega a un implementador 5.5 con el alcance exacto de esa fase.
+3. El implementador deja commit y resumen de pruebas.
+4. El agente principal ejecuta los gates completos.
+5. Se levanta un validador 5.5 en modo solo lectura.
+6. Si el validador aprueba, se marca la fase como oro en este plan y en `docs/ESTADO-DESARROLLO.md`.
+7. Si el validador rechaza, se documentan hallazgos, se corrige en la misma fase y se vuelve al paso 4.
+8. Al aprobar una fase, se inicia la siguiente sin cambiar el orden salvo que un bloqueo externo lo exija, como credenciales reales de Meta, Wompi o AWS.
+
 ## Orden de ejecución
 
 ### P1 · Base operativa y paginación
@@ -17,13 +49,19 @@ Aceptación: ningún listado depende de 100 clientes/200 actividades; el asesor 
 
 ### P2 · Tiempo real de bajo costo
 
+Estado: pendiente.
+
 Objetivo: actualizar CRM, visitas, chat y cobros sin refrescos manuales.
 
 Incluye canal SSE por empresa, autenticación por cookie, heartbeat, reconexión con backoff, eventos mínimos (`activity.created`, `activity.completed`, `visit.started`, `visit.completed`, `chat.received`, `membership.updated`) y fallback a polling cuando SSE no esté disponible.
 
 Aceptación: un cambio autorizado se refleja en otras sesiones en menos de cinco segundos; no se cruzan empresas; reconexión y cierre de sesión limpian el canal; se prueba con dos usuarios.
 
+Evidencia esperada: endpoint SSE autenticado, publicador interno de eventos, cliente front con reconexión, pruebas de aislamiento multiempresa y una validación manual con dos sesiones de demostración.
+
 ### P3 · Ubicaciones y visita activa
+
+Estado: pendiente.
 
 Objetivo: dar al coordinador una vista clara de visitas y al asesor un estado persistente de visita activa.
 
@@ -31,7 +69,11 @@ Incluye módulo de ubicaciones, mapa Leaflet/OpenStreetMap, lista alternativa ac
 
 Aceptación: coordinadores ven solo su empresa, asesores no ven ubicaciones ajenas, el mapa funciona sin bloquear la tabla, y una visita conserva sus dos coordenadas al trabajar offline.
 
+Evidencia esperada: vista de mapa para perfiles autorizados, panel persistente de visita activa, sincronización offline de inicio/cierre/foto, cálculo visual de distancia entre coordenadas y pruebas de permisos por rol.
+
 ### P4 · Evidencia y multimedia en almacenamiento económico
+
+Estado: pendiente.
 
 Objetivo: retirar fotografías y multimedia pesada de PostgreSQL.
 
@@ -41,6 +83,8 @@ Aceptación: la base guarda metadata y llave, nunca el binario en producción; d
 
 ### P5 · Catálogo, ofertas y campañas
 
+Estado: pendiente.
+
 Objetivo: administrar productos/servicios y asociarlos a clientes y asesores.
 
 Incluye productos con código, descripción, precio versionado, moneda, vigencia y estado; ofertas; campañas con participación histórica, reactivación sin sobrescribir historial, permisos comerciales y vistas de asesor/coordinador.
@@ -48,6 +92,8 @@ Incluye productos con código, descripción, precio versionado, moneda, vigencia
 Aceptación: un precio usado queda congelado en la actividad/pedido; una campaña vencida no acepta nuevas altas; la cartera y los datos permanecen aislados por empresa; UI tiene estados vacío/carga/error.
 
 ### P6 · Pedidos y adaptador ERP
+
+Estado: pendiente.
 
 Objetivo: convertir una oportunidad en pedido trazable.
 
@@ -57,6 +103,8 @@ Aceptación: no se duplica un pedido por reintento, nunca se marca enviado sin c
 
 ### P7 · Integraciones reales de WhatsApp y Wompi
 
+Estado: pendiente, condicionado por credenciales sandbox reales.
+
 Objetivo: pasar de contratos simulados a sandbox verificable.
 
 Incluye checklist de credenciales por empresa, validación Meta sandbox, plantillas aprobadas, webhook real, checkout y webhook Wompi, conciliación, recibo, membresía y estados de error observables.
@@ -65,6 +113,8 @@ Aceptación: secretos no llegan al cliente, firmas se validan, transacciones rep
 
 ### P8 · UX/UI de operación de campo
 
+Estado: pendiente.
+
 Objetivo: reducir pasos del asesor y dar claridad a coordinación.
 
 Incluye bandeja de chat con estados, panel de visita activa, acciones rápidas, accesibilidad WCAG AA, jerarquía de color, orientación de marca/logo por empresa y pruebas responsive 375/768/1440 px.
@@ -72,6 +122,8 @@ Incluye bandeja de chat con estados, panel de visita activa, acciones rápidas, 
 Aceptación: navegación por teclado, foco visible, mensajes de error comprensibles, modal de ficha sin salto de página, y cada perfil ve solo sus acciones.
 
 ### P9 · Preparación AWS, seguridad y operación
+
+Estado: pendiente.
 
 Objetivo: publicar con el costo mínimo razonable y observabilidad básica.
 
