@@ -1,6 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 import type { Actor } from "../identity/IdentityTypes.js";
 import { tenantId } from "../crm/CrmTypes.js";
+import { AppError } from "../shared/errors.js";
 import type { CampaignInput, ProductInput, ProductUpdate } from "./CatalogSchema.js";
 
 export class CatalogRepository {
@@ -26,11 +27,12 @@ export class CatalogRepository {
     });
   }
   campaigns(actor: Actor) {
-    return this.db.campaign.findMany({ where: { organizationId: tenantId(actor) }, include: { products: { include: { product: true } }, enrollments: { include: { client: { select: { id: true, name: true } }, advisor: { select: { id: true, name: true } } } } }, orderBy: [{ active: "desc" }, { startsAt: "desc" }] });
+    return this.db.campaign.findMany({ where: { organizationId: tenantId(actor) }, include: { products: { include: { product: true } }, enrollments: { where: actor.role === "advisor" ? { advisorId: actor.id } : undefined, include: { client: { select: { id: true, name: true } }, advisor: { select: { id: true, name: true } } } } }, orderBy: [{ active: "desc" }, { startsAt: "desc" }] });
   }
   createCampaign(actor: Actor, input: CampaignInput) {
     return this.db.$transaction(async (tx) => {
       const products = input.productIds.length ? await tx.product.findMany({ where: { id: { in: input.productIds }, organizationId: tenantId(actor), active: true } }) : [];
+      if (products.length !== new Set(input.productIds).size) throw new AppError(422, "INVALID_PRODUCT", "Uno o más productos no están disponibles.");
       const campaign = await tx.campaign.create({ data: { organizationId: tenantId(actor), name: input.name, description: input.description, startsAt: new Date(input.startsAt), endsAt: input.endsAt ? new Date(input.endsAt) : null, active: input.active, products: { create: products.map((p) => ({ productId: p.id, priceMinor: p.priceMinor })) } }, include: { products: { include: { product: true } } } });
       return campaign;
     });
