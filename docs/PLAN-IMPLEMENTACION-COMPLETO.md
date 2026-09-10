@@ -43,8 +43,6 @@ Cada fase usa el mismo circuito para mantener costo bajo y control de calidad:
 
 Estado: oro local (`a9ef2da`, validado por `p1_validate_final`).
 
-Estado: oro local (5c9d792, eb51567; validado por p2_validate_final2).
-
 Objetivo: soportar carteras y agendas grandes sin cargar límites fijos en el navegador.
 
 Incluye paginación por cursor en clientes y actividades, búsqueda server-side, filtros por rol, índices PostgreSQL, estados de carga incremental y pruebas de aislamiento multiempresa.
