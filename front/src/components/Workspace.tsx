@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { api, post, ApiError } from "../lib/api";
 import { queuedMutationCount, replayOfflineQueue } from "../lib/offlineQueue";
+import { readSnapshot, writeSnapshot } from "../lib/offlineCache";
 import {
   activityLabels,
   roleLabels,
@@ -216,6 +217,13 @@ export function Workspace({
   const coordinator = commercial || user.role === "administrative_coordinator";
   const load = useCallback(async () => {
     setError("");
+    const cacheKey = (name: string) => `workspace:${user.id}:${name}`;
+    const cached = await Promise.all([
+      readSnapshot<Organization>(cacheKey("organization")),
+      readSnapshot<User[]>(cacheKey("users")),
+      readSnapshot<Client[]>(cacheKey("clients")),
+      readSnapshot<Activity[]>(cacheKey("activities")),
+    ]).catch(() => [null, null, null, null] as const);
     try {
       const [org, team, customers, tasks] = await Promise.all([
         api<Organization>("/organization"),
@@ -228,6 +236,12 @@ export function Workspace({
       setClients(customers);
       setActivities(tasks);
       setLastSyncedAt(new Date());
+      await Promise.all([
+        writeSnapshot(cacheKey("organization"), org),
+        writeSnapshot(cacheKey("users"), team),
+        writeSnapshot(cacheKey("clients"), customers),
+        writeSnapshot(cacheKey("activities"), tasks),
+      ]).catch(() => undefined);
       if (commercial) setInvitations(await api<Invitation[]>("/invitations"));
       if (coordinator) setBilling(await available("/billing/settings"));
       setWhatsapp(await hasWhatsAppNumbers());
@@ -240,13 +254,30 @@ export function Workspace({
       }
       return customers;
     } catch (error) {
+      if (
+        error instanceof ApiError &&
+        error.status === 0 &&
+        cached[0] &&
+        cached[1] &&
+        cached[2] &&
+        cached[3]
+      ) {
+        setOrganization(cached[0]);
+        setUsers(cached[1]);
+        setClients(cached[2]);
+        setActivities(cached[3]);
+        setNotice(
+          "Sin conexión: mostrando la última cartera y agenda sincronizadas.",
+        );
+        return cached[2];
+      }
       if (error instanceof ApiError && error.status === 401) onLogout();
       else setError((error as Error).message);
       return undefined;
     } finally {
       setLoading(false);
     }
-  }, [commercial, coordinator, onLogout]);
+  }, [commercial, coordinator, onLogout, user.id]);
   useEffect(() => {
     void load();
   }, [load]);
@@ -326,9 +357,25 @@ export function Workspace({
     setHistory([]);
     setHistoryLoading(true);
     try {
-      setHistory(await api<Activity[]>(`/clients/${client.id}/history`));
+      const clientHistory = await api<Activity[]>(
+        `/clients/${client.id}/history`,
+      );
+      setHistory(clientHistory);
+      await writeSnapshot(
+        `workspace:${user.id}:history:${client.id}`,
+        clientHistory,
+      ).catch(() => undefined);
     } catch (error) {
-      setError((error as Error).message);
+      if (error instanceof ApiError && error.status === 0) {
+        const cachedHistory = await readSnapshot<Activity[]>(
+          `workspace:${user.id}:history:${client.id}`,
+        ).catch(() => null);
+        if (cachedHistory) setHistory(cachedHistory);
+        else
+          setError(
+            "Sin conexión: el historial aún no está disponible en este dispositivo.",
+          );
+      } else setError((error as Error).message);
     } finally {
       setHistoryLoading(false);
     }

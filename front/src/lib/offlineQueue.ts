@@ -8,6 +8,7 @@ export type OfflineMutation = {
 
 const DB_NAME = "ruts68-offline";
 const STORE_NAME = "mutations";
+const SNAPSHOT_STORE = "snapshots";
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4068";
 type RegistrationWithSync = ServiceWorkerRegistration & {
   sync?: { register: (tag: string) => Promise<void> };
@@ -19,11 +20,13 @@ function openQueue() {
       reject(new Error("IndexedDB no está disponible en este navegador."));
       return;
     }
-    const request = indexedDB.open(DB_NAME, 1);
+    const request = indexedDB.open(DB_NAME, 2);
     request.onupgradeneeded = () => {
       const db = request.result;
       if (!db.objectStoreNames.contains(STORE_NAME))
         db.createObjectStore(STORE_NAME, { keyPath: "id" });
+      if (!db.objectStoreNames.contains(SNAPSHOT_STORE))
+        db.createObjectStore(SNAPSHOT_STORE, { keyPath: "key" });
     };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);

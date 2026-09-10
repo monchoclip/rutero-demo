@@ -10,6 +10,7 @@ import type {
 } from "../lib/types";
 import { Empty } from "./WorkspaceViews";
 import { ConversationListItem, MessageBubble, NumberRow } from "./ChatViews";
+import { readSnapshot, writeSnapshot } from "../lib/offlineCache";
 
 export function Chat({
   commercial,
@@ -44,6 +45,11 @@ export function Chat({
 
   const load = useCallback(async () => {
     setError("");
+    const cacheKey = (name: string) => `chat:${currentUserId}:${name}`;
+    const cached = await Promise.all([
+      readSnapshot<WhatsAppConversation[]>(cacheKey("conversations")),
+      readSnapshot<WhatsAppNumber[]>(cacheKey("numbers")),
+    ]).catch(() => [null, null] as const);
     try {
       const [convos, nums] = await Promise.all([
         api<WhatsAppConversation[]>("/whatsapp/conversations"),
@@ -53,12 +59,25 @@ export function Chat({
       ]);
       setConversations(convos);
       setNumbers(nums);
+      await Promise.all([
+        writeSnapshot(cacheKey("conversations"), convos),
+        writeSnapshot(cacheKey("numbers"), nums),
+      ]).catch(() => undefined);
     } catch (loadError) {
-      setError((loadError as Error).message);
+      if (
+        loadError instanceof ApiError &&
+        loadError.status === 0 &&
+        cached[0] &&
+        cached[1]
+      ) {
+        setConversations(cached[0]);
+        setNumbers(cached[1]);
+        setError("Sin conexión: mostrando la última bandeja sincronizada.");
+      } else setError((loadError as Error).message);
     } finally {
       setLoading(false);
     }
-  }, [commercial]);
+  }, [commercial, currentUserId]);
   useEffect(() => {
     void load();
   }, [load]);
@@ -75,13 +94,23 @@ export function Chat({
     setMessagesLoading(true);
     setError("");
     try {
-      setMessages(
-        await api<WhatsAppMessage[]>(
-          `/whatsapp/conversations/${conversation.id}/messages`,
-        ),
+      const conversationMessages = await api<WhatsAppMessage[]>(
+        `/whatsapp/conversations/${conversation.id}/messages`,
       );
+      setMessages(conversationMessages);
+      await writeSnapshot(
+        `chat:${currentUserId}:messages:${conversation.id}`,
+        conversationMessages,
+      ).catch(() => undefined);
     } catch (openError) {
-      setError((openError as Error).message);
+      if (openError instanceof ApiError && openError.status === 0) {
+        const cachedMessages = await readSnapshot<WhatsAppMessage[]>(
+          `chat:${currentUserId}:messages:${conversation.id}`,
+        ).catch(() => null);
+        if (cachedMessages) setMessages(cachedMessages);
+        else
+          setError("Sin conexión: estos mensajes aún no están sincronizados.");
+      } else setError((openError as Error).message);
     } finally {
       setMessagesLoading(false);
     }
