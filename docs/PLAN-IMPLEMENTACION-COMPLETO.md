@@ -105,13 +105,15 @@ Evidencia local: migración `202609100003_catalog_campaigns` con productos, camp
 
 ### P6 · Pedidos y adaptador ERP
 
-Estado: pendiente.
+Estado: implementado localmente, pendiente de validación independiente 5.5 (límite de agentes).
 
 Objetivo: convertir una oportunidad en pedido trazable.
 
 Incluye pedido borrador/confirmado/pendiente ERP/enviado/error, líneas con snapshot de precio, idempotencia, reintentos, adaptador ERP simulado y bandeja de errores para coordinación.
 
 Aceptación: no se duplica un pedido por reintento, nunca se marca enviado sin confirmación del adaptador, y el asesor puede trabajar el borrador sin perderlo offline.
+
+Evidencia local: migración `202609100004_orders` con pedido y líneas de precio congelado, clave de idempotencia por empresa, estados draft/error/sent y referencia ERP. La API `/orders` permite crear/listar y enviar a un adaptador ERP simulado; los reintentos devuelven el mismo pedido y solo marcan `sent` tras confirmación del adaptador. La pestaña Pedidos permite crear borradores y enviarlos desde el flujo comercial. Falta adaptar la cola offline de pedidos y conectar el contrato ERP real.
 
 ### P7 · Integraciones reales de WhatsApp y Wompi
 

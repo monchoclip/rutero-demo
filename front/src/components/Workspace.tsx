@@ -386,6 +386,9 @@ export function Workspace({
           "visit.started",
           "visit.completed",
           "membership.updated",
+          "catalog.updated",
+          "campaign.enrolled",
+          "order.updated",
         ].includes(event.type)
       )
         void load();
