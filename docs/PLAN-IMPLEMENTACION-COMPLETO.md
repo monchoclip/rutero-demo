@@ -127,7 +127,7 @@ Aceptación: secretos no llegan al cliente, firmas se validan, transacciones rep
 
 ### P8 · UX/UI de operación de campo
 
-Estado: pendiente.
+Estado: implementado localmente, pendiente de validación independiente 5.5 (límite de agentes).
 
 Objetivo: reducir pasos del asesor y dar claridad a coordinación.
 
@@ -135,15 +135,19 @@ Incluye bandeja de chat con estados, panel de visita activa, acciones rápidas, 
 
 Aceptación: navegación por teclado, foco visible, mensajes de error comprensibles, modal de ficha sin salto de página, y cada perfil ve solo sus acciones.
 
+Evidencia local: tokens semánticos de color y foco visible global, modales nativos para ficha/formularios/pago, panel de visita activa, estados de Chat y Catálogo/Pedidos, navegación dinámica por `moduleConfig` y reglas de rol en servidor. Las hojas responsive cubren 375/768/1440 px y respetan `prefers-reduced-motion`; build estático pasa. Falta recorrido manual con dispositivos reales y una revisión independiente 5.5.
+
 ### P9 · Preparación AWS, seguridad y operación
 
-Estado: pendiente.
+Estado: preparado localmente, pendiente de staging y validación independiente 5.5 (límite de agentes).
 
 Objetivo: publicar con el costo mínimo razonable y observabilidad básica.
 
 Incluye front estático, API Lambda/Fargate según carga, PostgreSQL administrado económico, S3, CloudFront, dominio `ruts68.com`, secretos/IAM, backups, logs, alarmas, límites y guía de rollback.
 
 Aceptación: checklist de despliegue reproducible, presupuesto mensual estimado, HTTPS, CORS estricto, migraciones controladas, backups probados y sin sembrado demo en producción.
+
+Evidencia local: `infra/aws/template.yaml` crea buckets privados cifrados, ciclo de vida de fotos, CloudFront con OAC y HTTPS; `infra/aws/README.md` documenta ACM, DNS, IAM mínimo, migraciones, límites SSE y rollback. No se desplegó ni se inventan costos: faltan región, cuenta, base administrada, secretos, alarmas y prueba de restauración en staging.
 
 ## Protocolo automático por fase
 
