@@ -39,6 +39,7 @@ import {
   retryOfflineConflicts,
 } from "../lib/offlineQueue";
 import { readSnapshot, writeSnapshot } from "../lib/offlineCache";
+import { subscribeRealtime, type RealtimeEvent } from "../lib/realtime";
 import {
   activityLabels,
   roleLabels,
@@ -204,6 +205,9 @@ export function Workspace({
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
   const [notice, setNotice] = useState("");
   const [online, setOnline] = useState(true);
+  const [realtimeState, setRealtimeState] = useState<
+    "connected" | "connecting" | "fallback"
+  >("connecting");
   const [pendingSync, setPendingSync] = useState(0);
   const [syncConflicts, setSyncConflicts] = useState(0);
   const [search, setSearch] = useState("");
@@ -353,16 +357,40 @@ export function Workspace({
     };
   }, [load]);
   useEffect(() => {
-    const refreshWhenVisible = () => {
-      if (document.visibilityState === "visible") void load();
+    const onEvent = (event: RealtimeEvent) => {
+      if (
+        [
+          "activity.created",
+          "activity.completed",
+          "client.created",
+          "client.updated",
+          "visit.started",
+          "visit.completed",
+          "membership.updated",
+        ].includes(event.type)
+      )
+        void load();
     };
-    const interval = window.setInterval(refreshWhenVisible, 30_000);
+    return subscribeRealtime({ onEvent, onState: setRealtimeState });
+  }, [load]);
+  useEffect(() => {
+    const refreshWhenVisible = () => {
+      if (
+        document.visibilityState === "visible" &&
+        realtimeState !== "connected"
+      )
+        void load();
+    };
+    const interval =
+      realtimeState === "connected"
+        ? undefined
+        : window.setInterval(refreshWhenVisible, 30_000);
     document.addEventListener("visibilitychange", refreshWhenVisible);
     return () => {
-      window.clearInterval(interval);
+      if (interval) window.clearInterval(interval);
       document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
-  }, [load]);
+  }, [load, realtimeState]);
   async function saved() {
     const customers = await load();
     // Keep the ficha open after saving from it, refreshed with the new
@@ -623,6 +651,14 @@ export function Workspace({
               </button>
             )}{" "}
             <span className="environment-separator">·</span> Desarrollo local{" "}
+            <span className="sync-status">
+              ·{" "}
+              {realtimeState === "connected"
+                ? "Tiempo real"
+                : realtimeState === "fallback"
+                  ? "Polling"
+                  : "Conectando"}
+            </span>{" "}
             <span className="sync-status">
               {lastSyncedAt
                 ? `· Actualizado ${lastSyncedAt.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}`

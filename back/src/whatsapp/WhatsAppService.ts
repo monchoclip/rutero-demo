@@ -15,11 +15,13 @@ import {
 } from "./WhatsAppTypes.js";
 import { parseInboundEvents, verifySignature } from "./meta.js";
 import type { z } from "zod";
+import type { EventHub } from "../realtime/EventHub.js";
 export class WhatsAppService {
   constructor(
     private repository: WhatsAppRepository,
     private transport: WhatsAppTransport,
     private appSecret: string | undefined,
+    private realtimeHub?: EventHub,
   ) {}
   // Platform (super_admin): register a number for a company. Numbers are
   // registered centrally so a company only ever sees numbers it was given.
@@ -246,13 +248,22 @@ export class WhatsAppService {
           mediaId: message.mediaId,
           clientId: client?.id ?? null,
         });
+        if (stored.created)
+          this.realtimeHub?.publish({
+            organizationId: number.organizationId,
+            type: "chat.received",
+            resourceId: stored.message.conversationId,
+          });
         if (message.mediaId) {
           try {
             const media = await this.transport.downloadMedia({
               mediaId: message.mediaId,
               accessToken: decryptSecret(number.accessTokenCipher),
             });
-            await this.repository.attachMedia(stored.id, dataUrl(media));
+            await this.repository.attachMedia(
+              stored.message.id,
+              dataUrl(media),
+            );
           } catch {
             // Keep the message even when the optional media download fails.
           }

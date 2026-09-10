@@ -28,6 +28,7 @@ import {
   rate,
   money,
 } from "./BillingViews";
+import { subscribeRealtime } from "../lib/realtime";
 
 const outcomes: SimulationOutcome[] = ["approved", "declined", "pending"];
 const tariffFields = [
@@ -82,6 +83,15 @@ export function Billing({
   useEffect(() => {
     void load();
   }, [load]);
+  useEffect(
+    () =>
+      subscribeRealtime({
+        onEvent: (event) => {
+          if (event.type === "membership.updated") void load();
+        },
+      }),
+    [load],
+  );
 
   useEffect(() => {
     if (!settings) return;

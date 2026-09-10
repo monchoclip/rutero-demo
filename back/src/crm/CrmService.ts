@@ -1,4 +1,5 @@
 import type { z } from "zod";
+import type { FastifyReply } from "fastify";
 import type { Actor } from "../identity/IdentityTypes.js";
 import { CrmRepository } from "./CrmRepository.js";
 import { requireCommercial, requireWriter } from "./CrmTypes.js";
@@ -16,11 +17,16 @@ import {
   type ModuleConfig,
 } from "./OrganizationSchema.js";
 import { distanceMeters } from "./VisitTypes.js";
+import type { EventHub } from "../realtime/EventHub.js";
 export class CrmService {
   constructor(
     private repository: CrmRepository,
     private origin: string,
+    private realtimeHub: EventHub,
   ) {}
+  realtime(actor: Actor, reply: FastifyReply) {
+    return this.realtimeHub.subscribe(actor, reply);
+  }
   organization(actor: Actor) {
     return this.repository.organization(actor).then((organization) => ({
       ...organization,
@@ -64,7 +70,13 @@ export class CrmService {
         "INVALID_ADVISOR",
         "Elige un asesor activo de tu empresa.",
       );
-    return this.repository.createClient(actor, data);
+    const client = await this.repository.createClient(actor, data);
+    this.realtimeHub.publish({
+      organizationId: actor.organizationId!,
+      type: "client.created",
+      resourceId: client.id,
+    });
+    return client;
   }
   async reassign(actor: Actor, id: string, advisorId: string) {
     requireCommercial(actor);
@@ -75,7 +87,14 @@ export class CrmService {
         "INVALID_ADVISOR",
         "Elige un asesor activo de tu empresa.",
       );
-    return this.repository.reassign(actor, id, advisorId);
+    const client = await this.repository.reassign(actor, id, advisorId);
+    if (client)
+      this.realtimeHub.publish({
+        organizationId: actor.organizationId!,
+        type: "client.updated",
+        resourceId: id,
+      });
+    return client;
   }
   invitations(actor: Actor) {
     requireCommercial(actor);
@@ -126,12 +145,18 @@ export class CrmService {
         "INVALID_DATE",
         "Elige una fecha actual o futura.",
       );
-    return this.repository.createActivity(
+    const activity = await this.repository.createActivity(
       actor,
       { ...input, dueAt, advisorId: client.advisorId },
       client.advisor.email,
       client.name,
     );
+    this.realtimeHub.publish({
+      organizationId: actor.organizationId!,
+      type: "activity.created",
+      resourceId: activity.id,
+    });
+    return activity;
   }
   async complete(
     actor: Actor,
@@ -195,14 +220,26 @@ export class CrmService {
           recipient: client.advisor.email,
         }
       : undefined;
-    return (
+    const completed =
       (await this.repository.complete(
         actor,
         id,
         { ...data, ...visitData },
         followUp,
-      )) ?? this.repository.activity(actor, id)
-    );
+      )) ?? this.repository.activity(actor, id);
+    this.realtimeHub.publish({
+      organizationId: actor.organizationId!,
+      type:
+        activity.type === "visit" ? "visit.completed" : "activity.completed",
+      resourceId: id,
+    });
+    if (followUp)
+      this.realtimeHub.publish({
+        organizationId: actor.organizationId!,
+        type: "activity.created",
+        resourceId: `follow-up:${id}`,
+      });
+    return completed;
   }
   async startVisit(
     actor: Actor,
@@ -231,15 +268,20 @@ export class CrmService {
         "Esta visita ya no se puede iniciar.",
       );
     if (activity.visitStartedAt) return activity;
-    return (
+    const started =
       (await this.repository.startVisit(actor, id, {
         startedAt: new Date(input.capturedAt),
         latitude: input.latitude,
         longitude: input.longitude,
         accuracy: input.accuracy,
         address: input.address,
-      })) ?? this.repository.activity(actor, id)
-    );
+      })) ?? this.repository.activity(actor, id);
+    this.realtimeHub.publish({
+      organizationId: actor.organizationId!,
+      type: "visit.started",
+      resourceId: id,
+    });
+    return started;
   }
   async history(actor: Actor, clientId: string) {
     if (!(await this.repository.client(actor, clientId))) notFound();

@@ -1,6 +1,7 @@
 import type { FastifyRequest, FastifyReply } from "fastify";
 import type { IdentityService } from "../identity/IdentityService.js";
 import type { CrmService } from "../crm/CrmService.js";
+import type { EventHub } from "../realtime/EventHub.js";
 import type { Actor } from "../identity/IdentityTypes.js";
 declare module "fastify" {
   interface FastifyRequest {
@@ -11,6 +12,7 @@ declare module "fastify" {
 export type Services = {
   identity: IdentityService;
   crm: CrmService;
+  realtime: EventHub;
   production: boolean;
   localMail: boolean;
 };

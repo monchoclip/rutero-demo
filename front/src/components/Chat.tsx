@@ -1,5 +1,11 @@
 "use client";
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import { FileText, RefreshCw, Send, Settings2, UserPlus } from "lucide-react";
 import { api, post, patch, ApiError } from "../lib/api";
 import type {
@@ -11,6 +17,7 @@ import type {
 import { Empty } from "./WorkspaceViews";
 import { ConversationListItem, MessageBubble, NumberRow } from "./ChatViews";
 import { readSnapshot, writeSnapshot } from "../lib/offlineCache";
+import { subscribeRealtime } from "../lib/realtime";
 
 export function Chat({
   commercial,
@@ -41,6 +48,7 @@ export function Chat({
   const [showTemplate, setShowTemplate] = useState(false);
   const [sending, setSending] = useState(false);
   const [showNumbers, setShowNumbers] = useState(false);
+  const selectedRef = useRef<WhatsAppConversation | null>(null);
   const advisors = users.filter((u) => u.role === "advisor");
 
   const load = useCallback(async () => {
@@ -82,15 +90,34 @@ export function Chat({
     void load();
   }, [load]);
   useEffect(() => {
+    selectedRef.current = selected;
+  }, [selected]);
+  useEffect(() => {
+    let fallback = false;
+    const stopRealtime = subscribeRealtime({
+      onEvent: (event) => {
+        if (event.type !== "chat.received") return;
+        void load();
+        if (selectedRef.current) void loadMessages(selectedRef.current, false);
+      },
+      onState: (state) => {
+        fallback = state === "fallback";
+      },
+    });
     const timer = window.setInterval(() => {
-      if (document.visibilityState === "visible") void load();
+      if (fallback && document.visibilityState === "visible") void load();
     }, 10_000);
-    return () => window.clearInterval(timer);
+    return () => {
+      stopRealtime();
+      window.clearInterval(timer);
+    };
   }, [load]);
 
-  async function openConversation(conversation: WhatsAppConversation) {
-    setSelected(conversation);
-    setMessages([]);
+  async function loadMessages(
+    conversation: WhatsAppConversation,
+    reset = true,
+  ) {
+    if (reset) setMessages([]);
     setMessagesLoading(true);
     setError("");
     try {
@@ -114,6 +141,11 @@ export function Chat({
     } finally {
       setMessagesLoading(false);
     }
+  }
+
+  async function openConversation(conversation: WhatsAppConversation) {
+    setSelected(conversation);
+    await loadMessages(conversation);
   }
 
   async function sendMessage(event: FormEvent) {

@@ -17,6 +17,7 @@ import {
   paymentReference,
   wompiIntegritySignature,
 } from "./BillingTypes.js";
+import type { EventHub } from "../realtime/EventHub.js";
 type BillingOptions = {
   origin?: string;
   wompiPublicKey?: string;
@@ -28,6 +29,7 @@ export class BillingService {
     private repository: BillingRepository,
     private enabled: boolean,
     private options: BillingOptions = {},
+    private realtimeHub?: EventHub,
   ) {}
   private authorize(actor: Actor, write = false) {
     if (!this.enabled || actor.organizationId !== DEMO_ORGANIZATION_ID)
@@ -91,6 +93,11 @@ export class BillingService {
         "CONFIGURATION_CHANGED",
         "La configuración cambió. Actualiza antes de guardar.",
       );
+    this.realtimeHub?.publish({
+      organizationId: actor.organizationId!,
+      type: "membership.updated",
+      resourceId: actor.organizationId!,
+    });
     return result;
   }
   async quote(actor: Actor, input: QuoteInput) {
@@ -207,12 +214,18 @@ export class BillingService {
     const reference = String(transaction.reference ?? "");
     if (!reference)
       throw new AppError(400, "INVALID_EVENT", "Referencia ausente.");
-    return this.repository.updateTransaction(
+    const result = await this.repository.updateTransaction(
       reference,
       status,
       transaction.id ? String(transaction.id) : null,
       event,
     );
+    this.realtimeHub?.publish({
+      organizationId: result.organizationId,
+      type: "membership.updated",
+      resourceId: reference,
+    });
+    return result;
   }
   async platformOrganizations(actor: Actor) {
     if (actor.role !== "super_admin")
@@ -267,8 +280,8 @@ export class BillingService {
         "CONFIGURATION_CHANGED",
         "Actualiza el resumen con las nuevas tarifas de prueba.",
       );
-    if (input.reference)
-      await this.repository.updateTransaction(
+    if (input.reference) {
+      const transaction = await this.repository.updateTransaction(
         input.reference,
         input.outcome === "approved"
           ? "approved"
@@ -278,6 +291,12 @@ export class BillingService {
         `simulation:${result.id}`,
         result,
       );
+      this.realtimeHub?.publish({
+        organizationId: transaction.organizationId,
+        type: "membership.updated",
+        resourceId: input.reference,
+      });
+    }
     return result;
   }
   private replay(

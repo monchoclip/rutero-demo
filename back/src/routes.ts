@@ -13,6 +13,7 @@ export const routes = [
   ["PATCH", "/clients/:id/assignment", "reassignClient", true],
   ["GET", "/clients/:id/history", "history", true],
   ["GET", "/activities", "activities", true],
+  ["GET", "/realtime/events", "realtimeEvents", true],
   ["POST", "/activities", "createActivity", true],
   ["POST", "/activities/:id/start-visit", "startVisit", true],
   ["POST", "/activities/:id/complete", "completeActivity", true],

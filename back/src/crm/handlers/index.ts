@@ -51,6 +51,13 @@ export function crmHandlers({
     history: async (r) => crm.history(r.actor!, idSchema.parse(r.params).id),
     activities: async (r) =>
       crm.activities(r.actor!, listSchema.parse(r.query)),
+    realtimeEvents: async (r, reply) => {
+      r.server.log.debug(
+        { userId: r.actor!.id, organizationId: r.actor!.organizationId },
+        "Realtime stream opened",
+      );
+      return crm.realtime(r.actor!, reply);
+    },
     createActivity: async (r, reply) => {
       const result = await crm.createActivity(
         r.actor!,

@@ -230,7 +230,7 @@ export class WhatsAppRepository {
     const existing = await this.db.whatsAppMessage.findUnique({
       where: { waMessageId: input.waMessageId },
     });
-    if (existing) return existing;
+    if (existing) return { message: existing, created: false };
     const conversation = await this.db.whatsAppConversation.upsert({
       where: {
         whatsAppNumberId_contactPhone: {
@@ -252,7 +252,7 @@ export class WhatsAppRepository {
         ...(input.clientId ? { clientId: input.clientId } : {}),
       },
     });
-    return this.db.whatsAppMessage.create({
+    const message = await this.db.whatsAppMessage.create({
       data: {
         organizationId: input.organizationId,
         conversationId: conversation.id,
@@ -264,6 +264,7 @@ export class WhatsAppRepository {
         status: "received",
       },
     });
+    return { message, created: true };
   }
   updateStatus(
     waMessageId: string,

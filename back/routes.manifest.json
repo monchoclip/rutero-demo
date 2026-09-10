@@ -98,6 +98,13 @@
     "entry": "src/lambda.entry.ts"
   },
   {
+    "method": "GET",
+    "path": "/realtime/events",
+    "operation": "realtimeEvents",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
     "method": "POST",
     "path": "/activities",
     "operation": "createActivity",

@@ -53,7 +53,7 @@ Validación: APROBADO. El botón de actividades conserva un cursor global; su et
 
 ### P2 · Tiempo real de bajo costo
 
-Estado: pendiente.
+Estado: implementado localmente, pendiente de validación independiente 5.5.
 
 Objetivo: actualizar CRM, visitas, chat y cobros sin refrescos manuales.
 
@@ -62,6 +62,8 @@ Incluye canal SSE por empresa, autenticación por cookie, heartbeat, reconexión
 Aceptación: un cambio autorizado se refleja en otras sesiones en menos de cinco segundos; no se cruzan empresas; reconexión y cierre de sesión limpian el canal; se prueba con dos usuarios.
 
 Evidencia esperada: endpoint SSE autenticado, publicador interno de eventos, cliente front con reconexión, pruebas de aislamiento multiempresa y una validación manual con dos sesiones de demostración.
+
+Evidencia local: se agregó `/realtime/events` con SSE autenticado por cookie y filtrado por empresa, `EventHub` con heartbeat y cierre de conexiones, publicaciones desde CRM, visitas, WhatsApp entrante y membresías, cliente front con reconexión/backoff y polling de respaldo. `npm run typecheck`, `npm test`, `npm run test:integration`, `npm run routes:check` y `npm run build` pasan localmente.
 
 ### P3 · Ubicaciones y visita activa
 

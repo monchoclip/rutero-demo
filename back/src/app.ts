@@ -21,6 +21,7 @@ import { WhatsAppService } from "./whatsapp/WhatsAppService.js";
 import { whatsAppHandlers } from "./whatsapp/handlers/index.js";
 import { metaTransport } from "./whatsapp/MetaTransport.js";
 import type { WhatsAppTransport } from "./whatsapp/WhatsAppTypes.js";
+import { EventHub } from "./realtime/EventHub.js";
 export async function createApp(
   db: PrismaClient,
   options: {
@@ -69,9 +70,11 @@ export async function createApp(
   await app.register(helmet);
   app.decorateRequest("actor", null);
   const identity = new IdentityService(new IdentityRepository(db));
+  const realtime = new EventHub();
   const services = {
     identity,
-    crm: new CrmService(new CrmRepository(db), options.origin),
+    crm: new CrmService(new CrmRepository(db), options.origin, realtime),
+    realtime,
     ...options,
   };
   const billing = new BillingService(
@@ -83,11 +86,13 @@ export async function createApp(
       wompiIntegritySecret: options.wompiIntegritySecret,
       wompiEventsSecret: options.wompiEventsSecret,
     },
+    realtime,
   );
   const whatsapp = new WhatsAppService(
     new WhatsAppRepository(db),
     options.whatsappTransport ?? metaTransport,
     options.metaAppSecret,
+    realtime,
   );
   const handlers = {
     ...identityHandlers(services),
@@ -119,6 +124,7 @@ export async function createApp(
       },
       handler: async (request, reply) => {
         const result = await handlers[operation](request, reply);
+        if (operation === "realtimeEvents") return result;
         if (external) return result;
         const meta = {
           requestId: request.id,
@@ -160,6 +166,9 @@ export async function createApp(
       message: "No pudimos completar la operación. Intenta de nuevo.",
       requestId: request.id,
     });
+  });
+  app.addHook("onClose", async () => {
+    realtime.close();
   });
   return app;
 }

@@ -24,6 +24,7 @@ import {
 } from "../src/whatsapp/WhatsAppSchema.js";
 import { encryptSecret, decryptSecret } from "../src/shared/secrets.js";
 import { createHmac } from "node:crypto";
+import { EventEmitter } from "node:events";
 import {
   calculateQuote,
   defaultBillingConfig,
@@ -38,6 +39,76 @@ import {
   visitEvidenceCapabilities,
   visitVerificationStatus,
 } from "../src/crm/VisitTypes.js";
+import { EventHub } from "../src/realtime/EventHub.js";
+
+function fakeReply() {
+  const chunks: string[] = [];
+  const raw = new EventEmitter() as EventEmitter & {
+    writeHead: (status: number, headers: Record<string, string>) => void;
+    write: (chunk: string) => void;
+  };
+  raw.writeHead = (status, headers) => {
+    chunks.push(`status:${status}`);
+    chunks.push(headers["Content-Type"]);
+  };
+  raw.write = (chunk) => {
+    chunks.push(chunk);
+  };
+  return {
+    chunks,
+    code(status: number) {
+      chunks.push(`code:${status}`);
+      return this;
+    },
+    send(payload: unknown) {
+      chunks.push(JSON.stringify(payload));
+      return this;
+    },
+    raw,
+  };
+}
+
+describe("realtime event hub", () => {
+  const actor = (organizationId: string | null): Actor => ({
+    id: "user",
+    organizationId,
+    role: "commercial_coordinator",
+    name: "Usuario",
+    email: "user@example.test",
+  });
+
+  it("streams only events for the subscriber organization", () => {
+    const hub = new EventHub();
+    const alpha = fakeReply();
+    const beta = fakeReply();
+    hub.subscribe(actor("alpha"), alpha as never);
+    hub.subscribe(actor("beta"), beta as never);
+    hub.publish({
+      organizationId: "alpha",
+      type: "activity.created",
+      resourceId: "activity-1",
+    });
+    hub.publish({
+      organizationId: "beta",
+      type: "membership.updated",
+      resourceId: "payment-1",
+    });
+    expect(alpha.chunks.join("")).toContain("activity.created");
+    expect(alpha.chunks.join("")).not.toContain("payment-1");
+    expect(beta.chunks.join("")).toContain("membership.updated");
+    expect(beta.chunks.join("")).not.toContain("activity-1");
+    alpha.raw.emit("close");
+    beta.raw.emit("close");
+    hub.close();
+  });
+
+  it("rejects platform users without a tenant context", () => {
+    const hub = new EventHub();
+    const reply = fakeReply();
+    hub.subscribe(actor(null), reply as never);
+    expect(reply.chunks.join("")).toContain("TENANT_REQUIRED");
+  });
+});
 describe("calendar-month trial", () => {
   it.each([
     ["2026-01-31T14:10:00.000Z", "2026-02-28T14:10:00.000Z"],
