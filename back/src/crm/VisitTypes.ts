@@ -29,6 +29,10 @@ export type VisitActivityRef = {
   visitEndLatitude?: unknown;
   visitEndLongitude?: unknown;
   visitPhotoDataUrl?: unknown;
+  visitPhotoStorageKey?: unknown;
+  visitPhotoSha256?: unknown;
+  visitPhotoContentType?: unknown;
+  visitPhotoSizeBytes?: unknown;
   visitDistanceMeters?: number | null;
 };
 
@@ -61,6 +65,17 @@ function missing(value: unknown) {
   return value === null || value === undefined;
 }
 
+function hasPhotoEvidence(activity: VisitActivityRef) {
+  if (!missing(activity.visitPhotoDataUrl)) return true;
+  return (
+    !missing(activity.visitPhotoStorageKey) &&
+    !missing(activity.visitPhotoSha256) &&
+    !missing(activity.visitPhotoContentType) &&
+    typeof activity.visitPhotoSizeBytes === "number" &&
+    activity.visitPhotoSizeBytes > 0
+  );
+}
+
 export function visitVerificationStatus(
   activity: VisitActivityRef,
 ): VisitVerificationStatus | null {
@@ -74,7 +89,7 @@ export function visitVerificationStatus(
       missing(activity.visitFinishedAt) ||
       missing(activity.visitEndLatitude) ||
       missing(activity.visitEndLongitude) ||
-      missing(activity.visitPhotoDataUrl)
+      !hasPhotoEvidence(activity)
     )
       return "closed_without_evidence";
     return typeof activity.visitDistanceMeters === "number" &&

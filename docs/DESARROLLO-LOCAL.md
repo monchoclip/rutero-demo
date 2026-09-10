@@ -23,9 +23,7 @@ No arrancar dos instancias de `npm run dev` sobre el mismo puerto. Detener el co
 5. Volver a ingresar como coordinador, actualizar la página y crear un cliente asignado a ese asesor.
 6. Programar llamada, visita o seguimiento. El asesor lo verá al actualizar su agenda.
 
-Las fotografías de cierre de visita usan `VISIT_PHOTO_STORAGE_MODE=local` en desarrollo. Ese modo conserva el `data:` en PostgreSQL para vista previa local y pruebas. Para validar el contrato externo sin credenciales reales, las pruebas inyectan un adaptador mock; para staging/producción configurar `VISIT_PHOTO_STORAGE_MODE=s3`, bucket privado, región/endpoint compatible S3, límite `VISIT_PHOTO_MAX_BYTES`, TTL `VISIT_PHOTO_DOWNLOAD_TTL_SECONDS` y una política de ciclo de vida alineada con `VISIT_PHOTO_RETENTION_DAYS`.
-7. Registrar resultado y, opcionalmente, el próximo seguimiento. Consultar la ficha del cliente para ver el historial.
-8. Reasignar el cliente a otro asesor: conserva historial y mueve tareas pendientes.
+Las fotografías de cierre de visita usan `VISIT_PHOTO_STORAGE_MODE=local` solo en desarrollo. Ese modo conserva el `data:` en PostgreSQL para vista previa local y pruebas. En producción el backend exige `VISIT_PHOTO_STORAGE_MODE=s3`, `VISIT_PHOTO_S3_BUCKET` y `VISIT_PHOTO_S3_REGION` o `AWS_REGION`; si falta esa configuración, el arranque falla cerrado. Para validar el contrato externo sin credenciales reales, las pruebas inyectan un adaptador mock. Para staging/producción configurar bucket privado, región/endpoint compatible S3, límite `VISIT_PHOTO_MAX_BYTES`, TTL `VISIT_PHOTO_DOWNLOAD_TTL_SECONDS` y una política de ciclo de vida alineada con `VISIT_PHOTO_RETENTION_DAYS`. 7. Registrar resultado y, opcionalmente, el próximo seguimiento. Consultar la ficha del cliente para ver el historial. 8. Reasignar el cliente a otro asesor: conserva historial y mueve tareas pendientes.
 
 No se crean usuarios ni datos de ejemplo automáticamente en la base de desarrollo. Los datos de prueba viven en `ruts68_test`.
 

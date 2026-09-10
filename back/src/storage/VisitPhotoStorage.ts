@@ -57,8 +57,15 @@ export type VisitPhotoStorageConfig =
     };
 
 export function visitPhotoStorageConfigFromEnv(): VisitPhotoStorageConfig {
-  const mode =
-    process.env.VISIT_PHOTO_STORAGE_MODE === "s3" ? "s3" : "local";
+  const rawMode = process.env.VISIT_PHOTO_STORAGE_MODE;
+  const production = process.env.NODE_ENV === "production";
+  if (!rawMode && production)
+    throw new Error("VISIT_PHOTO_STORAGE_MODE=s3 is required in production");
+  const mode = rawMode ?? "local";
+  if (mode !== "local" && mode !== "s3")
+    throw new Error("VISIT_PHOTO_STORAGE_MODE must be local or s3");
+  if (production && mode !== "s3")
+    throw new Error("VISIT_PHOTO_STORAGE_MODE=s3 is required in production");
   const maxBytes = envInt(
     "VISIT_PHOTO_MAX_BYTES",
     DEFAULT_VISIT_PHOTO_LIMIT_BYTES,
@@ -67,13 +74,13 @@ export function visitPhotoStorageConfigFromEnv(): VisitPhotoStorageConfig {
   if (mode === "local") return { mode, maxBytes, retentionDays };
   const bucket = process.env.VISIT_PHOTO_S3_BUCKET;
   if (!bucket) throw new Error("VISIT_PHOTO_S3_BUCKET is required");
+  const region = process.env.VISIT_PHOTO_S3_REGION ?? process.env.AWS_REGION;
+  if (!region)
+    throw new Error("VISIT_PHOTO_S3_REGION or AWS_REGION is required");
   return {
     mode,
     bucket,
-    region:
-      process.env.VISIT_PHOTO_S3_REGION ??
-      process.env.AWS_REGION ??
-      "us-east-1",
+    region,
     endpoint: process.env.VISIT_PHOTO_S3_ENDPOINT,
     forcePathStyle: process.env.VISIT_PHOTO_S3_FORCE_PATH_STYLE === "true",
     maxBytes,
@@ -114,6 +121,12 @@ export function parseVisitPhotoDataUrl(
       "VISIT_PHOTO_TOO_LARGE",
       `La fotografía debe pesar máximo ${Math.floor(maxBytes / 1024 / 1024)} MB.`,
     );
+  if (!matchesImageSignature(bytes, contentType))
+    throw new AppError(
+      422,
+      "INVALID_VISIT_PHOTO",
+      "La fotografía debe tener bytes reales JPEG, PNG o WebP.",
+    );
   const sha256 = createHash("sha256").update(bytes).digest("hex");
   return {
     bytes,
@@ -124,6 +137,31 @@ export function parseVisitPhotoDataUrl(
   };
 }
 
+function matchesImageSignature(bytes: Buffer, contentType: string) {
+  if (contentType === "image/jpeg")
+    return (
+      bytes.byteLength >= 4 &&
+      bytes[0] === 0xff &&
+      bytes[1] === 0xd8 &&
+      bytes[bytes.byteLength - 2] === 0xff &&
+      bytes[bytes.byteLength - 1] === 0xd9
+    );
+  if (contentType === "image/png")
+    return (
+      bytes.byteLength >= 8 &&
+      bytes
+        .subarray(0, 8)
+        .equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+    );
+  if (contentType === "image/webp")
+    return (
+      bytes.byteLength >= 12 &&
+      bytes.subarray(0, 4).toString("ascii") === "RIFF" &&
+      bytes.subarray(8, 12).toString("ascii") === "WEBP"
+    );
+  return false;
+}
+
 export async function storeVisitPhoto(input: {
   organizationId: string;
   activityId: string;
@@ -131,8 +169,7 @@ export async function storeVisitPhoto(input: {
   storage?: VisitPhotoStorage;
 }): Promise<StoredVisitPhoto> {
   const storage =
-    input.storage ??
-    createVisitPhotoStorage(visitPhotoStorageConfigFromEnv());
+    input.storage ?? createVisitPhotoStorage(visitPhotoStorageConfigFromEnv());
   return storage.store(input);
 }
 
@@ -178,7 +215,9 @@ class LocalVisitPhotoStorage implements VisitPhotoStorage {
 class S3VisitPhotoStorage implements VisitPhotoStorage {
   private client: S3Client;
 
-  constructor(private config: Extract<VisitPhotoStorageConfig, { mode: "s3" }>) {
+  constructor(
+    private config: Extract<VisitPhotoStorageConfig, { mode: "s3" }>,
+  ) {
     this.client = new S3Client({
       region: config.region,
       endpoint: config.endpoint,
@@ -242,10 +281,11 @@ function parseVisitPhoto(
   input: { organizationId: string; activityId: string; dataUrl: string },
   maxBytes: number,
 ) {
-  const { bytes, storageKey: _empty, ...metadata } = parseVisitPhotoDataUrl(
-    input.dataUrl,
-    maxBytes,
-  );
+  const {
+    bytes,
+    storageKey: _empty,
+    ...metadata
+  } = parseVisitPhotoDataUrl(input.dataUrl, maxBytes);
   const extension = extensionFor(metadata.contentType);
   return {
     ...metadata,

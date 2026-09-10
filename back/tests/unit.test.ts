@@ -41,9 +41,15 @@ import {
 } from "../src/crm/VisitTypes.js";
 import { EventHub } from "../src/realtime/EventHub.js";
 import {
+  parseVisitPhotoDataUrl,
   storeVisitPhoto,
+  visitPhotoStorageConfigFromEnv,
   type VisitPhotoStorage,
 } from "../src/storage/VisitPhotoStorage.js";
+
+const jpegDataUrl = "data:image/jpeg;base64,/9j/2Q==";
+const jpegSha256 =
+  "32461d5bd1773012acef0ba15636752949bd7c2ce50f9172159d9f56cf0dd9af";
 
 function fakeReply() {
   const chunks: string[] = [];
@@ -123,14 +129,65 @@ describe("visit photo storage metadata", () => {
     const photo = await storeVisitPhoto({
       organizationId: "org-1",
       activityId: "act-1",
-      dataUrl: "data:image/jpeg;base64,aGVsbG8=",
+      dataUrl: jpegDataUrl,
     });
     expect(photo.storageKey).toBe(
-      "organizations/org-1/visits/act-1/2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824.jpg",
+      `organizations/org-1/visits/act-1/${jpegSha256}.jpg`,
     );
     expect(photo.contentType).toBe("image/jpeg");
-    expect(photo.sizeBytes).toBe(5);
+    expect(photo.sizeBytes).toBe(4);
     expect(photo.dataUrl).toContain("data:image/jpeg;base64");
+  });
+  it("rejects data URLs whose decoded bytes do not match the declared image type", () => {
+    expect(() =>
+      parseVisitPhotoDataUrl("data:image/jpeg;base64,aGVsbG8="),
+    ).toThrow("bytes reales");
+    expect(() =>
+      parseVisitPhotoDataUrl("data:image/png;base64,/9j/2Q=="),
+    ).toThrow("bytes reales");
+  });
+  it("requires explicit S3 photo storage in production", () => {
+    const previous = {
+      nodeEnv: process.env.NODE_ENV,
+      mode: process.env.VISIT_PHOTO_STORAGE_MODE,
+      bucket: process.env.VISIT_PHOTO_S3_BUCKET,
+      region: process.env.VISIT_PHOTO_S3_REGION,
+      awsRegion: process.env.AWS_REGION,
+    };
+    try {
+      process.env.NODE_ENV = "production";
+      delete process.env.VISIT_PHOTO_STORAGE_MODE;
+      expect(() => visitPhotoStorageConfigFromEnv()).toThrow(
+        "VISIT_PHOTO_STORAGE_MODE=s3 is required in production",
+      );
+      process.env.VISIT_PHOTO_STORAGE_MODE = "local";
+      expect(() => visitPhotoStorageConfigFromEnv()).toThrow(
+        "VISIT_PHOTO_STORAGE_MODE=s3 is required in production",
+      );
+      process.env.VISIT_PHOTO_STORAGE_MODE = "s3";
+      delete process.env.VISIT_PHOTO_S3_BUCKET;
+      expect(() => visitPhotoStorageConfigFromEnv()).toThrow(
+        "VISIT_PHOTO_S3_BUCKET is required",
+      );
+      process.env.VISIT_PHOTO_S3_BUCKET = "ruts68-test";
+      delete process.env.VISIT_PHOTO_S3_REGION;
+      delete process.env.AWS_REGION;
+      expect(() => visitPhotoStorageConfigFromEnv()).toThrow(
+        "VISIT_PHOTO_S3_REGION or AWS_REGION is required",
+      );
+      process.env.VISIT_PHOTO_S3_REGION = "us-east-1";
+      expect(visitPhotoStorageConfigFromEnv()).toMatchObject({
+        mode: "s3",
+        bucket: "ruts68-test",
+        region: "us-east-1",
+      });
+    } finally {
+      restoreEnv("NODE_ENV", previous.nodeEnv);
+      restoreEnv("VISIT_PHOTO_STORAGE_MODE", previous.mode);
+      restoreEnv("VISIT_PHOTO_S3_BUCKET", previous.bucket);
+      restoreEnv("VISIT_PHOTO_S3_REGION", previous.region);
+      restoreEnv("AWS_REGION", previous.awsRegion);
+    }
   });
   it("supports an external storage adapter without keeping the binary in row data", async () => {
     const calls: string[] = [];
@@ -158,7 +215,7 @@ describe("visit photo storage metadata", () => {
     const photo = await storeVisitPhoto({
       organizationId: "org-1",
       activityId: "act-1",
-      dataUrl: "data:image/jpeg;base64,aGVsbG8=",
+      dataUrl: jpegDataUrl,
       storage,
     });
     const download = await storage.authorizeDownload({
@@ -173,11 +230,16 @@ describe("visit photo storage metadata", () => {
       expiresInSeconds: 300,
     });
     expect(calls).toEqual([
-      "data:image/jpeg;base64,aGVsbG8=",
+      jpegDataUrl,
       "delete:organizations/org-1/visits/act-1/photo.jpg",
     ]);
   });
 });
+
+function restoreEnv(name: string, value: string | undefined) {
+  if (value === undefined) delete process.env[name];
+  else process.env[name] = value;
+}
 describe("calendar-month trial", () => {
   it.each([
     ["2026-01-31T14:10:00.000Z", "2026-02-28T14:10:00.000Z"],
@@ -374,7 +436,25 @@ describe("visit evidence preparation", () => {
         visitFinishedAt: new Date(),
         visitEndLatitude: 4.711,
         visitEndLongitude: -74.072,
-        visitPhotoDataUrl: "data:image/jpeg;base64,aGVsbG8=",
+        visitPhotoDataUrl: jpegDataUrl,
+        visitDistanceMeters: 12,
+      }),
+    ).toBe("verified");
+    expect(
+      visitVerificationStatus({
+        type: "visit",
+        status: "completed",
+        visitStartedAt: new Date(),
+        visitStartLatitude: 4.71098,
+        visitStartLongitude: -74.07209,
+        visitFinishedAt: new Date(),
+        visitEndLatitude: 4.711,
+        visitEndLongitude: -74.072,
+        visitPhotoDataUrl: null,
+        visitPhotoStorageKey: "organizations/org/visits/visit/photo.jpg",
+        visitPhotoSha256: jpegSha256,
+        visitPhotoContentType: "image/jpeg",
+        visitPhotoSizeBytes: 4,
         visitDistanceMeters: 12,
       }),
     ).toBe("verified");
@@ -388,7 +468,7 @@ describe("visit evidence preparation", () => {
         visitFinishedAt: new Date(),
         visitEndLatitude: 4.72,
         visitEndLongitude: -74.08,
-        visitPhotoDataUrl: "data:image/jpeg;base64,aGVsbG8=",
+        visitPhotoDataUrl: jpegDataUrl,
         visitDistanceMeters: 1200,
       }),
     ).toBe("out_of_range");

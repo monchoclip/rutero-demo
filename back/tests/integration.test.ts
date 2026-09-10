@@ -27,6 +27,9 @@ let activityId: string;
 const suffix = crypto.randomUUID();
 const password = "Testing-only-password-123!";
 const remoteAddress = `2001:db8:${suffix.slice(0, 4)}:${suffix.slice(4, 8)}::1`;
+const jpegDataUrl = "data:image/jpeg;base64,/9j/2Q==";
+const jpegSha256 =
+  "32461d5bd1773012acef0ba15636752949bd7c2ce50f9172159d9f56cf0dd9af";
 async function request(
   method: "GET" | "POST" | "PATCH" | "DELETE",
   path: string,
@@ -112,9 +115,7 @@ describe.sequential("real PostgreSQL CRM flow", () => {
       signal: controller.signal,
     });
     expect(response.status).toBe(200);
-    expect(response.headers.get("content-type")).toContain(
-      "text/event-stream",
-    );
+    expect(response.headers.get("content-type")).toContain("text/event-stream");
     const reader = response.body?.getReader();
     expect(reader).toBeTruthy();
     const first = await reader!.read();
@@ -522,7 +523,7 @@ describe.sequential("real PostgreSQL CRM flow", () => {
     );
     expect(duplicateStart.statusCode).toBe(200);
     expect(duplicateStart.json().data.visitStartLatitude).toBe(4.71098);
-    const closed = await request(
+    const invalidPhoto = await request(
       "POST",
       `/activities/${visitId}/complete`,
       {
@@ -548,16 +549,41 @@ describe.sequential("real PostgreSQL CRM flow", () => {
       },
       advisor.cookie,
     );
+    expect(invalidPhoto.statusCode).toBe(422);
+    const closed = await request(
+      "POST",
+      `/activities/${visitId}/complete`,
+      {
+        outcome: "contacted",
+        notes: "Pedido levantado en sitio",
+        durationSeconds: 900,
+        visitEvidence: {
+          start: {
+            latitude: 4.71098,
+            longitude: -74.07209,
+            accuracy: 12,
+            capturedAt: startedAt,
+            address: "Bogotá",
+          },
+          end: {
+            latitude: 4.711,
+            longitude: -74.072,
+            accuracy: 14,
+            capturedAt: new Date().toISOString(),
+          },
+          photoDataUrl: jpegDataUrl,
+        },
+      },
+      advisor.cookie,
+    );
     expect(closed.statusCode).toBe(200);
     const visit = closed.json().data;
     expect(visit.status).toBe("completed");
     expect(visit.visitPhotoDataUrl).toContain("data:image/jpeg;base64");
     expect(visit.visitPhotoStorageKey).toContain(`/visits/${visitId}/`);
-    expect(visit.visitPhotoSha256).toBe(
-      "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
-    );
+    expect(visit.visitPhotoSha256).toBe(jpegSha256);
     expect(visit.visitPhotoContentType).toBe("image/jpeg");
-    expect(visit.visitPhotoSizeBytes).toBe(5);
+    expect(visit.visitPhotoSizeBytes).toBe(4);
     expect(visit.visitDistanceMeters).toBeLessThan(20);
     const photo = await request(
       "GET",
@@ -569,7 +595,7 @@ describe.sequential("real PostgreSQL CRM flow", () => {
     expect(photo.json().data).toMatchObject({
       mode: "data",
       contentType: "image/jpeg",
-      sizeBytes: 5,
+      sizeBytes: 4,
     });
     expect(
       (
@@ -609,10 +635,9 @@ describe.sequential("real PostgreSQL CRM flow", () => {
         storedKeys.push(storageKey);
         return {
           storageKey,
-          sha256:
-            "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+          sha256: jpegSha256,
           contentType: "image/jpeg",
-          sizeBytes: 5,
+          sizeBytes: 4,
         };
       },
       async authorizeDownload(input) {
@@ -698,7 +723,7 @@ describe.sequential("real PostgreSQL CRM flow", () => {
               accuracy: 14,
               capturedAt,
             },
-            photoDataUrl: "data:image/jpeg;base64,aGVsbG8=",
+            photoDataUrl: jpegDataUrl,
           },
         },
         secondAdvisor.cookie,
