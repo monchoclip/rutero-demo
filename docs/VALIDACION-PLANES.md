@@ -10,6 +10,7 @@ Registro de los agentes 5.5 y de los gates ejecutados en local.
 | P4 Fotos/S3 | `91ec770`, `e416ad5` | Pendiente por límite de agentes | gates locales: 33 unitarias, 41 integración, typecheck, rutas y build; revisión CTO completada |
 | P5 Catálogo/campañas | `50b8961`, `2b90487` | Pendiente por límite de agentes | 41 integración; vigencia de campañas/productos y aislamiento revisados localmente |
 | P6 Pedidos/ERP | `ccf8427`, `4230c1a`, `e015bb7` | Pendiente por límite de agentes | 41 integración; snapshot, idempotencia, ERP simulado y cola offline |
+| P7 Meta/Wompi | `bd83beb` + adaptadores existentes | Pendiente sandbox externo | Firmas, secretos e idempotencia verificadas localmente; requiere credenciales reales |
 | P8 UX/UI | histórico F1 + módulos P5/P6 | Pendiente por recorrido independiente | build estático y revisión de CSS responsive/foco |
 | P9 AWS | `dce70e6` | Pendiente de staging | plantilla CloudFormation y checklist; no se desplegó |
 
