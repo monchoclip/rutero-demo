@@ -39,6 +39,8 @@ Cada fase usa el mismo circuito para mantener costo bajo y control de calidad:
 
 ### P1 · Base operativa y paginación
 
+Estado: oro local (`a9ef2da`, validado por `p1_validate_final`).
+
 Estado: implementado localmente, pendiente de validación independiente 5.5.
 
 Objetivo: soportar carteras y agendas grandes sin cargar límites fijos en el navegador.
@@ -46,6 +48,8 @@ Objetivo: soportar carteras y agendas grandes sin cargar límites fijos en el na
 Incluye paginación por cursor en clientes y actividades, búsqueda server-side, filtros por rol, índices PostgreSQL, estados de carga incremental y pruebas de aislamiento multiempresa.
 
 Aceptación: ningún listado depende de 100 clientes/200 actividades; el asesor conserva su cartera y el coordinador puede filtrar por asesor; typecheck, integración y carga paginada pasan.
+
+Validación: APROBADO. El botón de actividades conserva un cursor global; su etiqueta visual en una sección filtrada queda como mejora no bloqueante para P2/UX.
 
 ### P2 · Tiempo real de bajo costo
 
