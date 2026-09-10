@@ -101,7 +101,7 @@ Incluye productos con código, descripción, precio versionado, moneda, vigencia
 
 Aceptación: un precio usado queda congelado en la actividad/pedido; una campaña vencida no acepta nuevas altas; la cartera y los datos permanecen aislados por empresa; UI tiene estados vacío/carga/error.
 
-Evidencia local: migración `202609100003_catalog_campaigns` con productos, campañas, relación de productos con precio congelado e inscripciones por cliente/asesor. La API `/catalog/*` aplica aislamiento por empresa y permisos (coordinación comercial administra; asesores inscriben solo su cartera), y la pestaña Catálogo y campañas consume los estados de carga/error/vacío. La validación de campaña activa y alcance de cartera está cubierta por integración; falta validar vencimiento y precio histórico en el flujo de pedidos de P6.
+Evidencia local: migración `202609100003_catalog_campaigns` con productos, campañas, relación de productos con precio congelado e inscripciones por cliente/asesor. La API `/catalog/*` aplica aislamiento por empresa y permisos (coordinación comercial administra; asesores inscriben solo su cartera), y la pestaña Catálogo y campañas consume los estados de carga/error/vacío. La integración cubre vigencia de campañas/productos, aislamiento entre empresas y conservación del precio histórico al crear pedidos; queda la validación independiente 5.5.
 
 ### P6 · Pedidos y adaptador ERP
 
