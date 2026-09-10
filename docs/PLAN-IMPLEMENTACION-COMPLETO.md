@@ -45,7 +45,7 @@ Estado: oro local (`a9ef2da`, validado por `p1_validate_final`).
 
 Objetivo: soportar carteras y agendas grandes sin cargar límites fijos en el navegador.
 
-Incluye paginación por cursor en clientes y actividades, búsqueda server-side, filtros por rol, índices PostgreSQL, estados de carga incremental y pruebas de aislamiento multiempresa.
+Incluye paginación por cursor en clientes y actividades, búsqueda server-side, filtros por rol, índices PostgreSQL, estados de carga incremental, cancelación de gestiones programadas y pruebas de aislamiento multiempresa.
 
 Aceptación: ningún listado depende de 100 clientes/200 actividades; el asesor conserva su cartera y el coordinador puede filtrar por asesor; typecheck, integración y carga paginada pasan.
 
@@ -57,7 +57,7 @@ Estado: oro local (5c9d792, eb51567; validado por p2_validate_final2).
 
 Objetivo: actualizar CRM, visitas, chat y cobros sin refrescos manuales.
 
-Incluye canal SSE por empresa, autenticación por cookie, heartbeat, reconexión con backoff, eventos mínimos (`activity.created`, `activity.completed`, `visit.started`, `visit.completed`, `chat.received`, `membership.updated`) y fallback a polling cuando SSE no esté disponible.
+Incluye canal SSE por empresa, autenticación por cookie, heartbeat, reconexión con backoff, eventos mínimos (`activity.created`, `activity.completed`, `activity.cancelled`, `visit.started`, `visit.completed`, `chat.received`, `membership.updated`) y fallback a polling cuando SSE no esté disponible.
 
 Aceptación: un cambio autorizado se refleja en otras sesiones en menos de cinco segundos; no se cruzan empresas; reconexión y cierre de sesión limpian el canal; se prueba con dos usuarios.
 
