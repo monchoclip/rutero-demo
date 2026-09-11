@@ -12,4 +12,6 @@ Secuencia recomendada:
 6. Configurar `VISIT_PHOTO_STORAGE_MODE=s3`, `VISIT_PHOTO_S3_BUCKET`, región y credenciales IAM mínimas (`s3:PutObject`, `s3:GetObject`, `s3:DeleteObject` sobre `organizations/*`). Nunca subir `.env` ni el sembrado de demostración.
 7. Ejecutar `npm run preflight:production` con las variables reales cargadas en el entorno de staging o producción antes de correr migraciones o publicar tráfico. El comando valida que `NODE_ENV=production`, `APP_ORIGIN` use HTTPS, `DATABASE_URL` no apunte a local, Meta y Wompi tengan secretos completos, la llave `WHATSAPP_TOKEN_ENCRYPTION_KEY` sea fuerte, las fotos usen S3 y el correo use SES con remitente configurado. La salida solo lista nombres de variables y motivos; no imprime secretos.
 
+Verificación no destructiva local (2026-09-11): `aws cloudformation validate-template` acepta `template.yaml`. En la cuenta consultada no hay todavía stacks ni buckets con nombre `ruts68` o `rutero`; por eso el estado sigue siendo preparación y no staging desplegado.
+
 El costo real depende de región, tráfico, base de datos, conexiones y retención. Antes de activar producción hay que fijar presupuesto mensual, alarmas de gasto, backups restaurables, rotación de secretos, CORS con el dominio final y un ensayo de rollback.
