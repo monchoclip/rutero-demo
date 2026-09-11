@@ -25,6 +25,7 @@ import {
 import { encryptSecret, decryptSecret } from "../src/shared/secrets.js";
 import { createHmac } from "node:crypto";
 import { EventEmitter } from "node:events";
+import { execFileSync } from "node:child_process";
 import {
   calculateQuote,
   defaultBillingConfig,
@@ -52,12 +53,96 @@ const jpegDataUrl = "data:image/jpeg;base64,/9j/2Q==";
 const jpegSha256 =
   "32461d5bd1773012acef0ba15636752949bd7c2ce50f9172159d9f56cf0dd9af";
 
+describe("production preflight", () => {
+  const readyEnvironment = {
+    NODE_ENV: "production",
+    APP_ORIGIN: "https://ruts68.com",
+    DATABASE_URL:
+      "postgresql://ruts68_app:strong-password@ruts68-prod.cluster.example.com:5432/ruts68_prod",
+    META_WEBHOOK_VERIFY_TOKEN: "meta-verify-production-token",
+    META_APP_SECRET: "meta-app-secret-production",
+    WOMPI_PUBLIC_KEY: "pub_prod_abc",
+    WOMPI_INTEGRITY_SECRET: "wompi-integrity-secret",
+    WOMPI_EVENTS_SECRET: "wompi-events-secret",
+    WHATSAPP_TOKEN_ENCRYPTION_KEY: "Ruts68-production-key-2026-secure!",
+    VISIT_PHOTO_STORAGE_MODE: "s3",
+    VISIT_PHOTO_S3_BUCKET: "ruts68-production-visits",
+    VISIT_PHOTO_S3_REGION: "us-east-1",
+    MAIL_TRANSPORT: "ses",
+    MAIL_FROM: "recordatorios@ruts68.com",
+    AWS_REGION: "us-east-1",
+  };
+
+  it("accepts a complete production environment without exposing secret values", () => {
+    const output = execFileSync(
+      process.execPath,
+      ["scripts/preflight-production.mjs"],
+      {
+        cwd: new URL("../..", import.meta.url),
+        env: { ...process.env, ...readyEnvironment },
+        encoding: "utf8",
+      },
+    );
+    expect(output).toContain("OK");
+    expect(output).not.toContain(readyEnvironment.WOMPI_EVENTS_SECRET);
+    expect(output).not.toContain(
+      readyEnvironment.WHATSAPP_TOKEN_ENCRYPTION_KEY,
+    );
+  });
+
+  it("rejects local or incomplete settings and reports only variable names", () => {
+    let output = "";
+    try {
+      execFileSync(process.execPath, ["scripts/preflight-production.mjs"], {
+        cwd: new URL("../..", import.meta.url),
+        env: {
+          ...process.env,
+          ...readyEnvironment,
+          APP_ORIGIN: "http://localhost:3068",
+          DATABASE_URL: "postgresql://ruts68:local@127.0.0.1:55468/ruts68_test",
+          WOMPI_EVENTS_SECRET: "",
+          WHATSAPP_TOKEN_ENCRYPTION_KEY: "unit-test-encryption-key",
+          VISIT_PHOTO_STORAGE_MODE: "local",
+          MAIL_TRANSPORT: "local",
+        },
+        encoding: "utf8",
+      });
+    } catch (error) {
+      output = String((error as { stdout?: string }).stdout ?? "");
+    }
+    expect(output).toContain("APP_ORIGIN");
+    expect(output).toContain("DATABASE_URL");
+    expect(output).toContain("WOMPI_EVENTS_SECRET");
+    expect(output).toContain("WHATSAPP_TOKEN_ENCRYPTION_KEY");
+    expect(output).toContain("VISIT_PHOTO_STORAGE_MODE");
+    expect(output).toContain("MAIL_TRANSPORT");
+    expect(output).toContain("No se imprimieron valores de secretos");
+    expect(output).not.toContain("127.0.0.1");
+    expect(output).not.toContain("unit-test-encryption-key");
+  });
+});
+
 describe("catalog date validation", () => {
   it("rejects product validity ranges that end before they start", () => {
-    expect(productSchema.safeParse({ code: "A", name: "Producto", priceMinor: 100, validFrom: "2026-01-02T00:00:00Z", validTo: "2026-01-01T00:00:00Z" }).success).toBe(false);
+    expect(
+      productSchema.safeParse({
+        code: "A",
+        name: "Producto",
+        priceMinor: 100,
+        validFrom: "2026-01-02T00:00:00Z",
+        validTo: "2026-01-01T00:00:00Z",
+      }).success,
+    ).toBe(false);
   });
   it("rejects campaign ranges that end before they start", () => {
-    expect(campaignSchema.safeParse({ name: "Campaña", startsAt: "2026-01-02T00:00:00Z", endsAt: "2026-01-01T00:00:00Z", productIds: [] }).success).toBe(false);
+    expect(
+      campaignSchema.safeParse({
+        name: "Campaña",
+        startsAt: "2026-01-02T00:00:00Z",
+        endsAt: "2026-01-01T00:00:00Z",
+        productIds: [],
+      }).success,
+    ).toBe(false);
   });
 });
 

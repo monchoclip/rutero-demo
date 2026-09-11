@@ -19,6 +19,7 @@
     "test:integration": "node scripts/test-integration.mjs",
     "routes:generate": "npm run routes:generate -w back",
     "routes:check": "npm run routes:check -w back",
+    "preflight:production": "node scripts/preflight-production.mjs",
     "mail:local": "node scripts/mail-local.mjs",
     "demo:seed": "node scripts/seed-demo.mjs"
   },
