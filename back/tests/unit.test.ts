@@ -162,6 +162,33 @@ describe("production preflight", () => {
     expect(output).toContain("base reservada para pruebas");
     expect(output).not.toContain("127.0.0.1");
   });
+
+  it("still rejects a malformed or non-postgresql url when the server profile is explicit", () => {
+    // El perfil same-server declara una topologia; no puede convertirse en un
+    // interruptor que apague la validacion de la cadena de conexion.
+    for (const invalida of [
+      "no-es-una-url",
+      "mysql://ruts68@127.0.0.1/ruts68",
+    ]) {
+      let output = "";
+      try {
+        execFileSync(process.execPath, ["scripts/preflight-production.mjs"], {
+          cwd: new URL("../..", import.meta.url),
+          env: {
+            ...process.env,
+            ...readyEnvironment,
+            DATABASE_URL: invalida,
+            DATABASE_LOCATION: "same-server",
+          },
+          encoding: "utf8",
+        });
+      } catch (error) {
+        output = String((error as { stdout?: string }).stdout ?? "");
+      }
+      expect(output).toContain("ERROR");
+      expect(output).toContain("DATABASE_URL");
+    }
+  });
 });
 
 describe("catalog date validation", () => {

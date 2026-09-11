@@ -44,6 +44,7 @@ export async function createApp(
     wompiPublicKey?: string;
     wompiIntegritySecret?: string;
     wompiEventsSecret?: string;
+    trustProxy?: boolean | string;
     whatsappTransport?: WhatsAppTransport;
     visitPhotoStorage?: VisitPhotoStorage;
   },
@@ -54,7 +55,7 @@ export async function createApp(
       level: process.env.LOG_LEVEL ?? "warn",
     },
     bodyLimit: 3 * 1024 * 1024,
-    trustProxy: false,
+    trustProxy: options.trustProxy ?? false,
   });
   // JSON bodies are parsed as usual, but the raw string is kept on the
   // request too: Meta's webhook signature is an HMAC over the exact raw

@@ -1,6 +1,8 @@
 generator client {
   provider = "prisma-client-js"
-  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+  // rhel cubre Amazon Linux x86_64; linux-arm64 cubre la instancia ARM del
+  // despliegue economico, que es el plan mas barato.
+  binaryTargets = ["native", "rhel-openssl-3.0.x", "linux-arm64-openssl-3.0.x"]
 }
 datasource db {
   provider = "postgresql"
