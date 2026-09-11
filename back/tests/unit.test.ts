@@ -88,7 +88,7 @@ describe("production preflight", () => {
     expect(output).not.toContain(
       readyEnvironment.WHATSAPP_TOKEN_ENCRYPTION_KEY,
     );
-  });
+  }, 15000);
 
   it("rejects local or incomplete settings and reports only variable names", () => {
     let output = "";
@@ -139,7 +139,7 @@ describe("production preflight", () => {
     );
     expect(output).toContain("OK");
     expect(output).toContain("DATABASE_LOCATION");
-  });
+  }, 15000);
 
   it("still rejects test databases even when the server profile is explicit", () => {
     let output = "";

@@ -257,9 +257,12 @@ export function Workspace({
   const advisorMode = user.role === "advisor";
   const writer = commercial || user.role === "advisor";
   const coordinator = commercial || user.role === "administrative_coordinator";
+  const cacheKey = useCallback(
+    (name: string) => `workspace:${user.id}:${name}`,
+    [user.id],
+  );
   const load = useCallback(async () => {
     setError("");
-    const cacheKey = (name: string) => `workspace:${user.id}:${name}`;
     const cached = await Promise.all([
       readSnapshot<Organization>(cacheKey("organization")),
       readSnapshot<User[]>(cacheKey("users")),
@@ -341,7 +344,7 @@ export function Workspace({
     } finally {
       setLoading(false);
     }
-  }, [commercial, coordinator, onLogout, user.id]);
+  }, [cacheKey, commercial, coordinator, onLogout]);
   useEffect(() => {
     void load();
   }, [load]);
@@ -450,7 +453,14 @@ export function Workspace({
     });
     if (detail) {
       try {
-        setHistory(await api<Activity[]>(`/clients/${detail.id}/history`));
+        const refreshedHistory = await api<Activity[]>(
+          `/clients/${detail.id}/history`,
+        );
+        setHistory(refreshedHistory);
+        await writeSnapshot(
+          cacheKey(`history:${detail.id}`),
+          refreshedHistory,
+        ).catch(() => undefined);
       } catch {
         // The ficha already reflects the failure to load fresh data via `error`.
       }
@@ -535,7 +545,12 @@ export function Workspace({
       const page = await apiPage<Client>(
         `/clients?limit=50&cursor=${encodeURIComponent(clientCursor)}&search=${encodeURIComponent(search)}`,
       );
-      setClients((current) => [...current, ...page.data]);
+      const nextClients = [...clients, ...page.data];
+      setClients(nextClients);
+      if (!search)
+        await writeSnapshot(cacheKey("clients"), nextClients).catch(
+          () => undefined,
+        );
       setClientCursor(page.pagination.cursor);
       setClientHasMore(page.pagination.hasMore);
     } catch (error) {
@@ -552,7 +567,12 @@ export function Workspace({
       const page = await apiPage<Activity>(
         `/activities?limit=50&cursor=${encodeURIComponent(activityCursor)}${statusParam}`,
       );
-      setActivities((current) => [...current, ...page.data]);
+      const nextActivities = [...activities, ...page.data];
+      setActivities(nextActivities);
+      if (!status)
+        await writeSnapshot(cacheKey("activities"), nextActivities).catch(
+          () => undefined,
+        );
       setActivityCursor(page.pagination.cursor);
       setActivityHasMore(page.pagination.hasMore);
     } catch (error) {
