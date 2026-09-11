@@ -1,6 +1,6 @@
 # Estado de desarrollo de Ruts68
 
-Actualización: 2026-09-10. Este documento describe evidencia local; nada está publicado en AWS.
+Actualización: 2026-09-11. Este documento describe evidencia local; nada está publicado en AWS.
 
 ## Clasificación por módulo y etapa
 
@@ -85,7 +85,7 @@ Se comparó, solo en modo lectura, el patrón de Wompi y de WhatsApp del reposit
 - **WhatsApp**: en Kuvvi **no existe** un número por asesor ni una bandeja de conversación entrante con historial y multimedia. Lo que hay es notificación saliente (OTP, recordatorios) a través de un número único por plataforma, con un webhook que hoy solo registra en log lo que llega, sin persistirlo. Un módulo de chat con número por asesor, alta de cliente desde un mensaje entrante y bandeja compartida es un desarrollo nuevo, no algo transportable de Kuvvi.
 - Los commits `508e638` y `af3c716` del historial de este repositorio (portal de plataforma, Wompi, dispositivos de WhatsApp) modificaron únicamente el demo estático `index.html`; no tienen contraparte en `front/`/`back/`.
 
-## Próximo incremento
+## Historial de incrementos
 
 Se acordó con el usuario priorizar primero el rediseño de UX/UI del espacio de trabajo antes de campañas, Wompi o el chat de WhatsApp. Entregado en esta iteración: tarjetas de indicador con tendencia semanal real, agenda agrupada por urgencia (Vencidos/Hoy/Próximos) y panel de rendimiento por asesor para el coordinador, con animaciones de entrada. Todo calculado en el cliente a partir de datos ya expuestos por la API; no se agregó ningún endpoint ni tabla.
 
@@ -95,8 +95,16 @@ Continuación de la misma iteración: ficha del cliente rediseñada (contacto, n
 
 Chat de WhatsApp, entregado en esta iteración sobre la base de que el usuario confirmó que el número a usar es de la API oficial de Meta (Cloud API): modelo real de números/conversaciones/mensajes, consola visual de plataforma para registrar números, número asignado por la coordinación comercial a un asesor, webhook con verificación de firma real de Meta e ingestión idempotente ante reintentos, envío saliente de texto y de plantillas aprobadas con adaptador real a la API de Graph (no probado contra credenciales reales), descarga local de multimedia entrante cuando Meta entrega el archivo, cifrado del token de acceso por número, bandeja de conversación con burbujas por tipo de mensaje y alta de cliente prellenada desde un chat sin vincular. Al guardar ese cliente, las conversaciones previas con el mismo teléfono quedan vinculadas retroactivamente. 27 pruebas unitarias y 33 de integración cubren firma, parseo, cifrado, aislamiento por empresa, alcance por asesor, plataforma, multimedia, plantillas y flujo completo del webhook.
 
-Siguiente: probar el checkout y webhook con credenciales sandbox de Wompi, completar conciliación y renovaciones, y después administración avanzada de usuarios, catálogo/campañas y pedidos. Antes de enviar al ERP se necesita su contrato de integración.
+En ese punto el siguiente paso era probar el checkout y webhook con credenciales sandbox de Wompi, completar conciliación y renovaciones y construir catálogo/campañas y pedidos. Catálogo y pedidos ya quedaron implementados y validados localmente; siguen pendientes el sandbox real, la conciliación/renovaciones y el contrato ERP antes de enviar pedidos a un sistema externo.
 
 Sobre la simulación de cobro, el siguiente paso no es conectar la pasarela sino cerrar las decisiones comerciales: precios y vigencias, qué usuarios se facturan, base gravable del impuesto y moneda que espera el contrato. Con eso definido, la configuración versionada actual sirve de punto de partida para la cotización inmutable de la etapa F5.
 
 El demo original permanece intacto. Kuvvi se revisó en modo lectura. Los cambios previos del dominio se conservaron; hay commits locales de punto de control, sin push ni despliegues.
+
+## Próximos pasos para oro productivo
+
+- **Meta WhatsApp:** cargar credenciales de sandbox, verificar el webhook HTTPS, recibir y enviar mensajes, probar multimedia y plantillas aprobadas y revisar reintentos idempotentes.
+- **Wompi:** cargar llaves sandbox, probar checkout y webhook firmado, conciliar estados repetidos y definir renovaciones y suspensión.
+- **AWS:** elegir región y cuenta de staging, provisionar PostgreSQL administrado, S3/CloudFront, secretos, logs, alarmas y backups; ejecutar `npm run preflight:production`, migraciones controladas y prueba de restauración.
+- **Decisiones comerciales:** fijar precios, vigencias, usuarios facturables, impuestos, moneda y soporte para sustituir los valores ilustrativos por configuración aprobada.
+- **Operación:** validar manualmente dos sesiones SSE, dispositivos móviles, permisos de ubicación, recorrido PWA offline y contrato real del ERP.
