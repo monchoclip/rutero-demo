@@ -13,6 +13,7 @@ Adaptada tras revisar `../kuvvi/CLAUDE.md`, `front/CLAUDE.md`, `back/CLAUDE.md`,
 | `docs/ARQUITECTURA.md` | Decisiones técnicas y límites del despliegue. |
 | `docs/REVISION-KUVVI.md` | Evidencia de la revisión y reglas adoptadas/adaptadas/descartadas. |
 | `docs/DESARROLLO-LOCAL.md` | Instalación, ejecución y recorrido de verificación. |
+| `docs/DESPLIEGUE-AWS.md` | Runbook del despliegue económico en AWS: decisiones, control de costo, DNS desde Hostinger, verificación y límites reales. |
 | `back/CLAUDE.md`, `front/CLAUDE.md` | Convenciones de cada área. |
 
 Clasificar cada cambio por módulo (identidad, empresas, clientes, agenda, equipo, visitas, catálogo, campañas, pedidos, suscripciones, notificaciones, plataforma), tipo (funcionalidad, corrección, seguridad, infraestructura o documentación) y etapa (F1 a F6 del estado de desarrollo).
