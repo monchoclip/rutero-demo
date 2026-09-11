@@ -1,0 +1,11 @@
+[Unit]
+Description=Ruts68 - revisar la cola de recordatorios cada dos minutos
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=2min
+AccuracySec=30s
+Unit=ruts68-reminders.service
+
+[Install]
+WantedBy=timers.target

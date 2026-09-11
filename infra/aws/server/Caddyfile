@@ -1,0 +1,67 @@
+# Caddy sirve el frontend estatico y publica la API en un subdominio del mismo
+# dominio registrable. Eso mantiene la cookie de sesion en SameSite=Strict
+# (ruts68.com y api.ruts68.com son el mismo sitio) y deja que CORS compare un
+# unico origen conocido.
+#
+# El certificado se emite solo cuando el DNS ya apunta a esta instancia y los
+# puertos 80 y 443 estan abiertos.
+{
+	email {$RUTS68_ACME_EMAIL}
+}
+
+(seguridad) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+}
+
+{$RUTS68_DOMAIN} {
+	import seguridad
+	root * /srv/ruts68/front
+	encode zstd gzip
+
+	# La exportacion estatica de Next usa trailingSlash, asi que cada ruta es un
+	# directorio con su index.html.
+	try_files {path} {path}/index.html {path}.html /404.html
+	file_server
+
+	# Los archivos con hash en el nombre son inmutables; el HTML no puede
+	# cachearse o un despliegue nuevo no se veria.
+	@inmutables path /_next/static/*
+	header @inmutables Cache-Control "public, max-age=31536000, immutable"
+	@html path *.html /
+	header @html Cache-Control "no-cache"
+
+	log {
+		output file /var/log/caddy/front.log {
+			roll_size 10MiB
+			roll_keep 5
+		}
+	}
+}
+
+www.{$RUTS68_DOMAIN} {
+	redir https://{$RUTS68_DOMAIN}{uri} permanent
+}
+
+api.{$RUTS68_DOMAIN} {
+	import seguridad
+	reverse_proxy 127.0.0.1:4068 {
+		# Sin esto los eventos SSE de /realtime/events quedan en el buffer del
+		# proxy y el navegador nunca recibe el flujo.
+		flush_interval -1
+		transport http {
+			# Una conexion SSE vive mientras el asesor tenga la pestana abierta.
+			read_timeout 0
+		}
+	}
+	log {
+		output file /var/log/caddy/api.log {
+			roll_size 10MiB
+			roll_keep 5
+		}
+	}
+}

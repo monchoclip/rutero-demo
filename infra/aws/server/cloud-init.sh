@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Arranque de la instancia unica de Ruts68 sobre Ubuntu 24.04 LTS (ARM).
 # Instala Node 22, PostgreSQL, Caddy y los servicios del sistema. No copia
-# codigo ni secretos: eso lo hace infra/aws/deploy.sh desde la maquina local.
+# codigo ni secretos: esos artefactos se copian desde la maquina local cuando
+# se haga el despliegue controlado.
 #
 # Se ejecuta una sola vez, como user-data al crear la instancia, o a mano con
 # sudo en una instancia recien creada. Es idempotente: repetirlo no rompe nada
@@ -59,7 +60,11 @@ aws --version
 
 log "usuario de aplicacion y directorios"
 id -u "$APP_USER" >/dev/null 2>&1 || useradd --system --create-home --shell /usr/sbin/nologin "$APP_USER"
-install -d -o "$APP_USER" -g "$APP_USER" -m 755 "$APP_DIR" "$APP_DIR/back" "$APP_DIR/front"
+# app/ tiene el codigo y node_modules; front/ tiene solo la exportacion estatica
+# y es lo unico que Caddy publica, para que no queden package.json ni
+# dependencias accesibles por HTTP.
+install -d -o "$APP_USER" -g "$APP_USER" -m 755 "$APP_DIR" "$APP_DIR/app" "$APP_DIR/front"
+install -d -o postgres -g postgres -m 700 /var/backups/ruts68
 install -d -o "$APP_USER" -g "$APP_USER" -m 700 "$APP_DIR/secrets"
 
 log "PostgreSQL: solo loopback, rol propio y base de la aplicacion"
@@ -102,4 +107,4 @@ log "actualizaciones de seguridad desatendidas"
 apt-get install -y unattended-upgrades
 dpkg-reconfigure -f noninteractive unattended-upgrades
 
-log "listo. Siguiente paso: copiar Caddyfile, unidades systemd y el archivo de entorno, y correr deploy.sh"
+log "listo. Siguiente paso: copiar Caddyfile, unidades systemd y archivos de entorno, y habilitar los servicios"

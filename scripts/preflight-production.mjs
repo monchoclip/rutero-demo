@@ -33,28 +33,38 @@ function isLocalDatabaseUrl(rawUrl) {
   try {
     parsed = new URL(rawUrl);
   } catch {
-    return { local: true, reason: "no es una URL PostgreSQL valida" };
+    return {
+      local: true,
+      reserved: false,
+      reason: "no es una URL PostgreSQL valida",
+    };
   }
   const host = parsed.hostname.toLowerCase();
   const database = parsed.pathname.replace(/^\//, "").toLowerCase();
   if (!["postgresql:", "postgres:"].includes(parsed.protocol)) {
-    return { local: true, reason: "debe usar protocolo postgresql" };
+    return {
+      local: true,
+      reserved: false,
+      reason: "debe usar protocolo postgresql",
+    };
   }
-  if (
+  const local =
     host === "localhost" ||
     host === "127.0.0.1" ||
     host === "::1" ||
-    host.endsWith(".local")
-  ) {
-    return { local: true, reason: "apunta a un host local" };
-  }
+    host.endsWith(".local");
   if (["ruts68_test", "test", "postgres"].includes(database)) {
     return {
-      local: true,
+      local,
+      reserved: true,
       reason: "apunta a una base reservada para pruebas o administracion",
     };
   }
-  return { local: false };
+  return {
+    local,
+    reserved: false,
+    reason: local ? "apunta a un host local" : undefined,
+  };
 }
 
 function hasStrongEncryptionKey(value) {
@@ -94,7 +104,9 @@ function validateProductionPreflight(env = process.env) {
     addIssue(issues, "DATABASE_URL", "es requerido y no puede apuntar a local");
   } else {
     const database = isLocalDatabaseUrl(env.DATABASE_URL);
-    if (database.local) {
+    if (database.reserved) {
+      addIssue(issues, "DATABASE_URL", database.reason);
+    } else if (database.local && env.DATABASE_LOCATION !== "same-server") {
       addIssue(issues, "DATABASE_URL", database.reason);
     }
   }
@@ -147,6 +159,7 @@ function validateProductionPreflight(env = process.env) {
       "NODE_ENV",
       "APP_ORIGIN",
       "DATABASE_URL",
+      "DATABASE_LOCATION",
       ...requiredSecrets,
       "WHATSAPP_TOKEN_ENCRYPTION_KEY",
       "VISIT_PHOTO_STORAGE_MODE",

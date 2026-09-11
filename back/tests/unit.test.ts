@@ -120,6 +120,48 @@ describe("production preflight", () => {
     expect(output).not.toContain("127.0.0.1");
     expect(output).not.toContain("unit-test-encryption-key");
   });
+
+  it("accepts the explicit same-server database profile for the low-cost AWS start", () => {
+    const output = execFileSync(
+      process.execPath,
+      ["scripts/preflight-production.mjs"],
+      {
+        cwd: new URL("../..", import.meta.url),
+        env: {
+          ...process.env,
+          ...readyEnvironment,
+          DATABASE_URL:
+            "postgresql://ruts68:strong-password@127.0.0.1:5432/ruts68?schema=public&connection_limit=10",
+          DATABASE_LOCATION: "same-server",
+        },
+        encoding: "utf8",
+      },
+    );
+    expect(output).toContain("OK");
+    expect(output).toContain("DATABASE_LOCATION");
+  });
+
+  it("still rejects test databases even when the server profile is explicit", () => {
+    let output = "";
+    try {
+      execFileSync(process.execPath, ["scripts/preflight-production.mjs"], {
+        cwd: new URL("../..", import.meta.url),
+        env: {
+          ...process.env,
+          ...readyEnvironment,
+          DATABASE_URL:
+            "postgresql://ruts68:strong-password@127.0.0.1:5432/ruts68_test",
+          DATABASE_LOCATION: "same-server",
+        },
+        encoding: "utf8",
+      });
+    } catch (error) {
+      output = String((error as { stdout?: string }).stdout ?? "");
+    }
+    expect(output).toContain("DATABASE_URL");
+    expect(output).toContain("base reservada para pruebas");
+    expect(output).not.toContain("127.0.0.1");
+  });
 });
 
 describe("catalog date validation", () => {

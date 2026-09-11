@@ -1,0 +1,34 @@
+[Unit]
+Description=Ruts68 API (Fastify)
+Documentation=https://github.com/monchoclip/rutero-demo/blob/main/infra/aws/README.md
+After=network-online.target postgresql.service
+Wants=network-online.target
+Requires=postgresql.service
+
+[Service]
+Type=simple
+User=ruts68
+Group=ruts68
+WorkingDirectory=/srv/ruts68/app/back
+EnvironmentFile=/srv/ruts68/secrets/api.env
+ExecStart=/usr/bin/node dist/server.js
+Restart=always
+RestartSec=2
+# El proceso mantiene las conexiones SSE en memoria: al reiniciar, los
+# navegadores reconectan solos con el respaldo exponencial del cliente.
+KillSignal=SIGTERM
+TimeoutStopSec=20
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictSUIDSGID=true
+LockPersonality=true
+ReadWritePaths=/srv/ruts68/app/back
+
+[Install]
+WantedBy=multi-user.target
