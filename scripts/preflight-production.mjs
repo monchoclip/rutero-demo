@@ -36,6 +36,7 @@ function isLocalDatabaseUrl(rawUrl) {
     return {
       local: true,
       reserved: false,
+      malformed: true,
       reason: "no es una URL PostgreSQL valida",
     };
   }
@@ -45,6 +46,7 @@ function isLocalDatabaseUrl(rawUrl) {
     return {
       local: true,
       reserved: false,
+      malformed: true,
       reason: "debe usar protocolo postgresql",
     };
   }
@@ -104,9 +106,16 @@ function validateProductionPreflight(env = process.env) {
     addIssue(issues, "DATABASE_URL", "es requerido y no puede apuntar a local");
   } else {
     const database = isLocalDatabaseUrl(env.DATABASE_URL);
-    if (database.reserved) {
-      addIssue(issues, "DATABASE_URL", database.reason);
-    } else if (database.local && env.DATABASE_LOCATION !== "same-server") {
+    // same-server declara una topologia: PostgreSQL en esta misma maquina. Por
+    // eso perdona el host de loopback y nada mas. Una URL mal formada, un
+    // protocolo distinto o una base reservada siguen siendo errores; si no, el
+    // opt-in dejaria de ser una declaracion y pasaria a apagar la validacion.
+    const loopbackDeclarado =
+      database.local &&
+      !database.malformed &&
+      !database.reserved &&
+      env.DATABASE_LOCATION === "same-server";
+    if ((database.local || database.reserved) && !loopbackDeclarado) {
       addIssue(issues, "DATABASE_URL", database.reason);
     }
   }
