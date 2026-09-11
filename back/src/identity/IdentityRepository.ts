@@ -2,8 +2,14 @@ import type { PrismaClient } from "@prisma/client";
 import type { z } from "zod";
 import type { registerSchema } from "./IdentitySchema.js";
 import { defaultBillingConfig } from "../billing/BillingTypes.js";
+import type { BillingConfig } from "../billing/BillingSchema.js";
 export class IdentityRepository {
   constructor(private db: PrismaClient) {}
+  platformBillingDefaults() {
+    return this.db.platformBillingSettings.findUnique({
+      where: { id: "default" },
+    });
+  }
   findByEmail(email: string) {
     return this.db.user.findUnique({ where: { email } });
   }
@@ -11,13 +17,14 @@ export class IdentityRepository {
     input: z.infer<typeof registerSchema>,
     passwordHash: string,
     trialEndsAt: Date,
+    billingConfiguration: BillingConfig = defaultBillingConfig,
   ) {
     return this.db.organization.create({
       data: {
         name: input.companyName,
         sector: input.sector,
         trialEndsAt,
-        billingSettings: { create: { configuration: defaultBillingConfig } },
+        billingSettings: { create: { configuration: billingConfiguration } },
         users: {
           create: {
             name: input.name,

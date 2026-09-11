@@ -266,6 +266,20 @@
     "entry": "src/lambda.entry.ts"
   },
   {
+    "method": "GET",
+    "path": "/platform/billing-settings",
+    "operation": "platformBillingSettings",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "PATCH",
+    "path": "/platform/billing-settings",
+    "operation": "updatePlatformBillingSettings",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
     "method": "POST",
     "path": "/platform/whatsapp-numbers",
     "operation": "platformRegisterNumber",

@@ -104,6 +104,11 @@ export async function seedDemo(db: PrismaClient) {
       update: {},
       create: { ...user, organizationId: DEMO_ORGANIZATION_ID, passwordHash },
     });
+  await db.platformBillingSettings.upsert({
+    where: { id: "default" },
+    update: {},
+    create: { id: "default", configuration: defaultBillingConfig },
+  });
   await db.billingSettings.upsert({
     where: { organizationId: DEMO_ORGANIZATION_ID },
     update: {},

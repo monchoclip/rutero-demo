@@ -37,6 +37,8 @@ export const routes = [
   ["GET", "/billing/payments/:reference", "billingPayment", true],
   ["POST", "/billing/simulations", "billingSimulate", true],
   ["GET", "/billing/simulations", "billingHistory", true],
+  ["GET", "/platform/billing-settings", "platformBillingSettings", true],
+  ["PATCH", "/platform/billing-settings", "updatePlatformBillingSettings", true],
   ["POST", "/platform/whatsapp-numbers", "platformRegisterNumber", true],
   ["GET", "/platform/whatsapp-numbers", "platformListNumbers", true],
   [

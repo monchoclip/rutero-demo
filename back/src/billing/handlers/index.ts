@@ -40,6 +40,16 @@ export function billingHandlers(
       return result;
     },
     billingHistory: async (r) => billing.history(r.actor!),
+    platformBillingSettings: async (r) =>
+      billing.platformBillingSettings(r.actor!),
+    updatePlatformBillingSettings: async (r) => {
+      const input = settingsSchema.parse(r.body);
+      return billing.updatePlatformBillingSettings(
+        r.actor!,
+        input.version,
+        input.configuration,
+      );
+    },
     platformOrganizations: async (r) => billing.platformOrganizations(r.actor!),
     wompiWebhookEvents: async (r) => billing.wompiEvent(r.body),
   };

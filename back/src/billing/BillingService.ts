@@ -31,6 +31,46 @@ export class BillingService {
     private options: BillingOptions = {},
     private realtimeHub?: EventHub,
   ) {}
+  private authorizePlatform(actor: Actor) {
+    if (actor.role !== "super_admin")
+      throw new AppError(403, "FORBIDDEN", "Esta vista requiere plataforma.");
+  }
+  async platformBillingSettings(actor: Actor) {
+    this.authorizePlatform(actor);
+    const stored = await this.repository.platformSettings();
+    if (!stored)
+      throw new AppError(
+        404,
+        "NOT_CONFIGURED",
+        "Los valores por defecto todavía no están configurados.",
+      );
+    return {
+      ...stored,
+      configuration: billingConfigSchema.parse(stored.configuration),
+    };
+  }
+  async updatePlatformBillingSettings(
+    actor: Actor,
+    version: number,
+    configuration: BillingConfig,
+  ) {
+    this.authorizePlatform(actor);
+    const result = await this.repository.updatePlatformSettings(
+      actor.id,
+      version,
+      billingConfigSchema.parse(configuration),
+    );
+    if (!result)
+      throw new AppError(
+        409,
+        "CONFIGURATION_CHANGED",
+        "Los valores por defecto cambiaron. Actualiza antes de guardar.",
+      );
+    return {
+      ...result,
+      configuration: billingConfigSchema.parse(result.configuration),
+    };
+  }
   private authorize(actor: Actor, write = false) {
     if (!this.enabled || actor.organizationId !== DEMO_ORGANIZATION_ID)
       throw new AppError(

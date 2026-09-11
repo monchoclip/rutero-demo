@@ -12,8 +12,10 @@ import {
   newToken,
   hashToken,
 } from "../shared/security.js";
-import { addCalendarMonth } from "../shared/dates.js";
+import { addCalendarMonths } from "../shared/dates.js";
 import { publicUser } from "./IdentityTypes.js";
+import { billingConfigSchema } from "../billing/BillingSchema.js";
+import { defaultBillingConfig } from "../billing/BillingTypes.js";
 export class IdentityService {
   constructor(private repository: IdentityRepository) {}
   async limit(key: string) {
@@ -32,10 +34,15 @@ export class IdentityService {
         "EMAIL_UNAVAILABLE",
         "Este correo ya está registrado.",
       );
+    const storedDefaults = await this.repository.platformBillingDefaults();
+    const billingConfiguration = storedDefaults
+      ? billingConfigSchema.parse(storedDefaults.configuration)
+      : defaultBillingConfig;
     const organization = await this.repository.register(
       input,
       await hashPassword(input.password),
-      addCalendarMonth(new Date()),
+      addCalendarMonths(new Date(), billingConfiguration.trialMonths),
+      billingConfiguration,
     );
     return this.issue(organization.users[0]);
   }

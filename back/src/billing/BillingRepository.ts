@@ -4,6 +4,34 @@ import type { calculateQuote } from "./BillingTypes.js";
 import type { PaymentTransactionStatus } from "@prisma/client";
 export class BillingRepository {
   constructor(private db: PrismaClient) {}
+  platformSettings() {
+    return this.db.platformBillingSettings.findUnique({
+      where: { id: "default" },
+    });
+  }
+  updatePlatformSettings(
+    actorId: string,
+    version: number,
+    configuration: BillingConfig,
+  ) {
+    return this.db.$transaction(async (tx) => {
+      const changed = await tx.platformBillingSettings.updateMany({
+        where: { id: "default", version },
+        data: { configuration, version: { increment: 1 }, updatedById: actorId },
+      });
+      if (!changed.count) return null;
+      await tx.platformAuditEvent.create({
+        data: {
+          actorId,
+          action: "platform.billing.defaults.updated",
+          resourceId: "default",
+        },
+      });
+      return tx.platformBillingSettings.findUniqueOrThrow({
+        where: { id: "default" },
+      });
+    });
+  }
   settings(organizationId: string) {
     return this.db.billingSettings.findUnique({ where: { organizationId } });
   }

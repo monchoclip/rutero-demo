@@ -996,6 +996,71 @@ describe.sequential("billing simulation restricted to the demo company", () => {
         ),
     ).toBe(true);
   });
+  it("lets only the platform configure defaults for future companies", async () => {
+    const initial = (
+      await request("GET", "/platform/billing-settings", undefined, platform)
+    ).json().data;
+    const before = await db.organization.findUniqueOrThrow({
+      where: { id: DEMO_ORGANIZATION_ID },
+      select: { trialEndsAt: true },
+    });
+    expect(
+      (await request("GET", "/platform/billing-settings", undefined, coordinator))
+        .statusCode,
+    ).toBe(403);
+    expect(
+      (await request("PATCH", "/platform/billing-settings", {
+        version: initial.version,
+        configuration: initial.configuration,
+      }, demoAdvisor)).statusCode,
+    ).toBe(403);
+    const changed = {
+      ...initial.configuration,
+      trialMonths: 2,
+      plans: initial.configuration.plans.map((plan: Record<string, unknown>) => ({
+        ...plan,
+        name: `${plan.name} futuro`,
+      })),
+    };
+    const updated = await request(
+      "PATCH",
+      "/platform/billing-settings",
+      { version: initial.version, configuration: changed },
+      platform,
+    );
+    expect(updated.statusCode).toBe(200);
+    expect(updated.json().data.version).toBe(initial.version + 1);
+    const registered = await request("POST", "/auth/register", {
+      name: "Coordinador Defaults",
+      companyName: `Empresa defaults ${suffix}`,
+      sector: "commerce",
+      email: `defaults-${suffix}@example.test`,
+      password,
+    });
+    expect(registered.statusCode).toBe(201);
+    const created = await db.organization.findUniqueOrThrow({
+      where: { id: registered.json().data.organizationId },
+      include: { billingSettings: true },
+    });
+    expect(created.billingSettings?.configuration).toMatchObject({
+      trialMonths: 2,
+    });
+    expect(created.trialEndsAt.getTime()).toBeGreaterThan(
+      Date.now() + 50 * 86400000,
+    );
+    const unchanged = await db.organization.findUniqueOrThrow({
+      where: { id: DEMO_ORGANIZATION_ID },
+      select: { trialEndsAt: true },
+    });
+    expect(unchanged.trialEndsAt.getTime()).toBe(before.trialEndsAt.getTime());
+    const restored = await request(
+      "PATCH",
+      "/platform/billing-settings",
+      { version: updated.json().data.version, configuration: initial.configuration },
+      platform,
+    );
+    expect(restored.statusCode).toBe(200);
+  });
   it("hides the simulation from other companies and from anonymous visitors", async () => {
     expect((await request("GET", "/billing/settings")).statusCode).toBe(401);
     for (const [method, path] of [

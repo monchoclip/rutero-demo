@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { addCalendarMonth } from "../src/shared/dates.js";
+import { addCalendarMonth, addCalendarMonths } from "../src/shared/dates.js";
 import {
   hashPassword,
   verifyPassword,
@@ -260,6 +260,13 @@ describe("calendar-month trial", () => {
     const original = new Date(from);
     expect(addCalendarMonth(original).toISOString()).toBe(to);
     expect(original.toISOString()).toBe(from);
+  });
+  it("adds multiple months from the original day", () => {
+    const original = new Date("2026-01-31T14:10:00.000Z");
+    expect(addCalendarMonths(original, 2).toISOString()).toBe(
+      "2026-03-31T14:10:00.000Z",
+    );
+    expect(() => addCalendarMonths(original, 0)).toThrow();
   });
 });
 describe("passwords and authorization", () => {
