@@ -7,6 +7,7 @@ export type RealtimeEventType =
   | "realtime.heartbeat"
   | "client.created"
   | "client.updated"
+  | "user.updated"
   | "activity.created"
   | "activity.completed"
   | "activity.cancelled"

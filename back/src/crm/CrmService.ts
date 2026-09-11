@@ -10,6 +10,7 @@ import type {
   activitySchema,
   completeSchema,
   listSchema,
+  auditListSchema,
 } from "./CrmSchema.js";
 import {
   moduleConfigSchema,
@@ -52,6 +53,33 @@ export class CrmService {
   }
   users(actor: Actor) {
     return this.repository.users(actor);
+  }
+  async updateAdvisorStatus(actor: Actor, id: string, active: boolean) {
+    requireCommercial(actor);
+    const user = await this.repository.updateAdvisorStatus(actor, id, active);
+    if (!user) notFound();
+    this.realtimeHub.publish({
+      organizationId: actor.organizationId!,
+      type: "user.updated",
+      resourceId: id,
+    });
+    return user;
+  }
+  async auditEvents(actor: Actor, query: z.infer<typeof auditListSchema>) {
+    if (
+      ![
+        "super_admin",
+        "commercial_coordinator",
+        "administrative_coordinator",
+      ].includes(actor.role)
+    )
+      throw new AppError(
+        403,
+        "FORBIDDEN",
+        "Esta vista requiere coordinación o plataforma.",
+      );
+    const rows = await this.repository.auditEvents(actor, query);
+    return this.auditPage(rows, query.limit);
   }
   async clients(actor: Actor, query: z.infer<typeof listSchema>) {
     await this.ensureVisibleAdvisor(actor, query.advisorId);
@@ -362,6 +390,23 @@ export class CrmService {
       data,
       pagination: {
         cursor: hasMore ? data.at(-1)?.id : null,
+        hasMore,
+        limit,
+      },
+    };
+  }
+  private auditPage<T extends { id: string; createdAt: Date }>(
+    rows: T[],
+    limit: number,
+  ) {
+    const hasMore = rows.length > limit;
+    const data = rows.slice(0, limit);
+    const last = data.at(-1);
+    return {
+      data,
+      pagination: {
+        cursor:
+          hasMore && last ? `${last.createdAt.toISOString()}|${last.id}` : null,
         hasMore,
         limit,
       },

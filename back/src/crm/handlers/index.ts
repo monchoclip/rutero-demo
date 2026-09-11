@@ -8,6 +8,8 @@ import {
   cancelSchema,
   assignmentSchema,
   visitStartSchema,
+  userStatusSchema,
+  auditListSchema,
 } from "../CrmSchema.js";
 import { AppError } from "../../shared/errors.js";
 import type { Handler, Services } from "../../shared/context.js";
@@ -28,6 +30,14 @@ export function crmHandlers({
       );
     },
     users: async (r) => crm.users(r.actor!),
+    updateAdvisorStatus: async (r) =>
+      crm.updateAdvisorStatus(
+        r.actor!,
+        idSchema.parse(r.params).id,
+        userStatusSchema.parse(r.body).active,
+      ),
+    auditEvents: async (r) =>
+      crm.auditEvents(r.actor!, auditListSchema.parse(r.query)),
     invitations: async (r) => crm.invitations(r.actor!),
     invite: async (r, reply) => {
       const result = await crm.invite(r.actor!, inviteSchema.parse(r.body));

@@ -17,6 +17,11 @@ export type PageQuery = {
   advisorId?: string;
   status?: "scheduled" | "completed" | "cancelled" | "all";
 };
+export type AuditPageQuery = {
+  cursor?: string;
+  limit: number;
+  organizationId?: string;
+};
 export class CrmRepository {
   constructor(private db: PrismaClient) {}
   organization(actor: Actor) {
@@ -57,6 +62,77 @@ export class CrmRepository {
       },
       select: userSelect,
       orderBy: { name: "asc" },
+    });
+  }
+  updateAdvisorStatus(actor: Actor, id: string, active: boolean) {
+    return this.db.$transaction(async (tx) => {
+      const changed = await tx.user.updateMany({
+        where: {
+          id,
+          organizationId: tenantId(actor),
+          role: "advisor",
+          ...(id === actor.id ? { id: "__never__" } : {}),
+        },
+        data: { active },
+      });
+      if (!changed.count) return null;
+      await this.audit(
+        tx,
+        actor,
+        active ? "user.advisor.activated" : "user.advisor.deactivated",
+        id,
+      );
+      return tx.user.findUnique({
+        where: { organizationId_id: { organizationId: tenantId(actor), id } },
+        select: userSelect,
+      });
+    });
+  }
+  auditEvents(actor: Actor, query: AuditPageQuery) {
+    const [cursorDate, cursorId] = query.cursor?.split("|") ?? [];
+    const cursor =
+      cursorDate && cursorId
+        ? { createdAt: new Date(cursorDate), id: cursorId }
+        : null;
+    if (actor.role === "super_admin") {
+      return this.db.auditEvent.findMany({
+        where: {
+          ...(query.organizationId
+            ? { organizationId: query.organizationId }
+            : {}),
+          ...(cursor
+            ? {
+                OR: [
+                  { createdAt: { lt: cursor.createdAt } },
+                  { createdAt: cursor.createdAt, id: { lt: cursor.id } },
+                ],
+              }
+            : {}),
+        },
+        include: {
+          organization: { select: { id: true, name: true } },
+        },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        take: query.limit + 1,
+      });
+    }
+    return this.db.auditEvent.findMany({
+      where: {
+        organizationId: tenantId(actor),
+        ...(cursor
+          ? {
+              OR: [
+                { createdAt: { lt: cursor.createdAt } },
+                { createdAt: cursor.createdAt, id: { lt: cursor.id } },
+              ],
+            }
+          : {}),
+      },
+      include: {
+        organization: { select: { id: true, name: true } },
+      },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: query.limit + 1,
     });
   }
   advisor(actor: Actor, id: string) {

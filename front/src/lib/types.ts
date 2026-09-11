@@ -271,3 +271,12 @@ export type PaginatedResponse<T> = {
   data: T[];
   pagination: Pagination;
 };
+export type AuditEvent = {
+  id: string;
+  organizationId: string;
+  actorId: string;
+  action: string;
+  resourceId: string;
+  createdAt: string;
+  organization?: { id: string; name: string };
+};

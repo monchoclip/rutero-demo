@@ -50,6 +50,7 @@ export const completeSchema = z
   })
   .strict();
 export const assignmentSchema = z.object({ advisorId: z.uuid() }).strict();
+export const userStatusSchema = z.object({ active: z.boolean() }).strict();
 export const visitStartSchema = z
   .object({
     latitude: z.number().min(-90).max(90),
@@ -69,4 +70,9 @@ export const listSchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(50),
   advisorId: z.union([z.uuid(), z.literal("all")]).optional(),
   status: z.enum(["scheduled", "completed", "cancelled", "all"]).optional(),
+});
+export const auditListSchema = z.object({
+  cursor: z.string().trim().min(1).max(240).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(30),
+  organizationId: z.uuid().optional(),
 });

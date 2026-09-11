@@ -155,7 +155,7 @@ export async function createApp(
           requestId: request.id,
           timestamp: new Date().toISOString(),
         };
-        return operation === "clients" || operation === "activities"
+        return ["clients", "activities", "auditEvents"].includes(operation)
           ? { ...(result as object), meta }
           : { data: result, meta };
       },

@@ -254,6 +254,83 @@ describe.sequential("real PostgreSQL CRM flow", () => {
         )
       ).statusCode,
     ).toBe(404);
+  });
+  it("lets commercial coordination suspend advisors with tenant isolation and audit", async () => {
+    const suspended = await request(
+      "PATCH",
+      `/users/${secondAdvisor.id}/status`,
+      { active: false },
+      owner.cookie,
+    );
+    expect(suspended.statusCode).toBe(200);
+    expect(suspended.json().data.active).toBe(false);
+    expect(
+      (
+        await request(
+          "PATCH",
+          `/users/${externalAdvisor.id}/status`,
+          { active: false },
+          owner.cookie,
+        )
+      ).statusCode,
+    ).toBe(404);
+    expect(
+      (
+        await request(
+          "POST",
+          "/clients",
+          {
+            name: "Cliente para asesor suspendido",
+            contactName: "Prueba Estado",
+            email: "suspendido@example.test",
+            phone: "3000000000",
+            city: "Bogotá",
+            notes: "Debe fallar porque el asesor no está activo.",
+            advisorId: secondAdvisor.id,
+          },
+          owner.cookie,
+        )
+      ).statusCode,
+    ).toBe(422);
+    const audit = await request(
+      "GET",
+      "/audit-events?limit=5",
+      undefined,
+      owner.cookie,
+    );
+    const reactivated = await request(
+      "PATCH",
+      `/users/${secondAdvisor.id}/status`,
+      { active: true },
+      owner.cookie,
+    );
+    expect(reactivated.statusCode).toBe(200);
+    expect(audit.statusCode).toBe(200);
+    expect(audit.json().data).toContainEqual(
+      expect.objectContaining({
+        organizationId: owner.organizationId,
+        actorId: owner.id,
+        action: "user.advisor.deactivated",
+        resourceId: secondAdvisor.id,
+      }),
+    );
+    expect(audit.json().pagination.limit).toBe(5);
+  });
+  it("keeps audit and advisor status changes out of administrative and advisor write access", async () => {
+    expect(
+      (
+        await request(
+          "PATCH",
+          `/users/${advisor.id}/status`,
+          { active: false },
+          advisor.cookie,
+        )
+      ).statusCode,
+    ).toBe(403);
+    expect(
+      (await request("GET", "/audit-events", undefined, advisor.cookie))
+        .statusCode,
+    ).toBe(403);
     expect(
       (
         await request(
@@ -371,22 +448,55 @@ describe.sequential("real PostgreSQL CRM flow", () => {
     ).toBe(404);
   });
   it("cancels a scheduled activity and its pending reminder", async () => {
-    const created = await request("POST", "/activities", {
-      clientId,
-      type: "follow_up",
-      dueAt: new Date(Date.now() + 7200000).toISOString(),
-      notes: "Contacto que el cliente pidió cancelar",
-      idempotencyKey: crypto.randomUUID(),
-    }, advisor.cookie);
+    const created = await request(
+      "POST",
+      "/activities",
+      {
+        clientId,
+        type: "follow_up",
+        dueAt: new Date(Date.now() + 7200000).toISOString(),
+        notes: "Contacto que el cliente pidió cancelar",
+        idempotencyKey: crypto.randomUUID(),
+      },
+      advisor.cookie,
+    );
     expect(created.statusCode).toBe(201);
     const id = created.json().data.id;
-    const cancelled = await request("POST", `/activities/${id}/cancel`, { reason: "Cliente solicitó reagendar." }, advisor.cookie);
+    const cancelled = await request(
+      "POST",
+      `/activities/${id}/cancel`,
+      { reason: "Cliente solicitó reagendar." },
+      advisor.cookie,
+    );
     expect(cancelled.statusCode).toBe(200);
     expect(cancelled.json().data.status).toBe("cancelled");
-    expect(cancelled.json().data.cancelReason).toBe("Cliente solicitó reagendar.");
-    expect((await db.emailJob.findUniqueOrThrow({ where: { activityId: id } })).cancelledAt).not.toBeNull();
-    expect((await request("POST", `/activities/${id}/cancel`, { reason: "Segundo intento" }, advisor.cookie)).json().data.status).toBe("cancelled");
-    expect((await request("POST", `/activities/${id}/cancel`, { reason: "Acceso cruzado" }, externalAdvisor.cookie)).statusCode).toBe(404);
+    expect(cancelled.json().data.cancelReason).toBe(
+      "Cliente solicitó reagendar.",
+    );
+    expect(
+      (await db.emailJob.findUniqueOrThrow({ where: { activityId: id } }))
+        .cancelledAt,
+    ).not.toBeNull();
+    expect(
+      (
+        await request(
+          "POST",
+          `/activities/${id}/cancel`,
+          { reason: "Segundo intento" },
+          advisor.cookie,
+        )
+      ).json().data.status,
+    ).toBe("cancelled");
+    expect(
+      (
+        await request(
+          "POST",
+          `/activities/${id}/cancel`,
+          { reason: "Acceso cruzado" },
+          externalAdvisor.cookie,
+        )
+      ).statusCode,
+    ).toBe(404);
     await db.emailJob.delete({ where: { activityId: id } });
     await db.activity.delete({ where: { id } });
   });
@@ -996,6 +1106,38 @@ describe.sequential("billing simulation restricted to the demo company", () => {
         ),
     ).toBe(true);
   });
+  it("lets the platform read tenant audit events without exposing them to advisors", async () => {
+    const platformUser = await db.user.findUniqueOrThrow({
+      where: { email: "plataforma@ruts68.test" },
+    });
+    await db.auditEvent.create({
+      data: {
+        organizationId: DEMO_ORGANIZATION_ID,
+        actorId: platformUser.id,
+        action: "test.platform.audit.visible",
+        resourceId: "audit-fixture",
+      },
+    });
+    const audit = await request(
+      "GET",
+      `/audit-events?limit=2&organizationId=${DEMO_ORGANIZATION_ID}`,
+      undefined,
+      platform,
+    );
+    expect(audit.statusCode).toBe(200);
+    expect(audit.json().data).toContainEqual(
+      expect.objectContaining({
+        organizationId: DEMO_ORGANIZATION_ID,
+        action: "test.platform.audit.visible",
+        resourceId: "audit-fixture",
+      }),
+    );
+    expect(audit.json().pagination.limit).toBe(2);
+    expect(
+      (await request("GET", "/audit-events", undefined, demoAdvisor))
+        .statusCode,
+    ).toBe(403);
+  });
   it("lets only the platform configure defaults for future companies", async () => {
     const initial = (
       await request("GET", "/platform/billing-settings", undefined, platform)
@@ -1005,22 +1147,37 @@ describe.sequential("billing simulation restricted to the demo company", () => {
       select: { trialEndsAt: true },
     });
     expect(
-      (await request("GET", "/platform/billing-settings", undefined, coordinator))
-        .statusCode,
+      (
+        await request(
+          "GET",
+          "/platform/billing-settings",
+          undefined,
+          coordinator,
+        )
+      ).statusCode,
     ).toBe(403);
     expect(
-      (await request("PATCH", "/platform/billing-settings", {
-        version: initial.version,
-        configuration: initial.configuration,
-      }, demoAdvisor)).statusCode,
+      (
+        await request(
+          "PATCH",
+          "/platform/billing-settings",
+          {
+            version: initial.version,
+            configuration: initial.configuration,
+          },
+          demoAdvisor,
+        )
+      ).statusCode,
     ).toBe(403);
     const changed = {
       ...initial.configuration,
       trialMonths: 2,
-      plans: initial.configuration.plans.map((plan: Record<string, unknown>) => ({
-        ...plan,
-        name: `${plan.name} futuro`,
-      })),
+      plans: initial.configuration.plans.map(
+        (plan: Record<string, unknown>) => ({
+          ...plan,
+          name: `${plan.name} futuro`,
+        }),
+      ),
     };
     const updated = await request(
       "PATCH",
@@ -1056,7 +1213,10 @@ describe.sequential("billing simulation restricted to the demo company", () => {
     const restored = await request(
       "PATCH",
       "/platform/billing-settings",
-      { version: updated.json().data.version, configuration: initial.configuration },
+      {
+        version: updated.json().data.version,
+        configuration: initial.configuration,
+      },
       platform,
     );
     expect(restored.statusCode).toBe(200);
@@ -1349,10 +1509,20 @@ describe.sequential("billing simulation restricted to the demo company", () => {
     );
     expect(receipt.json().data.status).toBe("approved");
     expect(receipt.json().data.transactionId).toBe(transaction.id);
-    const before = await db.organization.findUniqueOrThrow({ where: { id: DEMO_ORGANIZATION_ID }, select: { membershipEndsAt: true } });
-    expect((await request("POST", "/webhooks/wompi", event)).statusCode).toBe(200);
-    const after = await db.organization.findUniqueOrThrow({ where: { id: DEMO_ORGANIZATION_ID }, select: { membershipEndsAt: true } });
-    expect(after.membershipEndsAt?.getTime()).toBe(before.membershipEndsAt?.getTime());
+    const before = await db.organization.findUniqueOrThrow({
+      where: { id: DEMO_ORGANIZATION_ID },
+      select: { membershipEndsAt: true },
+    });
+    expect((await request("POST", "/webhooks/wompi", event)).statusCode).toBe(
+      200,
+    );
+    const after = await db.organization.findUniqueOrThrow({
+      where: { id: DEMO_ORGANIZATION_ID },
+      select: { membershipEndsAt: true },
+    });
+    expect(after.membershipEndsAt?.getTime()).toBe(
+      before.membershipEndsAt?.getTime(),
+    );
   });
   it("stores one simulation per idempotency key and rejects a reused key with other data", async () => {
     const payload = {
@@ -1999,7 +2169,14 @@ describe.sequential("WhatsApp chat: numbers, webhook and conversations", () => {
     const created = await request(
       "POST",
       "/catalog/products",
-      { code: `SKU-${suffix.slice(0, 6)}`, name: "Plan nutricional", description: "Prueba", priceMinor: 125000, currency: "COP", active: true },
+      {
+        code: `SKU-${suffix.slice(0, 6)}`,
+        name: "Plan nutricional",
+        description: "Prueba",
+        priceMinor: 125000,
+        currency: "COP",
+        active: true,
+      },
       owner.cookie,
     );
     expect(created.statusCode).toBe(201);
@@ -2007,7 +2184,14 @@ describe.sequential("WhatsApp chat: numbers, webhook and conversations", () => {
     const campaign = await request(
       "POST",
       "/catalog/campaigns",
-      { name: "Campaña de reactivación", description: "Seguimiento", startsAt: new Date().toISOString(), endsAt: null, active: true, productIds: [productId] },
+      {
+        name: "Campaña de reactivación",
+        description: "Seguimiento",
+        startsAt: new Date().toISOString(),
+        endsAt: null,
+        active: true,
+        productIds: [productId],
+      },
       owner.cookie,
     );
     expect(campaign.statusCode).toBe(201);
@@ -2021,29 +2205,68 @@ describe.sequential("WhatsApp chat: numbers, webhook and conversations", () => {
     expect(enroll.statusCode).toBe(201);
     expect(enroll.json().data.client.id).toBe(clientId);
     expect(
-      (await request("GET", "/catalog/products", undefined, externalAdvisor.cookie)).json().data,
+      (
+        await request(
+          "GET",
+          "/catalog/products",
+          undefined,
+          externalAdvisor.cookie,
+        )
+      ).json().data,
     ).toEqual([]);
     const expired = await request(
       "POST",
       "/catalog/campaigns",
-      { name: "Campaña vencida", description: "No admitir altas", startsAt: new Date(Date.now() - 86400000).toISOString(), endsAt: new Date(Date.now() - 3600000).toISOString(), active: true, productIds: [productId] },
+      {
+        name: "Campaña vencida",
+        description: "No admitir altas",
+        startsAt: new Date(Date.now() - 86400000).toISOString(),
+        endsAt: new Date(Date.now() - 3600000).toISOString(),
+        active: true,
+        productIds: [productId],
+      },
       owner.cookie,
     );
     expect(expired.statusCode).toBe(201);
-    expect((await request("POST", `/catalog/campaigns/${expired.json().data.id}/enroll`, { clientId }, owner.cookie)).statusCode).toBe(404);
+    expect(
+      (
+        await request(
+          "POST",
+          `/catalog/campaigns/${expired.json().data.id}/enroll`,
+          { clientId },
+          owner.cookie,
+        )
+      ).statusCode,
+    ).toBe(404);
   });
   it("creates an idempotent order with frozen price and confirms simulated ERP", async () => {
-    const products = await request("GET", "/catalog/products", undefined, owner.cookie);
+    const products = await request(
+      "GET",
+      "/catalog/products",
+      undefined,
+      owner.cookie,
+    );
     const productId = products.json().data[0].id as string;
     const key = crypto.randomUUID();
-    const payload = { clientId, idempotencyKey: key, lines: [{ productId, quantity: 2 }] };
+    const payload = {
+      clientId,
+      idempotencyKey: key,
+      lines: [{ productId, quantity: 2 }],
+    };
     const first = await request("POST", "/orders", payload, owner.cookie);
     expect(first.statusCode).toBe(201);
     const second = await request("POST", "/orders", payload, owner.cookie);
     expect(second.statusCode).toBe(201);
     expect(second.json().data.id).toBe(first.json().data.id);
-    expect(second.json().data.lines[0].unitPriceMinor).toBe(first.json().data.lines[0].unitPriceMinor);
-    const sent = await request("POST", `/orders/${first.json().data.id}/submit`, {}, owner.cookie);
+    expect(second.json().data.lines[0].unitPriceMinor).toBe(
+      first.json().data.lines[0].unitPriceMinor,
+    );
+    const sent = await request(
+      "POST",
+      `/orders/${first.json().data.id}/submit`,
+      {},
+      owner.cookie,
+    );
     expect(sent.statusCode).toBe(200);
     expect(sent.json().data.status).toBe("sent");
     expect(sent.json().data.erpReference).toMatch(/^ERP-/);

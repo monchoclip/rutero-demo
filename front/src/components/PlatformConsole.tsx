@@ -9,8 +9,9 @@ import {
   Smartphone,
   ShieldCheck,
 } from "lucide-react";
-import { api, post, patch } from "../lib/api";
+import { api, apiPage, post, patch } from "../lib/api";
 import type {
+  AuditEvent,
   BillingConfiguration,
   PlatformBillingSettings,
   PlatformOrganization,
@@ -53,6 +54,9 @@ export function PlatformConsole({
   );
   const [billingDefaults, setBillingDefaults] =
     useState<PlatformBillingSettings | null>(null);
+  const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
+  const [auditCursor, setAuditCursor] = useState<string | null>(null);
+  const [auditHasMore, setAuditHasMore] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true);
@@ -69,12 +73,16 @@ export function PlatformConsole({
         api<PlatformWhatsAppNumber[]>("/platform/whatsapp-numbers"),
         api<PlatformOrganization[]>("/platform/organizations"),
       ]);
-      const defaults = await api<PlatformBillingSettings>(
-        "/platform/billing-settings",
-      );
+      const [defaults, auditPage] = await Promise.all([
+        api<PlatformBillingSettings>("/platform/billing-settings"),
+        apiPage<AuditEvent>("/audit-events?limit=30"),
+      ]);
       setNumbers(registeredNumbers);
       setOrganizations(registeredOrganizations);
       setBillingDefaults(defaults);
+      setAuditEvents(auditPage.data);
+      setAuditCursor(auditPage.pagination.cursor);
+      setAuditHasMore(auditPage.pagination.hasMore);
       setModuleDrafts(
         Object.fromEntries(
           registeredOrganizations.map((organization) => [
@@ -147,6 +155,19 @@ export function PlatformConsole({
       await load();
     } finally {
       setBusy(false);
+    }
+  }
+  async function loadMoreAuditEvents() {
+    if (!auditCursor) return;
+    try {
+      const page = await apiPage<AuditEvent>(
+        `/audit-events?limit=30&cursor=${encodeURIComponent(auditCursor)}`,
+      );
+      setAuditEvents((current) => [...current, ...page.data]);
+      setAuditCursor(page.pagination.cursor);
+      setAuditHasMore(page.pagination.hasMore);
+    } catch (failure) {
+      setError((failure as Error).message);
     }
   }
   return (
@@ -284,7 +305,10 @@ export function PlatformConsole({
             </form>
           ) : (
             <>
-              <div className="plan-grid" aria-label="Valores de planes por defecto">
+              <div
+                className="plan-grid"
+                aria-label="Valores de planes por defecto"
+              >
                 {billingDefaults.configuration.plans.map((plan) => (
                   <article className="plan-card" key={plan.id}>
                     <strong>{plan.name}</strong>
@@ -548,6 +572,49 @@ export function PlatformConsole({
             </div>
           ) : (
             <p className="hint">Todavía no hay empresas registradas.</p>
+          )}
+        </section>
+        <section className="panel">
+          <div className="section-heading">
+            <div>
+              <h2>Auditoría de empresas</h2>
+              <p>
+                Eventos recientes para revisar cambios operativos por cuenta.
+              </p>
+            </div>
+            <button className="text-button" onClick={load}>
+              <RefreshCw size={15} /> Actualizar
+            </button>
+          </div>
+          {auditEvents.length ? (
+            <div className="audit-list">
+              {auditEvents.map((event) => (
+                <article className="audit-row" key={event.id}>
+                  <span className="badge">{event.action}</span>
+                  <div>
+                    <strong>
+                      {event.organization?.name ?? event.organizationId}
+                    </strong>
+                    <small>
+                      {new Date(event.createdAt).toLocaleString("es-CO")} ·
+                      recurso {event.resourceId}
+                    </small>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="hint">
+              Todavía no hay eventos operativos registrados.
+            </p>
+          )}
+          {auditHasMore && (
+            <button
+              className="secondary load-more"
+              onClick={() => void loadMoreAuditEvents()}
+            >
+              Cargar más eventos
+            </button>
           )}
         </section>
       </section>

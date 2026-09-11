@@ -995,6 +995,40 @@ a.contact-row:hover {
   align-items: center;
   gap: 8px 14px;
 }
+.team-ops-list,
+.audit-list {
+  display: grid;
+  gap: 10px;
+}
+.team-ops-row,
+.audit-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+.team-ops-row > div,
+.audit-row > div {
+  min-width: 0;
+  flex: 1;
+}
+.team-ops-row strong,
+.audit-row strong {
+  display: block;
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+}
+.team-ops-row small,
+.audit-row small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+}
 .advisor-detail {
   display: inline-flex;
   align-items: center;
@@ -1468,21 +1502,96 @@ a.contact-row:hover {
 .icon-button.map-link {
   color: var(--brand);
 }
-.catalog-actions { display: flex; gap: 10px; margin-bottom: 16px; }
-.catalog-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-.catalog-row, .campaign-card { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); }
-.catalog-row > div, .campaign-card { flex: 1; }
-.catalog-row small, .campaign-card small { display: block; color: var(--muted); margin-top: 4px; }
-.campaign-card { flex-wrap: wrap; }
-.campaign-card .badge { margin-left: auto; }
-.catalog-enroll { width: 100%; padding: 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
-.order-create { display: grid; grid-template-columns: 1fr 1fr 90px auto; gap: 10px; margin-bottom: 18px; }
-.order-create select, .order-create input { min-width: 0; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
-.order-row { display: flex; align-items: center; gap: 14px; padding: 15px 0; border-top: 1px solid var(--line); }
-.order-row > div { flex: 1; } .order-row small { display: block; color: var(--muted); margin-top: 4px; }
-.order-ok { color: var(--success); }
-@media (max-width: 760px) { .catalog-grid { grid-template-columns: 1fr; } .catalog-actions { flex-wrap: wrap; } }
-@media (max-width: 760px) { .order-create { grid-template-columns: 1fr; } .order-row { align-items: flex-start; flex-wrap: wrap; } }
+.catalog-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.catalog-row,
+.campaign-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+.catalog-row > div,
+.campaign-card {
+  flex: 1;
+}
+.catalog-row small,
+.campaign-card small {
+  display: block;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.campaign-card {
+  flex-wrap: wrap;
+}
+.campaign-card .badge {
+  margin-left: auto;
+}
+.catalog-enroll {
+  width: 100%;
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+.order-create {
+  display: grid;
+  grid-template-columns: 1fr 1fr 90px auto;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.order-create select,
+.order-create input {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+.order-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 15px 0;
+  border-top: 1px solid var(--line);
+}
+.order-row > div {
+  flex: 1;
+}
+.order-row small {
+  display: block;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.order-ok {
+  color: var(--success);
+}
+@media (max-width: 760px) {
+  .catalog-grid {
+    grid-template-columns: 1fr;
+  }
+  .catalog-actions {
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 760px) {
+  .order-create {
+    grid-template-columns: 1fr;
+  }
+  .order-row {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+}
 @media (max-width: 760px) {
   .advisor-command {
     align-items: stretch;
@@ -1500,6 +1609,11 @@ a.contact-row:hover {
     grid-template-columns: 1fr;
   }
   .visit-map-links {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .team-ops-row,
+  .audit-row {
     align-items: flex-start;
     flex-direction: column;
   }

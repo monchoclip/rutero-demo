@@ -49,6 +49,20 @@
     "entry": "src/lambda.entry.ts"
   },
   {
+    "method": "PATCH",
+    "path": "/users/:id/status",
+    "operation": "updateAdvisorStatus",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "GET",
+    "path": "/audit-events",
+    "operation": "auditEvents",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
     "method": "GET",
     "path": "/invitations",
     "operation": "invitations",

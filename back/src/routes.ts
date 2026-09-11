@@ -6,6 +6,8 @@ export const routes = [
   ["GET", "/auth/me", "me", true],
   ["GET", "/organization", "organization", true],
   ["GET", "/users", "users", true],
+  ["PATCH", "/users/:id/status", "updateAdvisorStatus", true],
+  ["GET", "/audit-events", "auditEvents", true],
   ["GET", "/invitations", "invitations", true],
   ["POST", "/invitations", "invite", true],
   ["GET", "/clients", "clients", true],
@@ -38,7 +40,12 @@ export const routes = [
   ["POST", "/billing/simulations", "billingSimulate", true],
   ["GET", "/billing/simulations", "billingHistory", true],
   ["GET", "/platform/billing-settings", "platformBillingSettings", true],
-  ["PATCH", "/platform/billing-settings", "updatePlatformBillingSettings", true],
+  [
+    "PATCH",
+    "/platform/billing-settings",
+    "updatePlatformBillingSettings",
+    true,
+  ],
   ["POST", "/platform/whatsapp-numbers", "platformRegisterNumber", true],
   ["GET", "/platform/whatsapp-numbers", "platformListNumbers", true],
   [

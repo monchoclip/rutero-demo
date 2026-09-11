@@ -34,8 +34,9 @@ import {
   MessageCircle,
   Target,
   Radio,
+  Power,
 } from "lucide-react";
-import { api, apiPage, post, ApiError } from "../lib/api";
+import { api, apiPage, post, patch, ApiError } from "../lib/api";
 import {
   queuedMutationSummary,
   replayOfflineQueue,
@@ -54,6 +55,7 @@ import {
   type Invitation,
   type WhatsAppNumber,
   type ModuleKey,
+  type AuditEvent,
 } from "../lib/types";
 import { FormDialog, type FormKind } from "./Forms";
 import { Billing } from "./Billing";
@@ -216,6 +218,9 @@ export function Workspace({
   const [activities, setActivities] = useState<Activity[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [mail, setMail] = useState<MailItem[]>([]);
+  const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
+  const [auditCursor, setAuditCursor] = useState<string | null>(null);
+  const [auditHasMore, setAuditHasMore] = useState(false);
   const [localMail, setLocalMail] = useState(false);
   const [billing, setBilling] = useState(false);
   const [whatsapp, setWhatsapp] = useState(false);
@@ -236,6 +241,7 @@ export function Workspace({
   const [activityCursor, setActivityCursor] = useState<string | null>(null);
   const [activityHasMore, setActivityHasMore] = useState(false);
   const [activityPaging, setActivityPaging] = useState(false);
+  const [userBusy, setUserBusy] = useState<string | null>(null);
   const [form, setForm] = useState<{
     kind: FormKind;
     activity?: Activity;
@@ -283,6 +289,12 @@ export function Workspace({
         writeSnapshot(cacheKey("activities"), tasks),
       ]).catch(() => undefined);
       if (commercial) setInvitations(await api<Invitation[]>("/invitations"));
+      if (coordinator) {
+        const auditPage = await apiPage<AuditEvent>("/audit-events?limit=20");
+        setAuditEvents(auditPage.data);
+        setAuditCursor(auditPage.pagination.cursor);
+        setAuditHasMore(auditPage.pagination.hasMore);
+      }
       if (coordinator) setBilling(await available("/billing/settings"));
       setWhatsapp(await hasWhatsAppNumbers());
       try {
@@ -530,6 +542,35 @@ export function Workspace({
       setError((error as Error).message);
     } finally {
       setActivityPaging(false);
+    }
+  }
+  async function loadMoreAuditEvents() {
+    if (!auditCursor) return;
+    try {
+      const page = await apiPage<AuditEvent>(
+        `/audit-events?limit=20&cursor=${encodeURIComponent(auditCursor)}`,
+      );
+      setAuditEvents((current) => [...current, ...page.data]);
+      setAuditCursor(page.pagination.cursor);
+      setAuditHasMore(page.pagination.hasMore);
+    } catch (error) {
+      setError((error as Error).message);
+    }
+  }
+  async function setAdvisorStatus(advisor: User, active: boolean) {
+    setUserBusy(advisor.id);
+    setError("");
+    setNotice("");
+    try {
+      await patch<User>(`/users/${advisor.id}/status`, { active });
+      setNotice(
+        `${advisor.name} quedó ${active ? "activo" : "suspendido"} para nuevas gestiones.`,
+      );
+      await load();
+    } catch (error) {
+      setError((error as Error).message);
+    } finally {
+      setUserBusy(null);
     }
   }
   const remainingDays = organization
@@ -878,7 +919,9 @@ export function Workspace({
                         onComplete={(activity) =>
                           setForm({ kind: "complete", activity })
                         }
-                        onCancel={(activity) => setForm({ kind: "cancel", activity })}
+                        onCancel={(activity) =>
+                          setForm({ kind: "cancel", activity })
+                        }
                       />
                     </section>
                     <section className="next-step">
@@ -1044,7 +1087,9 @@ export function Workspace({
                                 onComplete={(activity) =>
                                   setForm({ kind: "complete", activity })
                                 }
-                                onCancel={(activity) => setForm({ kind: "cancel", activity })}
+                                onCancel={(activity) =>
+                                  setForm({ kind: "cancel", activity })
+                                }
                               />
                             </div>
                           ))}
@@ -1120,6 +1165,92 @@ export function Workspace({
                       </div>
                     </section>
                   )}
+                  {commercial && advisors.length > 0 && (
+                    <section className="panel">
+                      <div className="section-heading">
+                        <div>
+                          <h2>Control de asesores</h2>
+                          <p>
+                            Suspende o reactiva acceso operativo sin cambiar
+                            carteras.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="team-ops-list">
+                        {advisors.map((advisor) => (
+                          <article className="team-ops-row" key={advisor.id}>
+                            <span className="avatar small-avatar">
+                              {initials(advisor.name)}
+                            </span>
+                            <div>
+                              <strong>{advisor.name}</strong>
+                              <small>{advisor.email}</small>
+                            </div>
+                            <span
+                              className={`badge ${advisor.active ? "completed" : "cancelled"}`}
+                            >
+                              {advisor.active ? "Activo" : "Suspendido"}
+                            </span>
+                            <button
+                              className={
+                                advisor.active
+                                  ? "secondary danger-link"
+                                  : "secondary"
+                              }
+                              disabled={userBusy === advisor.id}
+                              onClick={() =>
+                                void setAdvisorStatus(advisor, !advisor.active)
+                              }
+                            >
+                              <Power size={15} />
+                              {advisor.active ? "Suspender" : "Reactivar"}
+                            </button>
+                          </article>
+                        ))}
+                      </div>
+                    </section>
+                  )}
+                  {coordinator && auditEvents.length > 0 && (
+                    <section className="panel">
+                      <div className="section-heading">
+                        <div>
+                          <h2>Auditoría operativa</h2>
+                          <p>
+                            Eventos recientes de la empresa para seguimiento y
+                            soporte.
+                          </p>
+                        </div>
+                        <button
+                          className="text-button"
+                          onClick={() => void load()}
+                        >
+                          Actualizar
+                        </button>
+                      </div>
+                      <div className="audit-list">
+                        {auditEvents.map((event) => (
+                          <article className="audit-row" key={event.id}>
+                            <span className="badge">{event.action}</span>
+                            <div>
+                              <strong>{event.resourceId}</strong>
+                              <small>
+                                {dateTime(event.createdAt)} · actor{" "}
+                                {event.actorId}
+                              </small>
+                            </div>
+                          </article>
+                        ))}
+                      </div>
+                      {auditHasMore && (
+                        <button
+                          className="secondary load-more"
+                          onClick={() => void loadMoreAuditEvents()}
+                        >
+                          Cargar más eventos
+                        </button>
+                      )}
+                    </section>
+                  )}
                   {visitMapItems.length > 0 && (
                     <VisitMapPanel visits={visitMapItems} />
                   )}
@@ -1191,7 +1322,11 @@ export function Workspace({
                 />
               )}
               {tab === "catalog" && (
-                <Catalog commercial={commercial} canEnroll={writer} clients={clients} />
+                <Catalog
+                  commercial={commercial}
+                  canEnroll={writer}
+                  clients={clients}
+                />
               )}
               {tab === "orders" && (
                 <Orders clients={clients} canWrite={writer} />
