@@ -402,6 +402,7 @@ export function Workspace({
           "catalog.updated",
           "campaign.enrolled",
           "order.updated",
+          "user.updated",
         ].includes(event.type)
       )
         void load();
