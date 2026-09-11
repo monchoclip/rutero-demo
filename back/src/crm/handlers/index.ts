@@ -38,6 +38,7 @@ export function crmHandlers({
       ),
     auditEvents: async (r) =>
       crm.auditEvents(r.actor!, auditListSchema.parse(r.query)),
+    insightsSummary: async (r) => crm.insightsSummary(r.actor!),
     invitations: async (r) => crm.invitations(r.actor!),
     invite: async (r, reply) => {
       const result = await crm.invite(r.actor!, inviteSchema.parse(r.body));

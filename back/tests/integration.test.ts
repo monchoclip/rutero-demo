@@ -1135,6 +1135,45 @@ describe.sequential("billing simulation restricted to the demo company", () => {
     expect(audit.json().pagination.limit).toBe(2);
     expect(
       (await request("GET", "/audit-events", undefined, demoAdvisor))
+      .statusCode,
+    ).toBe(403);
+  });
+  it("serves exact advisor insights from the server with role scope", async () => {
+    const demoUser = await db.user.findUniqueOrThrow({
+      where: { email: "asesor@ruts68.test" },
+    });
+    const advisorView = await request(
+      "GET",
+      "/insights/summary",
+      undefined,
+      demoAdvisor,
+    );
+    expect(advisorView.statusCode).toBe(200);
+    expect(advisorView.json().data.advisors).toHaveLength(1);
+    expect(advisorView.json().data.advisors[0].advisorId).toBe(demoUser.id);
+    expect(advisorView.json().data.totals.portfolio).toBe(
+      await db.client.count({
+        where: {
+          organizationId: DEMO_ORGANIZATION_ID,
+          advisorId: demoUser.id,
+        },
+      }),
+    );
+    const coordinatorView = await request(
+      "GET",
+      "/insights/summary",
+      undefined,
+      coordinator,
+    );
+    expect(coordinatorView.statusCode).toBe(200);
+    expect(coordinatorView.json().data.advisors.length).toBeGreaterThan(1);
+    expect(
+      coordinatorView.json().data.advisors.some(
+        (item: { advisorId: string }) => item.advisorId === demoUser.id,
+      ),
+    ).toBe(true);
+    expect(
+      (await request("GET", "/insights/summary", undefined, platform))
         .statusCode,
     ).toBe(403);
   });

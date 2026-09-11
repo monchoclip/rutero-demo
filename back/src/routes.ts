@@ -8,6 +8,7 @@ export const routes = [
   ["GET", "/users", "users", true],
   ["PATCH", "/users/:id/status", "updateAdvisorStatus", true],
   ["GET", "/audit-events", "auditEvents", true],
+  ["GET", "/insights/summary", "insightsSummary", true],
   ["GET", "/invitations", "invitations", true],
   ["POST", "/invitations", "invite", true],
   ["GET", "/clients", "clients", true],

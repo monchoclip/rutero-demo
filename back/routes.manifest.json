@@ -64,6 +64,13 @@
   },
   {
     "method": "GET",
+    "path": "/insights/summary",
+    "operation": "insightsSummary",
+    "authenticated": true,
+    "entry": "src/lambda.entry.ts"
+  },
+  {
+    "method": "GET",
     "path": "/invitations",
     "operation": "invitations",
     "authenticated": true,

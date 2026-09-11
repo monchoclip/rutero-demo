@@ -280,3 +280,28 @@ export type AuditEvent = {
   createdAt: string;
   organization?: { id: string; name: string };
 };
+export type AdvisorInsight = {
+  advisorId: string;
+  portfolio: number;
+  scheduled: number;
+  overdue: number;
+  today: number;
+  completedTotal: number;
+  completedLast7: number;
+  completedPrev7: number;
+  completionRate: number | null;
+  avgResolutionHours: number | null;
+  avgDurationMinutes: number | null;
+};
+export type InsightsSummary = {
+  advisors: AdvisorInsight[];
+  totals: {
+    portfolio: number;
+    scheduled: number;
+    overdue: number;
+    today: number;
+    completedTotal: number;
+    completedLast7: number;
+    completedPrev7: number;
+  };
+};

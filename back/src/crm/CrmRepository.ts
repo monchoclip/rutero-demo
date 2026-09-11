@@ -22,6 +22,18 @@ export type AuditPageQuery = {
   limit: number;
   organizationId?: string;
 };
+export type AdvisorInsight = {
+  advisorId: string;
+  portfolio: number;
+  scheduled: number;
+  overdue: number;
+  completedTotal: number;
+  completedLast7: number;
+  completedPrev7: number;
+  completionRate: number | null;
+  avgResolutionHours: number | null;
+  avgDurationMinutes: number | null;
+};
 export class CrmRepository {
   constructor(private db: PrismaClient) {}
   organization(actor: Actor) {
@@ -134,6 +146,135 @@ export class CrmRepository {
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       take: query.limit + 1,
     });
+  }
+  async insightsSummary(actor: Actor) {
+    const tenant = tenantId(actor);
+    const advisorWhere = {
+      organizationId: tenant,
+      role: "advisor" as const,
+      ...(actor.role === "advisor" ? { id: actor.id } : {}),
+    };
+    const advisors = await this.db.user.findMany({
+      where: advisorWhere,
+      select: userSelect,
+      orderBy: { name: "asc" },
+    });
+    const now = new Date();
+    const todayEnd = new Date(now);
+    todayEnd.setHours(23, 59, 59, 999);
+    const last7 = new Date(now.getTime() - 7 * 86_400_000);
+    const prev7 = new Date(now.getTime() - 14 * 86_400_000);
+    const stats = await Promise.all(
+      advisors.map(async (advisor) => {
+        const activityWhere = {
+          organizationId: tenant,
+          advisorId: advisor.id,
+          ...(actor.role === "advisor" ? { client: { advisorId: actor.id } } : {}),
+        };
+        const [
+          portfolio,
+          scheduled,
+          overdue,
+          today,
+          completedTotal,
+          completedLast7,
+          completedPrev7,
+          completedRows,
+        ] = await Promise.all([
+          this.db.client.count({
+            where: { organizationId: tenant, advisorId: advisor.id },
+          }),
+          this.db.activity.count({
+            where: { ...activityWhere, status: "scheduled" },
+          }),
+          this.db.activity.count({
+            where: { ...activityWhere, status: "scheduled", dueAt: { lt: now } },
+          }),
+          this.db.activity.count({
+            where: {
+              ...activityWhere,
+              status: "scheduled",
+              dueAt: { lte: todayEnd },
+            },
+          }),
+          this.db.activity.count({
+            where: { ...activityWhere, status: "completed" },
+          }),
+          this.db.activity.count({
+            where: {
+              ...activityWhere,
+              status: "completed",
+              completedAt: { gte: last7, lt: now },
+            },
+          }),
+          this.db.activity.count({
+            where: {
+              ...activityWhere,
+              status: "completed",
+              completedAt: { gte: prev7, lt: last7 },
+            },
+          }),
+          this.db.activity.findMany({
+            where: { ...activityWhere, status: "completed" },
+            select: {
+              createdAt: true,
+              completedAt: true,
+              durationSeconds: true,
+            },
+          }),
+        ]);
+        const resolutionHours = completedRows
+          .filter((activity) => activity.completedAt)
+          .map(
+            (activity) =>
+              (activity.completedAt!.getTime() - activity.createdAt.getTime()) /
+              3_600_000,
+          )
+          .filter((hours) => hours >= 0);
+        const durations = completedRows
+          .map((activity) => activity.durationSeconds)
+          .filter((seconds): seconds is number => seconds != null && seconds > 0);
+        return {
+          advisorId: advisor.id,
+          portfolio,
+          scheduled,
+          overdue,
+          today,
+          completedTotal,
+          completedLast7,
+          completedPrev7,
+          completionRate:
+            scheduled + completedTotal
+              ? Math.round((completedTotal / (scheduled + completedTotal)) * 100)
+              : null,
+          avgResolutionHours: this.average(resolutionHours),
+          avgDurationMinutes: this.average(durations)
+            ? this.average(durations)! / 60
+            : null,
+        };
+      }),
+    );
+    return {
+      advisors: stats,
+      totals: {
+        portfolio: stats.reduce((sum, item) => sum + item.portfolio, 0),
+        scheduled: stats.reduce((sum, item) => sum + item.scheduled, 0),
+        overdue: stats.reduce((sum, item) => sum + item.overdue, 0),
+        today: stats.reduce((sum, item) => sum + item.today, 0),
+        completedTotal: stats.reduce(
+          (sum, item) => sum + item.completedTotal,
+          0,
+        ),
+        completedLast7: stats.reduce(
+          (sum, item) => sum + item.completedLast7,
+          0,
+        ),
+        completedPrev7: stats.reduce(
+          (sum, item) => sum + item.completedPrev7,
+          0,
+        ),
+      },
+    };
   }
   advisor(actor: Actor, id: string) {
     return this.db.user.findFirst({
@@ -582,5 +723,10 @@ export class CrmRepository {
         resourceId,
       },
     });
+  }
+  private average(values: number[]) {
+    return values.length
+      ? values.reduce((sum, value) => sum + value, 0) / values.length
+      : null;
   }
 }

@@ -56,6 +56,7 @@ import {
   type WhatsAppNumber,
   type ModuleKey,
   type AuditEvent,
+  type InsightsSummary,
 } from "../lib/types";
 import { FormDialog, type FormKind } from "./Forms";
 import { Billing } from "./Billing";
@@ -219,6 +220,7 @@ export function Workspace({
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [mail, setMail] = useState<MailItem[]>([]);
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
+  const [insights, setInsights] = useState<InsightsSummary | null>(null);
   const [auditCursor, setAuditCursor] = useState<string | null>(null);
   const [auditHasMore, setAuditHasMore] = useState(false);
   const [localMail, setLocalMail] = useState(false);
@@ -263,7 +265,8 @@ export function Workspace({
       readSnapshot<User[]>(cacheKey("users")),
       readSnapshot<Client[]>(cacheKey("clients")),
       readSnapshot<Activity[]>(cacheKey("activities")),
-    ]).catch(() => [null, null, null, null] as const);
+      readSnapshot<InsightsSummary>(cacheKey("insights")),
+    ]).catch(() => [null, null, null, null, null] as const);
     try {
       const [org, team, customerPage, taskPage] = await Promise.all([
         api<Organization>("/organization"),
@@ -282,6 +285,14 @@ export function Workspace({
       setActivityCursor(taskPage.pagination.cursor);
       setActivityHasMore(taskPage.pagination.hasMore);
       setLastSyncedAt(new Date());
+      try {
+        const summary = await api<InsightsSummary>("/insights/summary");
+        setInsights(summary);
+        await writeSnapshot(cacheKey("insights"), summary);
+      } catch (error) {
+        if (!(error instanceof ApiError && error.status === 404)) throw error;
+        setInsights(null);
+      }
       await Promise.all([
         writeSnapshot(cacheKey("organization"), org),
         writeSnapshot(cacheKey("users"), team),
@@ -318,6 +329,7 @@ export function Workspace({
         setUsers(cached[1]);
         setClients(cached[2]);
         setActivities(cached[3]);
+        setInsights(cached[4]);
         setNotice(
           "Sin conexión: mostrando la última cartera y agenda sincronizadas.",
         );
@@ -484,6 +496,10 @@ export function Workspace({
   }
   const scheduled = activities.filter((a) => a.status === "scheduled");
   const completed = activities.filter((a) => a.status === "completed");
+  const exactTotals = insights?.totals;
+  const exactAdvisorStats = new Map(
+    insights?.advisors.map((item) => [item.advisorId, item]) ?? [],
+  );
   const activeVisits = scheduled.filter(
     (a) => a.type === "visit" && a.visitStartedAt,
   );
@@ -599,7 +615,21 @@ export function Workspace({
     if (!visibleTabs.some((item) => item.id === tab))
       setTab(visibleTabs[0]?.id ?? "overview");
   }, [tab, visibleTabs]);
-  const completionTrend = weeklyTrend(activities, () => true);
+  const completionTrend = exactTotals
+    ? {
+        current: exactTotals.completedLast7,
+        previous: exactTotals.completedPrev7,
+        delta: exactTotals.completedPrev7
+          ? Math.round(
+              ((exactTotals.completedLast7 - exactTotals.completedPrev7) /
+                exactTotals.completedPrev7) *
+                100,
+            )
+          : exactTotals.completedLast7
+            ? 100
+            : null,
+      }
+    : weeklyTrend(activities, () => true);
   const todayActivities = scheduled.filter((activity) => {
     const due = new Date(activity.dueAt).getTime();
     return due <= new Date().setHours(23, 59, 59, 999);
@@ -864,7 +894,7 @@ export function Workspace({
                     <StatCard
                       index={0}
                       label="Clientes en cartera"
-                      value={clients.length}
+                      value={exactTotals?.portfolio ?? clients.length}
                       detail="Con un asesor responsable"
                       icon={<ContactRound size={19} />}
                     />
@@ -874,7 +904,9 @@ export function Workspace({
                         advisorMode ? "Agenda de hoy" : "Contactos pendientes"
                       }
                       value={
-                        advisorMode ? todayActivities.length : scheduled.length
+                        advisorMode
+                          ? (exactTotals?.today ?? todayActivities.length)
+                          : (exactTotals?.scheduled ?? scheduled.length)
                       }
                       detail={
                         advisorMode
@@ -886,7 +918,7 @@ export function Workspace({
                     <StatCard
                       index={2}
                       label="Gestiones realizadas"
-                      value={completed.length}
+                      value={exactTotals?.completedTotal ?? completed.length}
                       detail="Resultados registrados"
                       icon={<Check size={19} />}
                       trend={completionTrend}
@@ -894,10 +926,10 @@ export function Workspace({
                     <StatCard
                       index={3}
                       label="Requieren atención"
-                      value={overdue.length}
+                      value={exactTotals?.overdue ?? overdue.length}
                       detail="Actividades con fecha vencida"
                       icon={<Clock size={19} />}
-                      warning={overdue.length > 0}
+                      warning={(exactTotals?.overdue ?? overdue.length) > 0}
                     />
                   </div>
                   <div className="overview-grid">
@@ -1148,20 +1180,40 @@ export function Workspace({
                       </div>
                       <div className="advisor-grid">
                         {advisors.map((advisor, index) => (
+                          (() => {
+                            const exact = exactAdvisorStats.get(advisor.id);
+                            const stats =
+                              exact ??
+                              advisorStats(advisor.id, clients, activities);
+                            const trend = exact
+                              ? {
+                                  current: exact.completedLast7,
+                                  previous: exact.completedPrev7,
+                                  delta: exact.completedPrev7
+                                    ? Math.round(
+                                        ((exact.completedLast7 -
+                                          exact.completedPrev7) /
+                                          exact.completedPrev7) *
+                                          100,
+                                      )
+                                    : exact.completedLast7
+                                      ? 100
+                                      : null,
+                                }
+                              : weeklyTrend(
+                                  activities,
+                                  (a) => a.advisor.id === advisor.id,
+                                );
+                            return (
                           <AdvisorPerformanceCard
                             key={advisor.id}
                             advisor={advisor}
                             index={index}
-                            stats={advisorStats(
-                              advisor.id,
-                              clients,
-                              activities,
-                            )}
-                            trend={weeklyTrend(
-                              activities,
-                              (a) => a.advisor.id === advisor.id,
-                            )}
+                            stats={stats}
+                            trend={trend}
                           />
+                            );
+                          })()
                         ))}
                       </div>
                     </section>

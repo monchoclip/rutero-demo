@@ -81,6 +81,21 @@ export class CrmService {
     const rows = await this.repository.auditEvents(actor, query);
     return this.auditPage(rows, query.limit);
   }
+  async insightsSummary(actor: Actor) {
+    if (
+      ![
+        "commercial_coordinator",
+        "administrative_coordinator",
+        "advisor",
+      ].includes(actor.role)
+    )
+      throw new AppError(
+        403,
+        "FORBIDDEN",
+        "Esta vista requiere una empresa activa.",
+      );
+    return this.repository.insightsSummary(actor);
+  }
   async clients(actor: Actor, query: z.infer<typeof listSchema>) {
     await this.ensureVisibleAdvisor(actor, query.advisorId);
     const rows = await this.repository.clients(actor, query);
