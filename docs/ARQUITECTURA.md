@@ -7,7 +7,7 @@
 3. **Desarrollo Windows autónomo.** `embedded-postgres` arranca PostgreSQL en loopback, puerto 55468, sin Docker ni instalación global. Datos y credencial aleatoria permanecen en `.local/`. Es infraestructura de desarrollo, nunca empaquetar ese servidor dentro de Lambda.
 4. **Sesiones opacas.** Tokens de 256 bits, hash en DB, cookie HttpOnly, expiración y revocación. Evita Redis y lógica refresh/access en esta primera web. La sesión debe vivir bajo el mismo sitio que frontend/API en producción.
 5. **Cola transaccional de correo.** No se pierde la intención de recordar cuando se guarda una actividad. Worker desacoplado, reintentos y bloqueo temporal. Adaptador SES preparado; configuración y ejecución programada reales pendientes.
-6. **Integridad por empresa.** Claves compuestas aseguran que un cliente no referencie un asesor de otra empresa. Servicios restringen también cartera. El acceso de superadmin a datos de empresas queda cerrado hasta implementar contexto auditado.
+6. **Integridad por empresa.** Claves compuestas aseguran que un cliente no referencie un asesor de otra empresa. Servicios restringen también cartera. El superadmin solo accede a listados de plataforma explícitos y auditados; no obtiene una cartera por defecto.
 7. **Manifiesto local generado.** `src/routes.ts` alimenta router Fastify y JSON generado. Ningún comando de validación interactúa con AWS.
 
 ## Despliegue objetivo, todavía sin provisionar
@@ -20,9 +20,9 @@ No se incluyen inicialmente Redis, WebSocket permanente, NAT Gateway, RDS Proxy 
 
 ## Límites conocidos de F1
 
-- Frontend muestra hasta 100 clientes y 200 actividades; la lista de clientes tiene cursor en API. Ampliar búsqueda y paginación de UI e indicadores antes de carteras grandes.
-- Zona de presentación: dispositivo; datos en UTC. Configuración por empresa preparada en schema, aún no aplicada a toda la UI.
-- La prueba inicial de un mes y los planes, cargos por usuario, soporte y pasarela están parametrizados en la configuración de facturación local. Cobro recurrente, suspensión automática y la conexión sandbox siguen pendientes de validar.
+- Frontend carga clientes y actividades por cursor con búsqueda y filtros; la UI permite cargar más resultados y conserva lo consultado para la cola offline.
+- Zona de presentación: dispositivo; datos en UTC. La navegación consume la configuración de módulos por empresa y la combina con permisos del rol.
+- Los valores por defecto de prueba, planes, cargos por usuario, soporte y pasarela se guardan en `PlatformBillingSettings`; cada nueva empresa copia una instantánea a su `BillingSettings` y las empresas existentes no cambian. Cobro recurrente, suspensión automática y la conexión sandbox siguen pendientes de validar.
 - Recuperación de contraseña, verificación de correo del fundador, MFA, administración completa de usuarios y limpieza automática de sesiones/rate limits quedan pendientes antes de una apertura pública.
 - Entrega de correo es at-least-once ante caída entre aceptación de SES y guardado del resultado. El bloqueo evita doble trabajo normal; no garantiza entrega exactamente una vez.
 - La bandeja de desarrollo puede mostrar enlaces de invitación a los coordinadores de esa empresa; no existe en producción.

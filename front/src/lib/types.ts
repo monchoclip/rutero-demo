@@ -134,6 +134,11 @@ export type BillingSettings = {
   version: number;
   configuration: BillingConfiguration;
 };
+export type PlatformBillingSettings = BillingSettings & {
+  id: string;
+  updatedById: string | null;
+  updatedAt: string;
+};
 export type BillingQuote = {
   version: number;
   mode: "simulation";

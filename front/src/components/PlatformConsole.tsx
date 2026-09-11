@@ -11,10 +11,21 @@ import {
 } from "lucide-react";
 import { api, post, patch } from "../lib/api";
 import type {
+  BillingConfiguration,
+  PlatformBillingSettings,
   PlatformOrganization,
   PlatformWhatsAppNumber,
   User,
 } from "../lib/types";
+
+const billingFields = [
+  ["trialMonths", "Meses de prueba para nuevas empresas"],
+  ["supportBps", "Soporte (puntos básicos)"],
+  ["supportFixedMinor", "Soporte fijo (unidades menores)"],
+  ["gatewayBps", "Pasarela (puntos básicos)"],
+  ["gatewayFixedMinor", "Pasarela fija (unidades menores)"],
+  ["taxBps", "Impuesto (puntos básicos)"],
+] as const;
 
 const moduleLabels = {
   overview: "Resumen",
@@ -40,6 +51,8 @@ export function PlatformConsole({
   const [organizations, setOrganizations] = useState<PlatformOrganization[]>(
     [],
   );
+  const [billingDefaults, setBillingDefaults] =
+    useState<PlatformBillingSettings | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true);
@@ -48,6 +61,7 @@ export function PlatformConsole({
   const [moduleDrafts, setModuleDrafts] = useState<
     Record<string, Record<string, boolean>>
   >({});
+  const [editingBilling, setEditingBilling] = useState(false);
   const load = useCallback(async () => {
     setError("");
     try {
@@ -55,8 +69,12 @@ export function PlatformConsole({
         api<PlatformWhatsAppNumber[]>("/platform/whatsapp-numbers"),
         api<PlatformOrganization[]>("/platform/organizations"),
       ]);
+      const defaults = await api<PlatformBillingSettings>(
+        "/platform/billing-settings",
+      );
       setNumbers(registeredNumbers);
       setOrganizations(registeredOrganizations);
+      setBillingDefaults(defaults);
       setModuleDrafts(
         Object.fromEntries(
           registeredOrganizations.map((organization) => [
@@ -94,6 +112,43 @@ export function PlatformConsole({
       setBusy(false);
     }
   }
+  async function saveBillingDefaults(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!billingDefaults) return;
+    setBusy(true);
+    setError("");
+    setNotice("");
+    const form = new FormData(event.currentTarget);
+    const configuration: BillingConfiguration = {
+      ...billingDefaults.configuration,
+      ...Object.fromEntries(
+        billingFields.map(([field]) => [field, Number(form.get(field))]),
+      ),
+      plans: billingDefaults.configuration.plans.map((plan) => ({
+        ...plan,
+        name: String(form.get(`plan-${plan.id}-name`) ?? plan.name).trim(),
+        baseMinor: Number(form.get(`plan-${plan.id}-baseMinor`)),
+        includedUsers: Number(form.get(`plan-${plan.id}-includedUsers`)),
+        userMinor: Number(form.get(`plan-${plan.id}-userMinor`)),
+      })),
+    };
+    try {
+      const saved = await patch<PlatformBillingSettings>(
+        "/platform/billing-settings",
+        { version: billingDefaults.version, configuration },
+      );
+      setBillingDefaults(saved);
+      setEditingBilling(false);
+      setNotice(
+        "Valores por defecto guardados. Solo aplican a empresas registradas después de este cambio.",
+      );
+    } catch (failure) {
+      setError((failure as Error).message);
+      await load();
+    } finally {
+      setBusy(false);
+    }
+  }
   return (
     <main className="platform-shell">
       <aside className="platform-side">
@@ -126,6 +181,134 @@ export function PlatformConsole({
             {notice}
           </div>
         )}
+        <section className="panel">
+          <div className="section-heading">
+            <div>
+              <h2>Valores por defecto para nuevas empresas</h2>
+              <p>
+                Se copian al registrar una empresa y no modifican cotizaciones
+                ni membresías existentes.
+              </p>
+            </div>
+            {billingDefaults && (
+              <button
+                className="text-button"
+                onClick={() => setEditingBilling((open) => !open)}
+              >
+                {editingBilling ? "Cancelar" : "Editar valores"}
+              </button>
+            )}
+          </div>
+          {!billingDefaults ? (
+            <div className="skeleton" />
+          ) : editingBilling ? (
+            <form onSubmit={saveBillingDefaults}>
+              <div className="form-grid">
+                {billingFields.map(([field, label]) => (
+                  <label key={field}>
+                    {label}
+                    <input
+                      name={field}
+                      type="number"
+                      min={field === "trialMonths" ? 1 : 0}
+                      max={
+                        field === "trialMonths"
+                          ? 12
+                          : field.endsWith("Bps")
+                            ? 10000
+                            : 100000000
+                      }
+                      defaultValue={
+                        billingDefaults.configuration[
+                          field as keyof BillingConfiguration
+                        ] as number
+                      }
+                      required
+                    />
+                  </label>
+                ))}
+              </div>
+              <div className="plan-editor-grid">
+                {billingDefaults.configuration.plans.map((plan) => (
+                  <fieldset className="plan-editor-card" key={plan.id}>
+                    <legend>{plan.name}</legend>
+                    <label>
+                      Nombre visible
+                      <input
+                        name={`plan-${plan.id}-name`}
+                        defaultValue={plan.name}
+                        required
+                        minLength={2}
+                        maxLength={60}
+                      />
+                    </label>
+                    <label>
+                      Precio base (unidades menores de COP)
+                      <input
+                        name={`plan-${plan.id}-baseMinor`}
+                        type="number"
+                        min={0}
+                        max={100000000}
+                        defaultValue={plan.baseMinor}
+                        required
+                      />
+                    </label>
+                    <label>
+                      Usuarios incluidos
+                      <input
+                        name={`plan-${plan.id}-includedUsers`}
+                        type="number"
+                        min={1}
+                        max={500}
+                        defaultValue={plan.includedUsers}
+                        required
+                      />
+                    </label>
+                    <label>
+                      Usuario adicional (unidades menores)
+                      <input
+                        name={`plan-${plan.id}-userMinor`}
+                        type="number"
+                        min={0}
+                        max={100000000}
+                        defaultValue={plan.userMinor}
+                        required
+                      />
+                    </label>
+                  </fieldset>
+                ))}
+              </div>
+              <button className="primary" disabled={busy} type="submit">
+                {busy ? "Guardando…" : "Guardar valores por defecto"}
+              </button>
+            </form>
+          ) : (
+            <>
+              <div className="plan-grid" aria-label="Valores de planes por defecto">
+                {billingDefaults.configuration.plans.map((plan) => (
+                  <article className="plan-card" key={plan.id}>
+                    <strong>{plan.name}</strong>
+                    <span className="plan-amount">
+                      {new Intl.NumberFormat("es-CO", {
+                        style: "currency",
+                        currency: billingDefaults.configuration.currency,
+                      }).format(plan.baseMinor / 100)}
+                    </span>
+                    <small>
+                      {plan.includedUsers} usuarios incluidos · tarifa por
+                      usuario adicional {plan.userMinor}
+                    </small>
+                  </article>
+                ))}
+              </div>
+              <p className="hint">
+                Prueba inicial: {billingDefaults.configuration.trialMonths} mes
+                {billingDefaults.configuration.trialMonths === 1 ? "" : "es"} ·
+                versión {billingDefaults.version}.
+              </p>
+            </>
+          )}
+        </section>
         <section className="panel">
           <div className="section-heading">
             <div>

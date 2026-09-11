@@ -125,7 +125,7 @@ Incluye checklist de credenciales por empresa, validación Meta sandbox, plantil
 
 Aceptación: secretos no llegan al cliente, firmas se validan, transacciones repetidas son idempotentes y el plan de la empresa cambia solo ante evento aprobado verificable.
 
-Evidencia local: el adaptador Meta Cloud API valida número, envía texto/plantillas y descarga multimedia; Wompi genera firma de integridad, valida webhook firmado y evita renovar la membresía al repetir el mismo evento aprobado. Los secretos permanecen en servidor y los errores se muestran en la consola. Falta probar contra Meta/Wompi sandbox, HTTPS público, plantillas aprobadas y conciliación/renovaciones reales.
+Evidencia local: el adaptador Meta Cloud API valida número, envía texto/plantillas y descarga multimedia; Wompi genera firma de integridad, valida webhook firmado y evita renovar la membresía al repetir el mismo evento aprobado. La consola de plataforma configura por separado los valores de facturación por defecto para nuevas empresas, con versionado optimista y auditoría. Los secretos permanecen en servidor y los errores se muestran en la consola. Falta probar contra Meta/Wompi sandbox, HTTPS público, plantillas aprobadas y conciliación/renovaciones reales.
 
 ### P8 · UX/UI de operación de campo
 
