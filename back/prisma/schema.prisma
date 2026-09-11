@@ -1,8 +1,9 @@
 generator client {
   provider = "prisma-client-js"
-  // rhel cubre Amazon Linux x86_64; linux-arm64 cubre la instancia ARM del
-  // despliegue economico, que es el plan mas barato.
-  binaryTargets = ["native", "rhel-openssl-3.0.x", "linux-arm64-openssl-3.0.x"]
+  // La instancia del despliegue economico es Ubuntu 24.04 x86_64: en us-east-1
+  // Lightsail no ofrece planes ARM. rhel cubre Amazon Linux y debian cubre esa
+  // instancia; el cliente igual se genera en el servidor, donde native aplica.
+  binaryTargets = ["native", "rhel-openssl-3.0.x", "debian-openssl-3.0.x"]
 }
 datasource db {
   provider = "postgresql"

@@ -1,13 +1,21 @@
 #!/usr/bin/env bash
-# Arranque de la instancia unica de Ruts68 sobre Ubuntu 24.04 LTS (ARM).
+# Arranque de la instancia unica de Ruts68 sobre Ubuntu 24.04 LTS.
+# La arquitectura no se asume: Lightsail en us-east-1 solo ofrece planes x86_64
+# hoy, pero el guion detecta la del sistema para que siga sirviendo en ARM.
 # Instala Node 22, PostgreSQL, Caddy y los servicios del sistema. No copia
 # codigo ni secretos: esos artefactos se copian desde la maquina local cuando
 # se haga el despliegue controlado.
 #
-# Se ejecuta una sola vez, como user-data al crear la instancia, o a mano con
-# sudo en una instancia recien creada. Es idempotente: repetirlo no rompe nada
-# y no sobreescribe la contrasena de la base ni el archivo de entorno.
-set -euo pipefail
+# Se ejecuta con `sudo bash cloud-init.sh` sobre una instancia recien creada.
+# Es idempotente: repetirlo no rompe nada y no sobreescribe la contrasena de la
+# base ni los archivos de entorno.
+#
+# No se pasa como user-data de Lightsail: Lightsail antepone su propio script de
+# inicializacion al contenido del usuario, el shebang deja de estar en la primera
+# linea y cloud-init termina ejecutando todo con dash. Aun asi el guion se
+# defiende de ese caso, porque dash no soporta pipefail.
+set -eu
+if (set -o pipefail) 2>/dev/null; then set -o pipefail; fi
 
 APP_USER=ruts68
 APP_DIR=/srv/ruts68
@@ -34,15 +42,29 @@ fi
 
 log "Node 22 desde el repositorio oficial de NodeSource"
 if ! command -v node >/dev/null || [ "$(node -v | cut -d. -f1 | tr -d v)" -lt 22 ]; then
-  curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+  # Descargar y luego ejecutar, no "curl | bash": en una tuberia sin pipefail un
+  # curl fallido entrega vacio y el interprete termina en exito, dejando el
+  # repositorio sin configurar y el error sin rastro.
+  curl -fsSL https://deb.nodesource.com/setup_22.x -o /tmp/nodesource.sh
+  [ -s /tmp/nodesource.sh ] || {
+    echo "[cloud-init] la descarga del repositorio de Node quedo vacia" >&2
+    exit 1
+  }
+  bash /tmp/nodesource.sh
+  rm -f /tmp/nodesource.sh
   apt-get install -y nodejs
 fi
 node -v
 
 log "Caddy desde el repositorio oficial del proyecto"
 if ! command -v caddy >/dev/null; then
-  curl -fsSL 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' |
-    gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+  curl -fsSL 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' -o /tmp/caddy.key
+  [ -s /tmp/caddy.key ] || {
+    echo "[cloud-init] la llave del repositorio de Caddy quedo vacia" >&2
+    exit 1
+  }
+  gpg --batch --yes --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg /tmp/caddy.key
+  rm -f /tmp/caddy.key
   curl -fsSL 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' \
     -o /etc/apt/sources.list.d/caddy-stable.list
   apt-get update -y
@@ -51,7 +73,15 @@ fi
 
 log "AWS CLI v2 para subir respaldos a S3"
 if ! command -v aws >/dev/null; then
-  curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o /tmp/awscliv2.zip
+  case "$(uname -m)" in
+  aarch64 | arm64) cli_arch=aarch64 ;;
+  x86_64 | amd64) cli_arch=x86_64 ;;
+  *)
+    echo "[cloud-init] arquitectura $(uname -m) no contemplada para la AWS CLI" >&2
+    exit 1
+    ;;
+  esac
+  curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-${cli_arch}.zip" -o /tmp/awscliv2.zip
   unzip -q -o /tmp/awscliv2.zip -d /tmp
   /tmp/aws/install --update
   rm -rf /tmp/aws /tmp/awscliv2.zip

@@ -21,6 +21,16 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 
 aws() { command aws --region "$REGION" "$@"; }
 
+# En Git Bash sobre Windows la AWS CLI es la nativa y no entiende una ruta
+# POSIX dentro de un file://, asi que se traduce cuando cygpath existe.
+ruta_nativa() {
+  if command -v cygpath >/dev/null 2>&1; then
+    cygpath -w "$1"
+  else
+    printf '%s' "$1"
+  fi
+}
+
 listar() {
   echo "== Planes disponibles (precio mensual real que reporta AWS) =="
   aws lightsail get-bundles --query \
@@ -43,7 +53,9 @@ crear() {
   }
   [ -n "$KEY_PAIR" ] || {
     echo "Falta KEY_PAIR_NAME. Crea o importa una llave SSH en Lightsail primero:" >&2
-    echo "  aws lightsail --region $REGION create-key-pair --key-pair-name ruts68 --query privateKeyBase64 --output text" >&2
+    # Lightsail reserva los nombres entre tipos de recurso dentro de la region:
+    # una llave que se llame igual que la instancia impide crear la instancia.
+    echo "  aws lightsail --region $REGION create-key-pair --key-pair-name ${INSTANCE}-key --query privateKeyBase64 --output text" >&2
     echo "Guarda esa llave privada fuera del repositorio, con permisos 600." >&2
     exit 1
   }
@@ -85,8 +97,7 @@ RESUMEN
       --availability-zone "$ZONE" \
       --blueprint-id "$BLUEPRINT" \
       --bundle-id "$BUNDLE" \
-      --key-pair-name "$KEY_PAIR" \
-      --user-data "file://${HERE}/server/cloud-init.sh" >/dev/null
+      --key-pair-name "$KEY_PAIR" >/dev/null
     echo "Instancia solicitada; esperando que quede en ejecucion."
     aws lightsail get-instance-state --instance-name "$INSTANCE" >/dev/null 2>&1 || true
     until [ "$(aws lightsail get-instance-state --instance-name "$INSTANCE" \
@@ -110,6 +121,26 @@ RESUMEN
 
   ip=$(aws lightsail get-static-ip --static-ip-name "$STATIC_IP" \
     --query 'staticIp.ipAddress' --output text)
+
+  # El arranque va por SSH y no como user-data: Lightsail antepone su propio
+  # script al del usuario, con lo que el shebang deja de ser la primera linea y
+  # cloud-init ejecuta todo con dash. Por SSH corre con bash y se ve la salida.
+  if [ -n "${SSH_KEY:-}" ]; then
+    echo "Esperando que SSH responda para ejecutar el arranque."
+    until ssh -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new \
+      -o ConnectTimeout=10 "ubuntu@${ip}" true 2>/dev/null; do
+      sleep 10
+      echo -n "."
+    done
+    echo
+    scp -q -i "$SSH_KEY" "${HERE}/server/cloud-init.sh" "ubuntu@${ip}:/tmp/cloud-init.sh"
+    ssh -i "$SSH_KEY" "ubuntu@${ip}" "sudo bash /tmp/cloud-init.sh && rm -f /tmp/cloud-init.sh"
+  else
+    echo "Sin SSH_KEY no se ejecuta el arranque. Correrlo a mano:"
+    echo "  scp -i <llave> ${HERE}/server/cloud-init.sh ubuntu@${ip}:/tmp/"
+    echo "  ssh -i <llave> ubuntu@${ip} 'sudo bash /tmp/cloud-init.sh'"
+  fi
+
   cat <<SIGUIENTE
 
 Instancia lista. IP fija: $ip

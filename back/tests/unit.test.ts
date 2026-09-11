@@ -163,6 +163,77 @@ describe("production preflight", () => {
     expect(output).not.toContain("127.0.0.1");
   });
 
+  it("accepts a launch that declares the integrations it has no credentials for", () => {
+    // El backend falla cerrado sin esos secretos: el webhook de Meta responde
+    // 503 y el de Wompi 404. Publicar sin ellos es valido si la ausencia es una
+    // decision declarada, y la salida tiene que decir cuales quedaron apagadas.
+    const sinCredenciales = { ...readyEnvironment };
+    for (const key of [
+      "META_WEBHOOK_VERIFY_TOKEN",
+      "META_APP_SECRET",
+      "WOMPI_PUBLIC_KEY",
+      "WOMPI_INTEGRITY_SECRET",
+      "WOMPI_EVENTS_SECRET",
+    ])
+      delete (sinCredenciales as Record<string, string>)[key];
+
+    const output = execFileSync(
+      process.execPath,
+      ["scripts/preflight-production.mjs"],
+      {
+        cwd: new URL("../..", import.meta.url),
+        env: {
+          ...process.env,
+          ...sinCredenciales,
+          DISABLED_INTEGRATIONS: "whatsapp,wompi",
+        },
+        encoding: "utf8",
+      },
+    );
+    expect(output).toContain("OK");
+    expect(output).toContain("whatsapp");
+    expect(output).toContain("wompi");
+  });
+
+  it("keeps requiring the secrets of an integration that was not declared disabled", () => {
+    const sinWompi = { ...readyEnvironment } as Record<string, string>;
+    delete sinWompi.WOMPI_EVENTS_SECRET;
+    delete sinWompi.META_APP_SECRET;
+    let output = "";
+    try {
+      execFileSync(process.execPath, ["scripts/preflight-production.mjs"], {
+        cwd: new URL("../..", import.meta.url),
+        // Solo se declara whatsapp: los secretos de Wompi siguen exigidos.
+        env: { ...process.env, ...sinWompi, DISABLED_INTEGRATIONS: "whatsapp" },
+        encoding: "utf8",
+      });
+    } catch (error) {
+      output = String((error as { stdout?: string }).stdout ?? "");
+    }
+    expect(output).toContain("ERROR");
+    expect(output).toContain("WOMPI_EVENTS_SECRET");
+    expect(output).not.toContain("META_APP_SECRET");
+  });
+
+  it("rejects an unknown integration name instead of silently ignoring it", () => {
+    let output = "";
+    try {
+      execFileSync(process.execPath, ["scripts/preflight-production.mjs"], {
+        cwd: new URL("../..", import.meta.url),
+        env: {
+          ...process.env,
+          ...readyEnvironment,
+          DISABLED_INTEGRATIONS: "whatsap",
+        },
+        encoding: "utf8",
+      });
+    } catch (error) {
+      output = String((error as { stdout?: string }).stdout ?? "");
+    }
+    expect(output).toContain("DISABLED_INTEGRATIONS");
+    expect(output).toContain("whatsap");
+  });
+
   it("still rejects a malformed or non-postgresql url when the server profile is explicit", () => {
     // El perfil same-server declara una topologia; no puede convertirse en un
     // interruptor que apague la validacion de la cadena de conexion.

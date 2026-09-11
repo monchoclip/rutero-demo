@@ -97,8 +97,14 @@ Environment=RUTS68_DOMAIN=$DOMAIN
 Environment=RUTS68_ACME_EMAIL=$ACME_EMAIL
 UNIDAD
 
-RUTS68_DOMAIN=$DOMAIN RUTS68_ACME_EMAIL=$ACME_EMAIL \
+# validate abre los log writers y por tanto crea los archivos de registro.
+# Corre como el usuario caddy para que no queden de root: el servicio corre
+# como caddy y no podria escribir en un archivo 600 ajeno, con lo que Caddy
+# no arranca. Las variables van por env porque sudo descarta las asignaciones
+# puestas antes del comando.
+sudo -u caddy env RUTS68_DOMAIN="$DOMAIN" RUTS68_ACME_EMAIL="$ACME_EMAIL" \
   caddy validate --config /etc/caddy/Caddyfile
+chown -R caddy:caddy /var/log/caddy
 systemctl daemon-reload
 REMOTO
 

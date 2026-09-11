@@ -1,72 +1,254 @@
-AWSTemplateFormatVersion: '2010-09-09'
-Description: Ruts68 - base AWS de bajo costo para frontend estático y fotos privadas.
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  Ruts68 - recursos administrados de AWS para el despliegue economico de un solo
+  servidor: zona DNS, identidad de correo SES, buckets privados de fotos y
+  respaldos, usuario IAM minimo y alarma de presupuesto. La instancia que corre
+  la API y PostgreSQL se crea fuera de esta pila a proposito: si la pila se
+  elimina por error, la maquina con la base de datos no se destruye con ella.
+  Esta cuenta es compartida con Kuvvi, asi que todo nombre queda prefijado por
+  el nombre de la pila y ningun recurso de Kuvvi se referencia ni se modifica.
 Parameters:
   DomainName:
     Type: String
     Default: ruts68.com
-  CertificateArn:
+    Description: Dominio raiz. El frontend queda aqui y la API en api.<dominio>.
+  ServerIp:
     Type: String
-    Description: ARN de certificado ACM en us-east-1 para CloudFront.
+    Default: ""
+    Description: >-
+      IP fija de la instancia. Dejar vacio en la primera creacion y volver a
+      desplegar con el valor cuando la instancia exista; solo entonces se crean
+      los registros A.
+  MailFromAddress:
+    Type: String
+    Default: ""
+    Description: >-
+      Remitente exacto que usara SES, por ejemplo no-reply@ruts68.com. Vacio
+      significa que el usuario IAM todavia no recibe permiso de envio.
   PhotoRetentionDays:
     Type: Number
     Default: 365
+    Description: Dias que se conservan las fotografias de visita.
+  BackupRetentionDays:
+    Type: Number
+    Default: 30
+    Description: Dias que se conservan los respaldos de PostgreSQL.
+  MonthlyBudgetUsd:
+    Type: Number
+    Default: 15
+    Description: >-
+      Techo mensual de gasto para la alarma. Filtrada por etiqueta para medir
+      solo Ruts68 y no el gasto de Kuvvi en la misma cuenta.
+  BudgetAlertEmail:
+    Type: String
+    Description: Correo que recibe el aviso de presupuesto. Requerido.
+Conditions:
+  HasServerIp: !Not [!Equals [!Ref ServerIp, ""]]
+  HasMailFrom: !Not [!Equals [!Ref MailFromAddress, ""]]
 Resources:
-  FrontendBucket:
-    Type: AWS::S3::Bucket
+  HostedZone:
+    Type: AWS::Route53::HostedZone
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
-      BucketEncryption: { ServerSideEncryptionConfiguration: [{ ServerSideEncryptionByDefault: { SSEAlgorithm: AES256 } }] }
-      PublicAccessBlockConfiguration: { BlockPublicAcls: true, BlockPublicPolicy: true, IgnorePublicAcls: true, RestrictPublicBuckets: true }
+      Name: !Ref DomainName
+
   PhotoBucket:
     Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
-      BucketEncryption: { ServerSideEncryptionConfiguration: [{ ServerSideEncryptionByDefault: { SSEAlgorithm: AES256 } }] }
-      PublicAccessBlockConfiguration: { BlockPublicAcls: true, BlockPublicPolicy: true, IgnorePublicAcls: true, RestrictPublicBuckets: true }
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: { SSEAlgorithm: AES256 }
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration: { Status: Enabled }
       LifecycleConfiguration:
         Rules:
           - Id: RetainVisitPhotos
             Status: Enabled
             ExpirationInDays: !Ref PhotoRetentionDays
-  CloudFrontOriginAccessControl:
-    Type: AWS::CloudFront::OriginAccessControl
+          - Id: ExpireOldVersions
+            Status: Enabled
+            NoncurrentVersionExpirationInDays: 30
+          - Id: AbortIncompleteUploads
+            Status: Enabled
+            AbortIncompleteMultipartUpload: { DaysAfterInitiation: 7 }
+
+  BackupBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
-      OriginAccessControlConfig:
-        Name: !Sub '${AWS::StackName}-frontend-oac'
-        OriginAccessControlOriginType: s3
-        SigningBehavior: always
-        SigningProtocol: sigv4
-  Distribution:
-    Type: AWS::CloudFront::Distribution
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: { SSEAlgorithm: AES256 }
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: RetainDatabaseDumps
+            Status: Enabled
+            ExpirationInDays: !Ref BackupRetentionDays
+          - Id: AbortIncompleteUploads
+            Status: Enabled
+            AbortIncompleteMultipartUpload: { DaysAfterInitiation: 3 }
+
+  # Lightsail no admite perfiles de instancia IAM, asi que el servidor necesita
+  # una llave de acceso. El permiso queda limitado a estos dos buckets, al
+  # prefijo organizations/ de las fotos y a un unico remitente de SES. En una
+  # cuenta compartida eso importa el doble: este usuario no puede ver ni tocar
+  # nada de Kuvvi.
+  ServerUser:
+    Type: AWS::IAM::User
     Properties:
-      DistributionConfig:
-        Enabled: true
-        DefaultRootObject: index.html
-        Aliases: [!Ref DomainName]
-        ViewerCertificate: { AcmCertificateArn: !Ref CertificateArn, SslSupportMethod: sni-only, MinimumProtocolVersion: TLSv1.2_2021 }
-        Origins:
-          - Id: frontend
-            DomainName: !GetAtt FrontendBucket.RegionalDomainName
-            S3OriginConfig: {}
-            OriginAccessControlId: !GetAtt CloudFrontOriginAccessControl.Id
-        DefaultCacheBehavior:
-          TargetOriginId: frontend
-          ViewerProtocolPolicy: redirect-to-https
-          Compress: true
-          AllowedMethods: [GET, HEAD, OPTIONS]
-          CachedMethods: [GET, HEAD, OPTIONS]
-  FrontendBucketPolicy:
-    Type: AWS::S3::BucketPolicy
+      UserName: !Sub "${AWS::StackName}-server"
+      Policies:
+        - PolicyName: VisitPhotosAndBackups
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: VisitPhotoObjects
+                Effect: Allow
+                Action: [s3:PutObject, s3:GetObject, s3:DeleteObject]
+                Resource: !Sub "${PhotoBucket.Arn}/organizations/*"
+              - Sid: DatabaseBackupObjects
+                Effect: Allow
+                Action: [s3:PutObject, s3:GetObject]
+                Resource: !Sub "${BackupBucket.Arn}/postgres/*"
+              - Sid: ListOwnBuckets
+                Effect: Allow
+                Action: s3:ListBucket
+                Resource: [!GetAtt PhotoBucket.Arn, !GetAtt BackupBucket.Arn]
+        - !If
+          - HasMailFrom
+          - PolicyName: TransactionalMail
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Sid: SendFromVerifiedAddress
+                  Effect: Allow
+                  Action: [ses:SendEmail]
+                  Resource: "*"
+                  Condition:
+                    StringEquals:
+                      ses:FromAddress: !Ref MailFromAddress
+          - !Ref AWS::NoValue
+
+  MailIdentity:
+    Type: AWS::SES::EmailIdentity
     Properties:
-      Bucket: !Ref FrontendBucket
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Sid: CloudFrontReadOnly
-            Effect: Allow
-            Principal: { Service: cloudfront.amazonaws.com }
-            Action: s3:GetObject
-            Resource: !Sub '${FrontendBucket.Arn}/*'
-            Condition: { StringEquals: { AWS:SourceArn: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${Distribution}' } }
+      EmailIdentity: !Ref DomainName
+      DkimAttributes: { SigningEnabled: true }
+      MailFromAttributes:
+        MailFromDomain: !Sub "mail.${DomainName}"
+        BehaviorOnMxFailure: USE_DEFAULT_VALUE
+
+  DkimRecords:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      RecordSets:
+        - Name: !GetAtt MailIdentity.DkimDNSTokenName1
+          Type: CNAME
+          TTL: 1800
+          ResourceRecords: [!GetAtt MailIdentity.DkimDNSTokenValue1]
+        - Name: !GetAtt MailIdentity.DkimDNSTokenName2
+          Type: CNAME
+          TTL: 1800
+          ResourceRecords: [!GetAtt MailIdentity.DkimDNSTokenValue2]
+        - Name: !GetAtt MailIdentity.DkimDNSTokenName3
+          Type: CNAME
+          TTL: 1800
+          ResourceRecords: [!GetAtt MailIdentity.DkimDNSTokenValue3]
+
+  # El dominio MAIL FROM propio evita que los correos salgan firmados por
+  # amazonses.com. Requiere su MX y su SPF.
+  MailFromRecords:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      RecordSets:
+        - Name: !Sub "mail.${DomainName}"
+          Type: MX
+          TTL: 1800
+          ResourceRecords:
+            [!Sub "10 feedback-smtp.${AWS::Region}.amazonses.com"]
+        - Name: !Sub "mail.${DomainName}"
+          Type: TXT
+          TTL: 1800
+          ResourceRecords: ['"v=spf1 include:amazonses.com ~all"']
+
+  ServerRecords:
+    Type: AWS::Route53::RecordSetGroup
+    Condition: HasServerIp
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      RecordSets:
+        - Name: !Ref DomainName
+          Type: A
+          TTL: 300
+          ResourceRecords: [!Ref ServerIp]
+        - Name: !Sub "www.${DomainName}"
+          Type: A
+          TTL: 300
+          ResourceRecords: [!Ref ServerIp]
+        - Name: !Sub "api.${DomainName}"
+          Type: A
+          TTL: 300
+          ResourceRecords: [!Ref ServerIp]
+
+  BudgetAlarm:
+    Type: AWS::Budgets::Budget
+    Properties:
+      Budget:
+        BudgetName: !Sub "${AWS::StackName}-mensual"
+        BudgetType: COST
+        TimeUnit: MONTHLY
+        BudgetLimit: { Amount: !Ref MonthlyBudgetUsd, Unit: USD }
+        CostFilters:
+          # Mide solo lo etiquetado como este proyecto. Sin este filtro la
+          # alarma sumaria el gasto de Kuvvi y no serviria para nada. La
+          # etiqueta Project se pasa en el deploy con --tags.
+          TagKeyValue: [!Sub "user:Project$${AWS::StackName}"]
+      NotificationsWithSubscribers:
+        - Notification:
+            NotificationType: ACTUAL
+            ComparisonOperator: GREATER_THAN
+            Threshold: 80
+            ThresholdType: PERCENTAGE
+          Subscribers:
+            - SubscriptionType: EMAIL
+              Address: !Ref BudgetAlertEmail
+        - Notification:
+            NotificationType: FORECASTED
+            ComparisonOperator: GREATER_THAN
+            Threshold: 100
+            ThresholdType: PERCENTAGE
+          Subscribers:
+            - SubscriptionType: EMAIL
+              Address: !Ref BudgetAlertEmail
 Outputs:
-  FrontendBucketName: { Value: !Ref FrontendBucket }
-  PhotoBucketName: { Value: !Ref PhotoBucket }
-  CloudFrontDomain: { Value: !GetAtt Distribution.DomainName }
+  HostedZoneId:
+    Value: !Ref HostedZone
+  NameServers:
+    Description: Estos cuatro valores se copian en Hostinger como nameservers.
+    Value: !Join [",", !GetAtt HostedZone.NameServers]
+  PhotoBucketName:
+    Value: !Ref PhotoBucket
+  BackupBucketName:
+    Value: !Ref BackupBucket
+  ServerUserName:
+    Description: La llave de acceso se crea aparte; la pila no la expone.
+    Value: !Ref ServerUser
+  AppOrigin:
+    Value: !Sub "https://${DomainName}"
+  ApiOrigin:
+    Value: !Sub "https://api.${DomainName}"

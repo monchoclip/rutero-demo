@@ -6,28 +6,42 @@ Runbook del despliegue económico de un solo servidor. Escrito el 11 de septiemb
 
 ## 1. Decisiones tomadas y por qué
 
-| Decisión | Elegido | Motivo |
-| --- | --- | --- |
-| Cómputo | Una instancia Lightsail ARM, Ubuntu 24.04 | El backend mantiene conexiones SSE en memoria y una cola de recordatorios con bloqueo: necesita un proceso permanente. En Lambda con API Gateway el SSE no funciona y el frontend quedaría en estado `fallback`, sin tiempo real. |
-| Base de datos | PostgreSQL en la misma instancia | Es el punto que más baja el costo de arranque frente a una base administrada. Para producción más resiliente sigue siendo preferible PostgreSQL administrado cuando el presupuesto lo permita. |
-| Frontend | Archivos estáticos servidos por Caddy en la misma máquina | `front/` ya exporta estático. Sin CloudFront no hay CDN, pero tampoco hay costo ni certificado que administrar aparte. |
-| TLS | Caddy con emisión automática | Renovación sola, sin ACM ni CloudFront de por medio. |
-| DNS | Route 53 | Permite registros ALIAS si más adelante se pone CloudFront delante del ápice, que es justo lo que Hostinger no resuelve bien. |
-| Región | `us-east-1` | La más barata y donde SES y ACM están disponibles sin rodeos. Desde Colombia son del orden de 60 a 90 ms. |
-| Correo | SES | 0,10 USD por mil correos. |
-| Fotos de visita | Bucket S3 privado con URL prefirmada | El backend ya exige `VISIT_PHOTO_STORAGE_MODE=s3` en producción. |
+| Decisión        | Elegido                                                   | Motivo                                                                                                                                                                                                                            |
+| --------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Cómputo         | Una instancia Lightsail x86_64, Ubuntu 24.04              | El backend mantiene conexiones SSE en memoria y una cola de recordatorios con bloqueo: necesita un proceso permanente. En Lambda con API Gateway el SSE no funciona y el frontend quedaría en estado `fallback`, sin tiempo real. |
+| Base de datos   | PostgreSQL en la misma instancia                          | Es el punto que más baja el costo de arranque frente a una base administrada. Para producción más resiliente sigue siendo preferible PostgreSQL administrado cuando el presupuesto lo permita.                                    |
+| Frontend        | Archivos estáticos servidos por Caddy en la misma máquina | `front/` ya exporta estático. Sin CloudFront no hay CDN, pero tampoco hay costo ni certificado que administrar aparte.                                                                                                            |
+| TLS             | Caddy con emisión automática                              | Renovación sola, sin ACM ni CloudFront de por medio.                                                                                                                                                                              |
+| DNS             | Route 53                                                  | Permite registros ALIAS si más adelante se pone CloudFront delante del ápice, que es justo lo que Hostinger no resuelve bien.                                                                                                     |
+| Región          | `us-east-1`                                               | La más barata y donde SES y ACM están disponibles sin rodeos. Desde Colombia son del orden de 60 a 90 ms.                                                                                                                         |
+| Correo          | SES                                                       | 0,10 USD por mil correos.                                                                                                                                                                                                         |
+| Fotos de visita | Bucket S3 privado con URL prefirmada                      | El backend ya exige `VISIT_PHOTO_STORAGE_MODE=s3` en producción.                                                                                                                                                                  |
 
 ## 2. Control de costo
 
-Las cifras de AWS cambian por región, plan, promociones y consumo. Antes de crear recursos, ejecutar `infra/aws/provision.sh --list`: ese comando imprime el precio real que reporta AWS para cada plan disponible en la región elegida. La alarma de presupuesto de la plantilla ayuda a detectar gasto temprano, pero no reemplaza revisar la consola de facturación.
+Las cifras de AWS cambian por región, plan, promociones y consumo, así que se consultan, no se recuerdan. `infra/aws/provision.sh --list` imprime el precio que reporta AWS para cada plan disponible en la región elegida.
 
-| Concepto | Cómo controlarlo |
-| --- | --- |
-| Instancia Lightsail ARM | Elegir el plan más pequeño que tenga al menos 1 GB de RAM y confirmar el precio con `provision.sh --list`. |
-| DNS Route 53 | Revisar el valor mensual de la zona alojada y consultas antes de mover nameservers. |
-| S3 fotos y respaldos | Activar ciclo de vida, limitar tamaño de fotos y vigilar crecimiento por organización. |
-| SES | Revisar precio por correos enviados y salir del sandbox solo cuando el dominio esté listo. |
-| Presupuesto | Configurar `BudgetAlertEmail` y atender la alerta al 80 %. |
+Precios verificados contra la API el 11 de septiembre de 2026 en `us-east-1`, cuenta `021891592771`:
+
+| Plan        | RAM    | Disco | Transferencia | USD/mes  |
+| ----------- | ------ | ----- | ------------- | -------- |
+| `nano_3_0`  | 0,5 GB | 20 GB | 1 TB          | 5,00     |
+| `micro_3_0` | 1 GB   | 40 GB | 2 TB          | **7,00** |
+| `small_3_0` | 2 GB   | 60 GB | 3 TB          | 12,00    |
+
+El plan elegido es `micro_3_0`: `nano_3_0` tiene 0,5 GB de RAM y ahí Node y PostgreSQL juntos no caben con holgura. Sumando la zona de Route 53 (0,50 USD/mes) y céntimos de S3 y SES, el total de partida queda en **unos 7,50 a 8 USD al mes**.
+
+En esa región no hay planes ARM: `get-bundles` solo devuelve x86_64. Existen variantes `*_ipv6_3_0` dos dólares más baratas, pero son solo IPv6 y el dominio necesita un registro `A` con IPv4 alcanzable desde redes móviles, así que no sirven aquí.
+
+La alarma de presupuesto de la plantilla filtra por la etiqueta `Project=ruts68`, porque la cuenta es compartida con Kuvvi y sin ese filtro mediría el gasto de los dos proyectos. Eso exige desplegar con `--tags Project=ruts68` y activar esa etiqueta como etiqueta de asignación de costos en la consola de facturación.
+
+| Concepto             | Cómo controlarlo                                                                               |
+| -------------------- | ---------------------------------------------------------------------------------------------- |
+| Instancia Lightsail  | `micro_3_0` por 7,00 USD/mes; subir de plan solo si `free -h` muestra presión real de memoria. |
+| DNS Route 53         | Revisar el valor mensual de la zona alojada y consultas antes de mover nameservers.            |
+| S3 fotos y respaldos | Activar ciclo de vida, limitar tamaño de fotos y vigilar crecimiento por organización.         |
+| SES                  | Revisar precio por correos enviados y salir del sandbox solo cuando el dominio esté listo.     |
+| Presupuesto          | Configurar `BudgetAlertEmail` y atender la alerta al 80 %.                                     |
 
 Lo que más puede mover el gasto: instantáneas automáticas de Lightsail, subir de plan si 1 GB de RAM no alcanza, retención larga de fotos/respaldos y el crecimiento de la base, porque hoy la multimedia de WhatsApp se guarda como `data:` dentro de PostgreSQL.
 
@@ -147,9 +161,31 @@ En orden: compuertas locales, compilación del frontend contra `https://api.ruts
 
 La verificación final espera 401 en `GET https://api.ruts68.com/auth/me` y 200 en la portada. El 401 sin cookie es la prueba de que Fastify responde detrás de Caddy con TLS válido, sin tocar datos de nadie.
 
-## 6. Verificación manual después del primer despliegue
+## 6. Verificación ejecutada el 11 de septiembre de 2026
 
-Lo que el script no puede comprobar por sí solo:
+Comprobado contra el despliegue real, desde fuera del servidor:
+
+| Comprobación                                       | Resultado                                                                                                                                         |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `https://ruts68.com/`                              | 200                                                                                                                                               |
+| `https://www.ruts68.com/`                          | 301 al ápice                                                                                                                                      |
+| `http://ruts68.com/`                               | 308 a HTTPS                                                                                                                                       |
+| `https://ruts68.com/ingresar/` y `/app/`           | 200                                                                                                                                               |
+| `https://api.ruts68.com/auth/me` sin cookie        | 401                                                                                                                                               |
+| Certificados                                       | emitidos por Let's Encrypt para el ápice y para `api`                                                                                             |
+| `POST /auth/login` sin la cabecera propia          | 403, la protección de origen funciona                                                                                                             |
+| `POST /auth/login` con origen y cabecera correctos | 401 `INVALID_CREDENTIALS`, no 500: Fastify, Prisma y PostgreSQL responden de punta a punta                                                        |
+| `GET /development/mailbox`                         | 401 sin sesión; el handler lanza 404 en producción, así que queda cerrado por ambos lados                                                         |
+| `GET /webhooks/whatsapp` sin credenciales          | 503 `WEBHOOK_NOT_CONFIGURED`                                                                                                                      |
+| `POST /webhooks/wompi` sin credenciales            | 404 `NOT_CONFIGURED`                                                                                                                              |
+| Cola de recordatorios                              | `{ delivered: 0 }` sobre base vacía; temporizador cada dos minutos activo                                                                         |
+| Respaldo completo                                  | volcado, **restauración verificada con 24 tablas** y subida a `s3://ruts68-backupbucket-9okyro6zui1g/postgres/2026/09/`                           |
+| `TRUST_PROXY`                                      | la clave del limitador almacenada es el SHA-256 de `ip:<IP pública real del cliente>`, no la de `127.0.0.1`: el límite por IP es realmente por IP |
+| Recursos de la máquina                             | 422 MiB de 911 MiB usados, swap casi sin tocar, disco al 17 %                                                                                     |
+
+### Lo que todavía exige un recorrido con datos reales
+
+Lo que no se puede comprobar sin crear datos de negocio, y queda para tu primer recorrido:
 
 1. Registrar una empresa y confirmar que el mes calendario gratuito queda persistido.
 2. Invitar a un asesor y confirmar que el correo **sale de SES y llega**. En modo de prueba solo llegará a direcciones verificadas.
@@ -184,7 +220,54 @@ sudo systemctl start ruts68-api.service ruts68-reminders.timer
 
 **Volver atrás** un despliegue: `git checkout <commit anterior>` y correr `deploy.sh` otra vez. Las migraciones de Prisma no se revierten solas; una migración que haya que deshacer necesita su propia migración hacia adelante.
 
-## 8. Límites reales de este despliegue
+## 8. Recursos creados y trampas encontradas
+
+Creado el 11 de septiembre de 2026 en la cuenta `021891592771` (`us-east-1`), con el perfil `kuvvi`:
+
+| Recurso             | Identificador                                                                                      |
+| ------------------- | -------------------------------------------------------------------------------------------------- |
+| Pila CloudFormation | `ruts68`                                                                                           |
+| Zona Route 53       | `Z04992545RI1EVJ93AS6`                                                                             |
+| Nameservers         | `ns-1750.awsdns-26.co.uk`, `ns-881.awsdns-46.net`, `ns-309.awsdns-38.com`, `ns-1115.awsdns-11.org` |
+| Instancia Lightsail | `ruts68`, `ubuntu_24_04`, `micro_3_0`, 7,00 USD/mes                                                |
+| IP fija             | `107.20.221.137` (`ruts68-ip`)                                                                     |
+| Llave SSH           | `ruts68-key`, privada en `~/.ssh/ruts68.pem` con permisos 600                                      |
+| Bucket de fotos     | `ruts68-photobucket-geasn5xjay7p`                                                                  |
+| Bucket de respaldos | `ruts68-backupbucket-9okyro6zui1g`                                                                 |
+| Usuario IAM         | `ruts68-server`                                                                                    |
+| Identidad SES       | `ruts68.com`, DKIM y MAIL FROM en `SUCCESS`                                                        |
+
+El dominio estaba aparcado en Hostinger sin ningún `MX` ni `TXT`, así que el cambio de nameservers no rompió correo ni servicios: solo dejó de mostrarse la página de parking.
+
+### Los nombres de Lightsail son únicos entre tipos de recurso
+
+Una llave SSH llamada `ruts68` hace que `create-instances` falle con `Some names are already in use: ruts68`, aunque no exista ninguna instancia. Por eso la llave se llama `ruts68-key` y la instancia `ruts68`.
+
+### El arranque no va como user-data
+
+Lightsail antepone su propio script de inicialización al contenido del usuario. El shebang deja de estar en la primera línea y cloud-init ejecuta todo con `dash`, que no soporta `pipefail`: el arranque entero falla con `Illegal option -o pipefail` y la instancia queda vacía, con `cloud-init status: error`.
+
+`provision.sh` lo resuelve ejecutando `cloud-init.sh` por SSH con `sudo bash`, que además deja ver la salida en vivo. El guion quedó igualmente compatible con `dash` (`pipefail` condicional) y sin `curl | bash`, porque en una tubería sin `pipefail` una descarga fallida entrega vacío y el intérprete termina en éxito, dejando el repositorio sin configurar y el error sin rastro.
+
+### Los valores del archivo de entorno van entre comillas
+
+La cadena de conexión de Prisma lleva `?schema=public&connection_limit=10`. Sin comillas, al sourcear el archivo el shell interpreta el `&` como operador: ejecuta la asignación en una subshell y la variable **llega vacía** al proceso. El síntoma es engañoso, porque el preflight reporta `DATABASE_URL: es requerido y no puede apuntar a local` aunque el archivo la tenga completa. systemd acepta las comillas y las quita, así que citar todos los valores sirve para los dos casos.
+
+### `caddy validate` corrido como root deja los logs inservibles
+
+`validate` abre los log writers y por tanto **crea** `/var/log/caddy/*.log`. Si corre como root, los archivos quedan `root:root` en modo 600 y el servicio, que corre como el usuario `caddy`, no puede escribirlos: Caddy falla al arrancar con `permission denied` y no se emite ningún certificado. `deploy.sh` lo corre con `sudo -u caddy env ...` y además hace `chown -R caddy:caddy /var/log/caddy`. Las variables van por `env` porque `sudo` descarta las asignaciones puestas antes del comando.
+
+### Publicar sin credenciales de Meta y de Wompi
+
+El backend falla cerrado sin esos secretos: el webhook de Meta responde 503 `WEBHOOK_NOT_CONFIGURED`, el de Wompi 404 `NOT_CONFIGURED` y el checkout no se ofrece si faltan las llaves. Publicar sin ellas es seguro, pero tiene que ser una decisión declarada y no un olvido, así que el preflight exige nombrarlas:
+
+```text
+DISABLED_INTEGRATIONS=whatsapp,wompi
+```
+
+Solo acepta `whatsapp` y `wompi`; un nombre desconocido es error, para que un dedazo no desactive nada en silencio. Lo declarado sale impreso en la salida del preflight, de modo que cada despliegue deja constancia de con qué módulos se lanzó. Cuando lleguen las credenciales reales, se llenan las variables y se quita el nombre de esa lista.
+
+## 9. Límites reales de este despliegue
 
 Se escriben aquí para que nadie los descubra en producción:
 
